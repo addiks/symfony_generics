@@ -1,0 +1,7 @@
+
+- https://symfony.com/doc/current/components/serializer.html
+- https://www.w3schools.com/xml/xsl_intro.asp
+- Eine serializer Mapping-XML-Datei + eine XSLT pro Endpunkt
+- Per mime-type kann zwischen XML oder JSON umgeschaltet werden (per serializer)
+
+- generic form type
