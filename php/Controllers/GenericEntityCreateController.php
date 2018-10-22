@@ -142,7 +142,7 @@ final class GenericEntityCreateController
         $constructArguments = array();
 
         if (!empty($this->constructArguments)) {
-            $this->argumentBuilder->buildCallArguments(
+            $constructArguments = $this->argumentBuilder->buildCallArguments(
                 $constructorReflection,
                 $this->constructArguments,
                 $request
@@ -163,14 +163,11 @@ final class GenericEntityCreateController
                     /** @var object|null $factoryObject */
                     $factoryObject = $this->container->get($factoryServiceId);
 
-                    if (is_null($factoryObject)) {
-                        throw new ErrorException(sprintf(
-                            "Did not find service with id '%s' to use as factory for '%s'!",
-                            $factoryServiceId,
-                            $this->entityClass
-                        ));
-                    }
-
+                    Assert::object($factoryObject, sprintf(
+                        "Did not find service with id '%s' to use as factory for '%s'!",
+                        $factoryServiceId,
+                        $this->entityClass
+                    ));
                     Assert::methodExists($factoryObject, $factoryMethod);
 
                     # Create by factory-service-object

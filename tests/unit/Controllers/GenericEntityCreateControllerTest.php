@@ -78,6 +78,49 @@ final class GenericEntityCreateControllerTest extends TestCase
     /**
      * @test
      */
+    public function shouldProvideConstructArguments()
+    {
+        /** @var GenericEntityCreateController $controller */
+        $controller = GenericEntityCreateController::create(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'calls' => [
+                    'construct' => [
+                        'foo' => 'bar'
+                    ]
+                ]
+            ]
+        );
+
+        /** @var SampleEntity|null $persistedEntity */
+        $persistedEntity = null;
+
+        $this->controllerHelper->expects($this->once())->method('flushORM');
+        $this->controllerHelper->method('persistEntity')->will($this->returnCallback(
+            function (SampleEntity $entity) use (&$persistedEntity) {
+                $persistedEntity = $entity;
+            }
+        ));
+
+        $this->argumentBuilder->method('buildCallArguments')->willReturn([
+            'bar'
+        ]);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var Response $response */
+        $response = $controller->createEntity($request);
+
+        $this->assertEquals('bar', $persistedEntity->constructArgument);
+    }
+
+    /**
+     * @test
+     */
     public function shouldExecuteACall()
     {
         /** @var GenericEntityCreateController $controller */

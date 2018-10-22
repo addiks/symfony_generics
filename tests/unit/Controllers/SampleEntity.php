@@ -20,9 +20,11 @@ class SampleEntity
      */
     public $fooCalled = false;
 
-    public function __construct()
-    {
+    public $constructArgument = "foo";
 
+    public function __construct(string $foo = "foo")
+    {
+        $this->constructArgument = $foo;
     }
 
     public function doFoo()

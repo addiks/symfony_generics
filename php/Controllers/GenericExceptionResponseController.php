@@ -168,44 +168,28 @@ final class GenericExceptionResponseController
         } catch (Throwable $exception) {
             $this->controllerHelper->handleException($exception);
 
-            /** @var int $responseCode */
-            $responseCode = 500;
-
-            /** @var int $responseMessage */
-            $responseMessage = "";
-
-            /** @var string $flashType */
-            $flashType = "";
-
-            /** @var string $flashMessage */
-            $flashMessage = "";
-
             foreach ($this->exceptionResponses as $exceptionClass => $responseData) {
                 if (is_a($exception, $exceptionClass)) {
+                    /** @var string $responseMessage */
                     $responseMessage = $responseData['message'];
-                    $responseCode = $responseData['code'];
-                    $flashType = $responseData['flash-type'];
-                    $flashMessage = $responseData['flash-message'];
-                    break;
+
+                    if (empty($responseMessage)) {
+                        $responseMessage = $exception->getMessage();
+                    }
+
+                    if (!empty($responseData['flash-type'])) {
+                        /** @var string $flashMessage */
+                        $flashMessage = sprintf($responseData['flash-message'], $exception->getMessage());
+
+                        $this->controllerHelper->addFlashMessage($flashMessage, $responseData['flash-type']);
+                    }
+                    $response = new Response($responseMessage, $responseData['code']);
                 }
             }
 
-            if (!empty($flashType)) {
-                if (strpos($flashMessage, '%s') !== false) {
-                    $flashMessage = sprintf($flashMessage, $exception->getMessage());
-
-                } elseif (empty($flashMessage)) {
-                    $flashMessage = $exception->getMessage();
-                }
-
-                $this->controllerHelper->addFlashMessage($flashMessage, $flashType);
+            if (is_null($response)) {
+                throw $exception;
             }
-
-            if (empty($responseMessage)) {
-                $responseMessage = $exception->getMessage();
-            }
-
-            $response = new Response($responseMessage, $responseCode);
         }
 
         return $response;
