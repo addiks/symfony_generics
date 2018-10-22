@@ -51,8 +51,7 @@ final class GenericEntityCreateControllerTest extends TestCase
      */
     public function shouldCreateAnEntity()
     {
-        /** @var GenericEntityCreateController $controller */
-        $controller = GenericEntityCreateController::create(
+        $controller = new GenericEntityCreateController(
             $this->controllerHelper,
             $this->argumentBuilder,
             $this->container,
@@ -80,8 +79,7 @@ final class GenericEntityCreateControllerTest extends TestCase
      */
     public function shouldProvideConstructArguments()
     {
-        /** @var GenericEntityCreateController $controller */
-        $controller = GenericEntityCreateController::create(
+        $controller = new GenericEntityCreateController(
             $this->controllerHelper,
             $this->argumentBuilder,
             $this->container,
@@ -123,8 +121,7 @@ final class GenericEntityCreateControllerTest extends TestCase
      */
     public function shouldExecuteACall()
     {
-        /** @var GenericEntityCreateController $controller */
-        $controller = GenericEntityCreateController::create(
+        $controller = new GenericEntityCreateController(
             $this->controllerHelper,
             $this->argumentBuilder,
             $this->container,
@@ -161,8 +158,7 @@ final class GenericEntityCreateControllerTest extends TestCase
      */
     public function shouldUseFactoryObject()
     {
-        /** @var GenericEntityCreateController $controller */
-        $controller = GenericEntityCreateController::create(
+        $controller = new GenericEntityCreateController(
             $this->controllerHelper,
             $this->argumentBuilder,
             $this->container,

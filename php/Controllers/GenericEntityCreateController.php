@@ -71,26 +71,30 @@ final class GenericEntityCreateController
      */
     private $successResponse;
 
-    private function __construct(
+    public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentBuilder,
         ContainerInterface $container,
-        string $entityClass,
-        string $factory = null,
-        array $calls = array(),
-        string $successResponse = "object created"
+        array $options
     ) {
         Assert::null($this->controllerHelper);
-        Assert::true(class_exists($entityClass));
+        Assert::keyExists($options, 'entity-class');
+        Assert::true(class_exists($options['entity-class']));
+
+        $options = array_merge([
+            'calls' => [],
+            'success-response' => "object created",
+            'factory' => null,
+        ], $options);
 
         $this->controllerHelper = $controllerHelper;
         $this->argumentBuilder = $argumentBuilder;
         $this->container = $container;
-        $this->entityClass = $entityClass;
-        $this->successResponse = $successResponse;
-        $this->factory = $factory;
+        $this->entityClass = $options['entity-class'];
+        $this->successResponse = $options['success-response'];
+        $this->factory = $options['factory'];
 
-        foreach ($calls as $methodName => $arguments) {
+        foreach ($options['calls'] as $methodName => $arguments) {
             /** @var array $arguments */
 
             Assert::isArray($arguments);
@@ -99,36 +103,11 @@ final class GenericEntityCreateController
                 $this->constructArguments = $arguments;
 
             } else {
-                Assert::true(method_exists($entityClass, $methodName));
+                Assert::true(method_exists($this->entityClass, $methodName));
 
                 $this->calls[$methodName] = $arguments;
             }
         }
-    }
-
-    public static function create(
-        ControllerHelperInterface $controllerHelper,
-        ArgumentCompilerInterface $argumentBuilder,
-        ContainerInterface $container,
-        array $options
-    ): GenericEntityCreateController {
-        Assert::keyExists($options, 'entity-class');
-
-        $options = array_merge([
-            'calls' => [],
-            'success-response' => "object created",
-            'factory' => null,
-        ], $options);
-
-        return new GenericEntityCreateController(
-            $controllerHelper,
-            $argumentBuilder,
-            $container,
-            $options['entity-class'],
-            $options['factory'],
-            $options['calls'],
-            $options['success-response']
-        );
     }
 
     public function createEntity(Request $request): Response

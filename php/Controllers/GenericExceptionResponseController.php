@@ -60,27 +60,35 @@ final class GenericExceptionResponseController
     /**
      * @param object $innerController
      */
-    private function __construct(
+    public function __construct(
         ControllerHelperInterface $controllerHelper,
-        $innerController,
-        string $innerControllerMethod,
-        array $exceptionResponses = array(),
-        string $successResponse = null,
-        int $successResponseCode = 200,
-        string $successFlashMessage = null
+        array $options
     ) {
+        /** @var int $defaultResponseCode */
+        $defaultResponseCode = 200;
+
+        /** @var array<string, mixed> $defaults */
+        $defaults = array(
+            'exception-responses' => [],
+            'success-response' => null,
+            'success-response-code' => $defaultResponseCode,
+            'success-flash-message' => null,
+        );
+
+        /** @var mixed $options */
+        $options = array_merge($defaults, $options);
+
         Assert::null($this->controllerHelper);
-        Assert::true(is_object($innerController));
-        Assert::true(method_exists($innerController, $innerControllerMethod));
+        Assert::true(is_object($options['inner-controller']));
 
         $this->controllerHelper = $controllerHelper;
-        $this->innerController = $innerController;
-        $this->innerControllerMethod = $innerControllerMethod;
-        $this->successResponse = $successResponse;
-        $this->successResponseCode = $successResponseCode;
-        $this->successFlashMessage = $successFlashMessage;
+        $this->innerController = $options['inner-controller'];
+        $this->innerControllerMethod = $options['inner-controller-method'];
+        $this->successResponse = $options['success-response'];
+        $this->successResponseCode = $options['success-response-code'];
+        $this->successFlashMessage = $options['success-flash-message'];
 
-        foreach ($exceptionResponses as $exceptionClass => $responseData) {
+        foreach ($options['exception-responses'] as $exceptionClass => $responseData) {
             /** @var array<string, mixed> $responseData */
 
             Assert::true(
@@ -95,44 +103,8 @@ final class GenericExceptionResponseController
                 'flash-message' => '', # empty => exception message used
             ], $responseData);
 
-            $this->exceptionResponses[(string)$exceptionClass] = [
-                'message' => (string)$responseData['message'],
-                'code' => (int)$responseData['code'],
-                'flash-type' => (string)$responseData['flash-type'],
-                'flash-message' => (string)$responseData['flash-message']
-            ];
+            $this->exceptionResponses[$exceptionClass] = $responseData;
         }
-    }
-
-    public static function create(
-        ControllerHelperInterface $controllerHelper,
-        array $options
-    ): GenericExceptionResponseController {
-        Assert::keyExists($options, 'inner-controller');
-        Assert::keyExists($options, 'inner-controller-method');
-
-        /** @var int $defaultResponseCode */
-        $defaultResponseCode = 200;
-
-        /** @var array<string, mixed> $defaults */
-        $defaults = array(
-            'exception-responses' => [],
-            'success-response' => null,
-            'success-response-code' => $defaultResponseCode,
-            'success-flash-message' => null,
-        );
-
-        $options = array_merge($defaults, $options);
-
-        return new GenericExceptionResponseController(
-            $controllerHelper,
-            $options['inner-controller'],
-            $options['inner-controller-method'],
-            $options['exception-responses'],
-            $options['success-response'],
-            $options['success-response-code'],
-            $options['success-flash-message']
-        );
     }
 
     public function executeInnerControllerSafely(): Response
@@ -149,7 +121,7 @@ final class GenericExceptionResponseController
 
             $innerResponse = call_user_func([$this->innerController, $this->innerControllerMethod], $arguments);
 
-            Assert::isInstanceOf($innerResponse, Response::class);
+            Assert::isInstanceOf($innerResponse, Response::class, "Controller did not return an Response object!");
 
             if (!is_null($this->successFlashMessage)) {
                 $this->controllerHelper->addFlashMessage($this->successFlashMessage, "success");
@@ -158,11 +130,8 @@ final class GenericExceptionResponseController
             if (!is_null($this->successResponse)) {
                 $response = new Response($this->successResponse, $this->successResponseCode);
 
-            } elseif ($innerResponse instanceof Response) {
-                $response = $innerResponse;
-
             } else {
-                throw new ErrorException("Controller did not return an Response object!");
+                $response = $innerResponse;
             }
 
         } catch (Throwable $exception) {
@@ -183,6 +152,7 @@ final class GenericExceptionResponseController
 
                         $this->controllerHelper->addFlashMessage($flashMessage, $responseData['flash-type']);
                     }
+
                     $response = new Response($responseMessage, $responseData['code']);
                 }
             }
