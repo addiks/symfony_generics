@@ -132,29 +132,31 @@ final class GenericEntityCreateController
         $entity = null;
 
         if (!empty($this->factory)) {
-            if (strpos($this->factory, '::') !== false) {
+            if (is_int(strpos($this->factory, '::'))) {
                 [$factoryClass, $factoryMethod] = explode('::', $this->factory, 2);
 
-                if ($factoryClass[0] === '@') {
-                    /** @var string $factoryServiceId */
-                    $factoryServiceId = substr($factoryClass, 1);
+                if (!empty($factoryClass)) {
+                    if ($factoryClass[0] == '@') {
+                        /** @var string $factoryServiceId */
+                        $factoryServiceId = substr($factoryClass, 1);
 
-                    /** @var object|null $factoryObject */
-                    $factoryObject = $this->container->get($factoryServiceId);
+                        /** @var object|null $factoryObject */
+                        $factoryObject = $this->container->get($factoryServiceId);
 
-                    Assert::object($factoryObject, sprintf(
-                        "Did not find service with id '%s' to use as factory for '%s'!",
-                        $factoryServiceId,
-                        $this->entityClass
-                    ));
-                    Assert::methodExists($factoryObject, $factoryMethod);
+                        Assert::methodExists($factoryObject, $factoryMethod, sprintf(
+                            "Did not find service with id '%s' that has a method '%s' to use as factory for '%s'!",
+                            $factoryServiceId,
+                            $factoryMethod,
+                            $this->entityClass
+                        ));
 
-                    # Create by factory-service-object
-                    $entity = call_user_func_array([$factoryObject, $factoryMethod], $constructArguments);
+                        # Create by factory-service-object
+                        $entity = call_user_func_array([$factoryObject, $factoryMethod], $constructArguments);
 
-                } else {
-                    # Create by static factory-method of other class
-                    $entity = call_user_func_array($this->factory, $constructArguments);
+                    } else {
+                        # Create by static factory-method of other class
+                        $entity = call_user_func_array($this->factory, $constructArguments);
+                    }
                 }
 
             } elseif (method_exists($this->entityClass, $this->factory)) {

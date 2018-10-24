@@ -20,6 +20,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntity;
 use Webmozart\Assert\Assert;
 use Serializable;
+use stdClass;
+use InvalidArgumentException;
 
 final class GenericEntityCreateControllerTest extends TestCase
 {
@@ -72,6 +74,65 @@ final class GenericEntityCreateControllerTest extends TestCase
         $response = $controller->createEntity($request);
 
         $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectNonExistingEntityClass()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => "\\ClassDoes\\NotExist"
+            ]
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectMissingEntityClass()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+            ]
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectControllerCalledAgain()
+    {
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class
+            ]
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller->__construct(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class
+            ]
+        );
     }
 
     /**
@@ -156,6 +217,66 @@ final class GenericEntityCreateControllerTest extends TestCase
     /**
      * @test
      */
+    public function shouldRejectCallToNonExistingMethod()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'calls' => [
+                    'doNonExistingThing' => []
+                ]
+            ]
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectCallWithNonArrayParameters()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'calls' => [
+                    'doFoo' => "notAnArray"
+                ]
+            ]
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectCallWithIntegerMethod()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'calls' => [
+                    0 => []
+                ]
+            ]
+        );
+    }
+
+    /**
+     * @test
+     */
     public function shouldUseFactoryObject()
     {
         $controller = new GenericEntityCreateController(
@@ -193,6 +314,148 @@ final class GenericEntityCreateControllerTest extends TestCase
         $controller->createEntity($request);
 
         $this->assertSame($expectedEntity, $actualEntity);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectWrongEntityCreated()
+    {
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'factory' => '@some_factory_service::serialize'
+            ]
+        );
+
+        /** @var Serializable $factoryMock */
+        $factoryMock = $this->createMock(Serializable::class);
+        $factoryMock->method("serialize")->willReturn(new stdClass());
+
+        $this->container->expects($this->once())->method('get')->with(
+            $this->equalTo('some_factory_service')
+        )->willReturn($factoryMock);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller->createEntity($request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectNonExistingFactory()
+    {
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'factory' => '@some_factory_service::serialize'
+            ]
+        );
+
+        $this->container->expects($this->once())->method('get')->with(
+            $this->equalTo('some_factory_service')
+        )->willReturn(null);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller->createEntity($request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectInvalidFactory()
+    {
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'factory' => '::serialize'
+            ]
+        );
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller->createEntity($request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectNonExistingFactoryMethod()
+    {
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'factory' => '@some_factory_service::MethodDoesNotExist'
+            ]
+        );
+
+        /** @var Serializable $factoryMock */
+        $factoryMock = $this->createMock(Serializable::class);
+
+        $this->container->expects($this->once())->method('get')->with(
+            $this->equalTo('some_factory_service')
+        )->willReturn($factoryMock);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller->createEntity($request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldCorrectlyDetectFactoryMethod()
+    {
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'factory' => '@some_factory_service::serialize::thisShouldCauseAnError'
+            ]
+        );
+
+        /** @var Serializable $factoryMock */
+        $factoryMock = $this->createMock(Serializable::class);
+        $factoryMock->method("serialize")->willReturn(new SampleEntity());
+
+        $this->container->expects($this->once())->method('get')->with(
+            $this->equalTo('some_factory_service')
+        )->willReturn($factoryMock);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller->createEntity($request);
     }
 
 }
