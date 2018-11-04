@@ -17,6 +17,9 @@ use Serializable;
 use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
 use DivisionByZeroError;
+use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 final class GenericExceptionResponseControllerTest extends TestCase
 {
@@ -36,26 +39,35 @@ final class GenericExceptionResponseControllerTest extends TestCase
      */
     private $innerController;
 
+    /**
+     * @var ArgumentCompilerInterface
+     */
+    private $argumentBuilder;
+
     public function setUp()
     {
         $this->controllerHelper = $this->createMock(ControllerHelperInterface::class);
         $this->innerController = $this->createMock(Serializable::class);
+        $this->argumentBuilder = $this->createMock(ArgumentCompilerInterface::class);
     }
 
     /**
      * @test
      */
-    public function shouldExecuteInnerControllerSafely()
+    public function shouldexecuteInnerControllerSafely()
     {
-        $controller = new GenericExceptionResponseController($this->controllerHelper, [
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
         ]);
 
         $this->innerController->method("serialize")->willReturn(new Response("foo", 205));
 
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
         /** @var Response $response */
-        $response = $controller->executeInnerControllerSafely();
+        $response = $controller->executeInnerControllerSafely($request);
 
         $this->assertEquals("foo", $response->getContent());
         $this->assertEquals(205, $response->getStatusCode());
@@ -66,7 +78,7 @@ final class GenericExceptionResponseControllerTest extends TestCase
      */
     public function shouldOverrideSuccessResponse()
     {
-        $controller = new GenericExceptionResponseController($this->controllerHelper, [
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
             'success-response' => "Some success!",
@@ -75,8 +87,11 @@ final class GenericExceptionResponseControllerTest extends TestCase
 
         $this->innerController->method("serialize")->willReturn(new Response("foo", 205));
 
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
         /** @var Response $response */
-        $response = $controller->executeInnerControllerSafely();
+        $response = $controller->executeInnerControllerSafely($request);
 
         $this->assertEquals("Some success!", $response->getContent());
         $this->assertEquals(234, $response->getStatusCode());
@@ -87,7 +102,7 @@ final class GenericExceptionResponseControllerTest extends TestCase
      */
     public function shouldOverrideSuccessResponseWithDefaultResponseCode()
     {
-        $controller = new GenericExceptionResponseController($this->controllerHelper, [
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
             'success-response' => "Some success!",
@@ -95,8 +110,11 @@ final class GenericExceptionResponseControllerTest extends TestCase
 
         $this->innerController->method("serialize")->willReturn(new Response("foo", 205));
 
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
         /** @var Response $response */
-        $response = $controller->executeInnerControllerSafely();
+        $response = $controller->executeInnerControllerSafely($request);
 
         $this->assertEquals("Some success!", $response->getContent());
         $this->assertEquals(200, $response->getStatusCode());
@@ -107,7 +125,7 @@ final class GenericExceptionResponseControllerTest extends TestCase
      */
     public function shouldTriggerSuccessFlashMessage()
     {
-        $controller = new GenericExceptionResponseController($this->controllerHelper, [
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
             'success-flash-message' => 'Some Success Message!'
@@ -120,7 +138,10 @@ final class GenericExceptionResponseControllerTest extends TestCase
 
         $this->innerController->method("serialize")->willReturn(new Response("foo", 200));
 
-        $controller->executeInnerControllerSafely();
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $controller->executeInnerControllerSafely($request);
     }
 
     /**
@@ -128,7 +149,7 @@ final class GenericExceptionResponseControllerTest extends TestCase
      */
     public function shouldAddFlashMessageUponException()
     {
-        $controller = new GenericExceptionResponseController($this->controllerHelper, [
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
             'exception-responses' => [
@@ -151,8 +172,11 @@ final class GenericExceptionResponseControllerTest extends TestCase
             $this->equalTo('danger')
         );
 
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
         /** @var Response $response */
-        $response = $controller->executeInnerControllerSafely();
+        $response = $controller->executeInnerControllerSafely($request);
 
         $this->assertEquals("Lorem ipsum!", $response->getContent());
         $this->assertEquals(500, $response->getStatusCode());
@@ -164,7 +188,7 @@ final class GenericExceptionResponseControllerTest extends TestCase
     public function shouldForwardThrowExceptionIfNotHandled()
     {
         /** @var mixed $controller */
-        $controller = new GenericExceptionResponseController($this->controllerHelper, [
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
         ]);
@@ -177,7 +201,10 @@ final class GenericExceptionResponseControllerTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
 
-        $controller->executeInnerControllerSafely();
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $controller->executeInnerControllerSafely($request);
     }
 
     /**
@@ -185,14 +212,17 @@ final class GenericExceptionResponseControllerTest extends TestCase
      */
     public function shouldThrowExceptionIfInnerControllerDidNotReturnAResponse()
     {
-        $controller = new GenericExceptionResponseController($this->controllerHelper, [
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
         ]);
 
         $this->expectException(InvalidArgumentException::class);
 
-        $controller->executeInnerControllerSafely();
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $controller->executeInnerControllerSafely($request);
     }
 
     /**
@@ -202,7 +232,7 @@ final class GenericExceptionResponseControllerTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $controller = new GenericExceptionResponseController($this->controllerHelper, [
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
             'exception-responses' => [
@@ -219,7 +249,7 @@ final class GenericExceptionResponseControllerTest extends TestCase
      */
     public function shouldHandleThrowables()
     {
-        $controller = new GenericExceptionResponseController($this->controllerHelper, [
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
             'exception-responses' => [
@@ -236,8 +266,11 @@ final class GenericExceptionResponseControllerTest extends TestCase
             }
         ));
 
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
         /** @var Response $response */
-        $response = $controller->executeInnerControllerSafely();
+        $response = $controller->executeInnerControllerSafely($request);
 
         $this->assertEquals("Lorem ipsum", $response->getContent());
     }
@@ -249,7 +282,7 @@ final class GenericExceptionResponseControllerTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $controller = new GenericExceptionResponseController($this->controllerHelper, [
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => false,
             'inner-controller-method' => "serialize",
         ]);
@@ -262,15 +295,59 @@ final class GenericExceptionResponseControllerTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $controller = new GenericExceptionResponseController($this->controllerHelper, [
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
         ]);
 
-        $controller->__construct($this->controllerHelper, [
+        $controller->__construct($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
         ]);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRedirectFromException()
+    {
+        /** @var mixed $controller */
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
+            'inner-controller' => $this->innerController,
+            'inner-controller-method' => "serialize",
+            'exception-responses' => [
+                InvalidArgumentException::class => [
+                    'redirect-route' => 'some_redirect_route',
+                    'redirect-route-parameters' => [
+                        'foo' => 'bar'
+                    ]
+                ]
+            ]
+        ]);
+
+        $this->innerController->method("serialize")->will($this->returnCallback(
+            function () {
+                throw new InvalidArgumentException("Lorem ipsum!");
+            }
+        ));
+
+        /** @var RedirectResponse $redirectResponse */
+        $redirectResponse = $this->createMock(RedirectResponse::class);
+
+        $this->controllerHelper->expects($this->once())->method('handleException');
+        $this->controllerHelper->expects($this->once())->method('redirectToRoute')->with(
+            $this->equalTo('some_redirect_route'),
+            $this->equalTo([]),
+            $this->equalTo(301)
+        )->willReturn($redirectResponse);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var Response $response */
+        $response = $controller->executeInnerControllerSafely($request);
+
+        $this->assertSame($redirectResponse, $response);
     }
 
 }

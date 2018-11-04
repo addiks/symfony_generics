@@ -1,5 +1,3 @@
 GenericEntityFetchController
-GenericEntityInvokeController.php
+GenericEntityInvokeController
 GenericEntityListingController
-GenericEntityRemoveController
-GenericExceptionRedirectController

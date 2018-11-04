@@ -18,6 +18,11 @@ use Symfony\Component\HttpFoundation\Request;
 interface ArgumentCompilerInterface
 {
 
+    public function buildRouteArguments(
+        array $argumentsConfiguration,
+        Request $request
+    ): array;
+
     public function buildCallArguments(
         ReflectionMethod $methodReflection,
         array $argumentsConfiguration,

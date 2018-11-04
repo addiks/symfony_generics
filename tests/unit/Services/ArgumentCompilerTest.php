@@ -17,8 +17,10 @@ use Addiks\SymfonyGenerics\Services\EntityRepositoryInterface;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\Request;
 use ReflectionParameter;
+use ReflectionType;
 use stdClass;
 use InvalidArgumentException;
+use Serializable;
 
 final class ArgumentCompilerTest extends TestCase
 {
@@ -49,6 +51,42 @@ final class ArgumentCompilerTest extends TestCase
     /**
      * @test
      */
+    public function shouldBuildRouteArguments()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+        $request->method('get')->will($this->returnValueMap([
+            ['reqFoo', null, 'ipsum'],
+        ]));
+
+        $someObject = new stdClass();
+
+        /** @var Serializable $someService */
+        $someService = $this->createMock(Serializable::class);
+        $someService->method('serialize')->willReturn($someObject);
+
+        $this->container->method('get')->will($this->returnValueMap([
+            ['some.service', $someService],
+        ]));
+
+        /** @var array<string, mixed> $expectedRouteArguments */
+        $expectedRouteArguments = array(
+            'foo' => 'ipsum',
+            'bar' => $someObject
+        );
+
+        /** @var array<string, mixed> $actualRouteArguments */
+        $actualRouteArguments = $this->argumentCompiler->buildRouteArguments([
+            'foo' => '$reqFoo',
+            'bar' => '@some.service::serialize',
+        ], $request);
+
+        $this->assertEquals($expectedRouteArguments, $actualRouteArguments);
+    }
+
+    /**
+     * @test
+     */
     public function shouldBuildCallArguments()
     {
         /** @var ReflectionMethod $methodReflection */
@@ -66,10 +104,21 @@ final class ArgumentCompilerTest extends TestCase
         $parameterBazReflection = $this->createMock(ReflectionParameter::class);
         $parameterBazReflection->method('getName')->willReturn("baz");
 
+        /** @var ReflectionType $parameterType */
+        $parameterType = $this->createMock(ReflectionType::class);
+        $parameterType->method('__toString')->willReturn(stdClass::class);
+
+        /** @var ReflectionParameter $parameterBazReflection */
+        $parameterFazReflection = $this->createMock(ReflectionParameter::class);
+        $parameterFazReflection->method('getName')->willReturn("faz");
+        $parameterFazReflection->method('hasType')->willReturn(true);
+        $parameterFazReflection->method('getType')->willReturn($parameterType);
+
         $methodReflection->method("getParameters")->willReturn([
             $parameterFooReflection,
             $parameterBarReflection,
-            $parameterBazReflection
+            $parameterBazReflection,
+            $parameterFazReflection
         ]);
 
         /** @var Request $request */
@@ -82,7 +131,8 @@ final class ArgumentCompilerTest extends TestCase
         /** @var array<string, mixed> $argumentsConfiguration */
         $argumentsConfiguration = array(
             "foo" => '$lorem',
-            "baz" => '@some.service'
+            "baz" => '@some.service',
+            "faz" => '$lorem'
         );
 
         /** @var object $someService */
@@ -92,10 +142,16 @@ final class ArgumentCompilerTest extends TestCase
             ['some.service', $someService],
         ]));
 
+        $this->entityRepository->expects($this->once())->method('findEntity')->with(
+            $this->equalTo(stdClass::class),
+            $this->equalTo('ipsum')
+        )->willReturn($someService);
+
         /** @var array<int, mixed> $expectedCallArguments */
         $expectedCallArguments = array(
             'ipsum',
             'blah',
+            $someService,
             $someService
         );
 
@@ -141,6 +197,29 @@ final class ArgumentCompilerTest extends TestCase
             $request
         );
 
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectNonExistingFactoryMethod()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var Serializable $someService */
+        $someService = $this->createMock(Serializable::class);
+
+        $this->container->method('get')->will($this->returnValueMap([
+            ['some.service', $someService],
+        ]));
+
+        $this->argumentCompiler->buildRouteArguments([
+            'foo' => '$reqFoo',
+            'bar' => '@some.service::doesNotExist',
+        ], $request);
     }
 
 }

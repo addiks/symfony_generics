@@ -21,6 +21,7 @@ use ReflectionMethod;
 use Symfony\Component\HttpFoundation\Request;
 use Webmozart\Assert\Assert;
 use Addiks\SymfonyGenerics\Services\EntityRepositoryInterface;
+use ReflectionClass;
 
 final class ArgumentCompiler implements ArgumentCompilerInterface
 {
@@ -41,6 +42,42 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
     ) {
         $this->container = $container;
         $this->entityRepository = $entityRepository;
+    }
+
+    public function buildRouteArguments(
+        array $argumentsConfiguration,
+        Request $request
+    ): array {
+        /** @var array<int, mixed> $routeArguments */
+        $routeArguments = array();
+
+        foreach ($argumentsConfiguration as $key => $argumentConfiguration) {
+            /** @var array|string $argumentConfiguration */
+
+            /** @var bool $doSet */
+            $doSet = true;
+
+            /** @var string|null $parameterTypeName */
+            $parameterTypeName = null;
+
+            if (isset($argumentConfiguration['entity-class'])) {
+                $parameterTypeName = $argumentConfiguration['entity-class'];
+            }
+
+            /** @var mixed $argumentValue */
+            $argumentValue = $this->resolveArgumentConfiguration(
+                $argumentConfiguration,
+                $request,
+                $parameterTypeName,
+                $doSet
+            );
+
+            if ($doSet) {
+                $routeArguments[$key] = $argumentValue;
+            }
+        }
+
+        return $routeArguments;
     }
 
     public function buildCallArguments(
@@ -66,38 +103,28 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
 
                 Assert::true(is_string($argumentConfiguration) || is_array($argumentConfiguration));
 
-                /** @var mixed $argumentValue */
-                $argumentValue = null;
-
                 /** @var bool $doSet */
                 $doSet = true;
 
-                if (is_array($argumentConfiguration)) {
-                    if (isset($argumentConfiguration['id'])) {
-                        $argumentValue = $this->container->get($argumentConfiguration['id']);
-                    }
-
-                } else {
-                    if ($argumentConfiguration[0] == '@') {
-                        $argumentValue = $this->container->get(substr($argumentConfiguration, 1));
-
-                    } elseif ($argumentConfiguration[0] == '$') {
-                        $argumentValue = $request->get(substr($argumentConfiguration, 1));
-                    }
-                }
+                /** @var string|null $parameterTypeName */
+                $parameterTypeName = null;
 
                 if ($parameterReflection->hasType()) {
-                    /** @var ReflectionType $parameterType */
+                    /** @var ReflectionType|null $parameterType */
                     $parameterType = $parameterReflection->getType();
 
-                    /** @var string $parameterTypeName */
-                    $parameterTypeName = $parameterType->getName();
-
-                    if (class_exists($parameterTypeName)) {
-                        $argumentValue = $this->entityRepository->findEntity($parameterTypeName, $argumentValue);
-                        # TODO: error handling "not an entty", "entity not found", ...
+                    if ($parameterType instanceof ReflectionType) {
+                        $parameterTypeName = $parameterType->__toString();
                     }
                 }
+
+                /** @var mixed $argumentValue */
+                $argumentValue = $this->resolveArgumentConfiguration(
+                    $argumentConfiguration,
+                    $request,
+                    $parameterTypeName,
+                    $doSet
+                );
 
                 if ($doSet) {
                     $callArguments[$index] = $argumentValue;
@@ -109,6 +136,81 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         }
 
         return $callArguments;
+    }
+
+    /**
+     * @param array|string $argumentConfiguration
+     *
+     * @return mixed
+     */
+    private function resolveArgumentConfiguration(
+        $argumentConfiguration,
+        Request $request,
+        ?string $parameterTypeName,
+        bool &$doSet
+    ) {
+        /** @var mixed $argumentValue */
+        $argumentValue = null;
+
+        if (is_array($argumentConfiguration)) {
+            if (isset($argumentConfiguration['id'])) {
+                $argumentValue = $this->container->get($argumentConfiguration['id']);
+            }
+
+        } else {
+            if (is_int(strpos($argumentConfiguration, '::'))) {
+                [$factoryClass, $factoryMethod] = explode('::', $argumentConfiguration);
+
+                if (!empty($factoryClass)) {
+                    if ($factoryClass[0] == '@') {
+                        /** @var string $factoryServiceId */
+                        $factoryServiceId = substr($factoryClass, 1);
+
+                        /** @var object|null $factoryObject */
+                        $factoryObject = $this->container->get($factoryServiceId);
+
+                        Assert::methodExists($factoryObject, $factoryMethod, sprintf(
+                            "Did not find service with id '%s' that has a method '%s'!",
+                            $factoryServiceId,
+                            $factoryMethod
+                        ));
+
+                        $factoryReflection = new ReflectionClass($factoryObject);
+
+                        /** @var ReflectionMethod $methodReflection */
+                        $methodReflection = $factoryReflection->getMethod($factoryMethod);
+
+                        $callArguments = $this->buildCallArguments(
+                            $methodReflection,
+                            [], # TODO
+                            $request
+                        );
+
+                        # Create by factory-service-object
+                        $argumentValue = call_user_func_array([$factoryObject, $factoryMethod], $callArguments);
+
+                    } else {
+                        # Create by static factory-method of other class
+                        $argumentValue = call_user_func_array($argumentConfiguration, []);
+                    }
+                }
+
+            } elseif ($argumentConfiguration[0] == '$') {
+                $argumentValue = $request->get(substr($argumentConfiguration, 1));
+
+            } elseif ($argumentConfiguration[0] == '@') {
+                $argumentValue = $this->container->get(substr($argumentConfiguration, 1));
+            }
+        }
+
+        if (!empty($parameterTypeName)) {
+            if (class_exists($parameterTypeName)) {
+                $argumentValue = $this->entityRepository->findEntity($parameterTypeName, $argumentValue);
+                # TODO: error handling "not an entty", "entity not found", ...
+            }
+        }
+
+        return $argumentValue;
     }
 
 }

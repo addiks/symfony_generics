@@ -18,6 +18,8 @@ use Exception;
 use Throwable;
 use Symfony\Component\HttpFoundation\Response;
 use ErrorException;
+use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 final class GenericExceptionResponseController
 {
@@ -26,6 +28,11 @@ final class GenericExceptionResponseController
      * @var ControllerHelperInterface
      */
     private $controllerHelper;
+
+    /**
+     * @var ArgumentCompilerInterface
+     */
+    private $argumentBuilder;
 
     /**
      * @var object
@@ -62,6 +69,7 @@ final class GenericExceptionResponseController
      */
     public function __construct(
         ControllerHelperInterface $controllerHelper,
+        ArgumentCompilerInterface $argumentBuilder,
         array $options
     ) {
         /** @var int $defaultResponseCode */
@@ -82,6 +90,7 @@ final class GenericExceptionResponseController
         Assert::true(is_object($options['inner-controller']));
 
         $this->controllerHelper = $controllerHelper;
+        $this->argumentBuilder = $argumentBuilder;
         $this->innerController = $options['inner-controller'];
         $this->innerControllerMethod = $options['inner-controller-method'];
         $this->successResponse = $options['success-response'];
@@ -101,13 +110,15 @@ final class GenericExceptionResponseController
                 'code' => '500',
                 'flash-type' => '', # empty => no message triggered
                 'flash-message' => '', # empty => exception message used
+                'redirect-route' => null,
+                'redirect-route-parameters' => [],
             ], $responseData);
 
             $this->exceptionResponses[$exceptionClass] = $responseData;
         }
     }
 
-    public function executeInnerControllerSafely(): Response
+    public function executeInnerControllerSafely(Request $request): Response
     {
         /** @var Response|null $response */
         $response = null;
@@ -153,7 +164,18 @@ final class GenericExceptionResponseController
                         $this->controllerHelper->addFlashMessage($flashMessage, $responseData['flash-type']);
                     }
 
-                    $response = new Response($responseMessage, $responseData['code']);
+                    if (!empty($responseData['redirect-route'])) {
+                        $response = $this->controllerHelper->redirectToRoute(
+                            $responseData['redirect-route'],
+                            $this->argumentBuilder->buildRouteArguments(
+                                $responseData['redirect-route-parameters'],
+                                $request
+                            )
+                        );
+
+                    } else {
+                        $response = new Response($responseMessage, $responseData['code']);
+                    }
                 }
             }
 
