@@ -51,7 +51,7 @@ final class ArgumentCompilerTest extends TestCase
     /**
      * @test
      */
-    public function shouldBuildRouteArguments()
+    public function shouldBuildArguments()
     {
         /** @var Request $request */
         $request = $this->createMock(Request::class);
@@ -76,7 +76,7 @@ final class ArgumentCompilerTest extends TestCase
         );
 
         /** @var array<string, mixed> $actualRouteArguments */
-        $actualRouteArguments = $this->argumentCompiler->buildRouteArguments([
+        $actualRouteArguments = $this->argumentCompiler->buildArguments([
             'foo' => '$reqFoo',
             'bar' => '@some.service::serialize',
         ], $request);
@@ -216,7 +216,7 @@ final class ArgumentCompilerTest extends TestCase
             ['some.service', $someService],
         ]));
 
-        $this->argumentCompiler->buildRouteArguments([
+        $this->argumentCompiler->buildArguments([
             'foo' => '$reqFoo',
             'bar' => '@some.service::doesNotExist',
         ], $request);

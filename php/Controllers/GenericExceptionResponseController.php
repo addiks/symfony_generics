@@ -167,7 +167,7 @@ final class GenericExceptionResponseController
                     if (!empty($responseData['redirect-route'])) {
                         $response = $this->controllerHelper->redirectToRoute(
                             $responseData['redirect-route'],
-                            $this->argumentBuilder->buildRouteArguments(
+                            $this->argumentBuilder->buildArguments(
                                 $responseData['redirect-route-parameters'],
                                 $request
                             )

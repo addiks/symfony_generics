@@ -57,7 +57,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->argumentCompiler,
             [
                 'entity-class' => get_class($this->argumentCompiler),
-                'method' => 'buildRouteArguments',
+                'method' => 'buildArguments',
                 'arguments' => [
                     'argumentsConfiguration' => "Lorem",
                     'request' => "ipsum"
@@ -71,7 +71,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
         )->willReturn($this->argumentCompiler);
 
         $this->argumentCompiler->expects($this->once())->method('buildCallArguments')->with(
-            $this->equalTo(new ReflectionMethod(get_class($this->argumentCompiler), 'buildRouteArguments')),
+            $this->equalTo(new ReflectionMethod(get_class($this->argumentCompiler), 'buildArguments')),
             $this->equalTo([
                 'argumentsConfiguration' => "Lorem",
                 'request' => "ipsum"
@@ -82,7 +82,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $request
         ]);
 
-        $this->argumentCompiler->expects($this->once())->method('buildRouteArguments')->with(
+        $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
             $this->equalTo(['foo' => 'bar']),
             $this->identicalTo($request)
         );
@@ -105,7 +105,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->argumentCompiler,
             [
                 'entity-class' => get_class($this->argumentCompiler),
-                'method' => 'buildRouteArguments',
+                'method' => 'buildArguments',
             ]
         );
 
@@ -132,7 +132,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->argumentCompiler,
             [
                 'entity-class' => get_class($this->argumentCompiler),
-                'method' => 'buildRouteArguments',
+                'method' => 'buildArguments',
                 'deny-access-attribute' => 'foo',
             ]
         );
@@ -161,14 +161,14 @@ final class GenericEntityInvokeControllerTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $this->controller = new GenericEntityInvokeController($this->controllerHelper, $this->argumentCompiler, [
+        $controller = new GenericEntityInvokeController($this->controllerHelper, $this->argumentCompiler, [
             'entity-class' => get_class($this->argumentCompiler),
-            'method' => 'buildRouteArguments',
+            'method' => 'buildArguments',
         ]);
 
-        $this->controller->__construct($this->controllerHelper, $this->argumentCompiler, [
+        $controller->__construct($this->controllerHelper, $this->argumentCompiler, [
             'entity-class' => get_class($this->argumentCompiler),
-            'method' => 'buildRouteArguments',
+            'method' => 'buildArguments',
         ]);
     }
 
@@ -183,7 +183,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->controllerHelper,
             $this->argumentCompiler,
             [
-                'method' => 'buildRouteArguments',
+                'method' => 'buildArguments',
             ]
         );
     }
@@ -217,7 +217,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->argumentCompiler,
             [
                 'entity-class' => "NonExistingClass",
-                'method' => 'buildRouteArguments',
+                'method' => 'buildArguments',
             ]
         );
     }
@@ -251,7 +251,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->argumentCompiler,
             [
                 'entity-class' => get_class($this->argumentCompiler),
-                'method' => 'buildRouteArguments',
+                'method' => 'buildArguments',
                 'arguments' => "12345",
             ]
         );

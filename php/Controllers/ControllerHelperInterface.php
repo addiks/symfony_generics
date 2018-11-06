@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
 interface ControllerHelperInterface
 {
 
-    public function renderTemplate(string $templatePath, array $arguments = array()): string;
+    public function renderTemplate(string $templatePath, array $arguments = array()): Response;
 
     /**
      * @return object|null

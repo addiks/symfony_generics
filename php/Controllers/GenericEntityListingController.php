@@ -111,7 +111,7 @@ final class GenericEntityListingController
         }
 
         /** @var array $criteria */
-        $criteria = $this->argumentCompiler->buildRouteArguments($this->criteria, $request);
+        $criteria = $this->argumentCompiler->buildArguments($this->criteria, $request);
 
         /** @var array<object> $entities */
         $entities = $this->controllerHelper->findEntities($this->entityClass, $criteria);

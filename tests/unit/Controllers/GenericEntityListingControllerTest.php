@@ -133,7 +133,7 @@ final class GenericEntityListingControllerTest extends TestCase
             $this->equalTo(['blah' => 'blubb'])
         )->willReturn([$entityA, $entityB]);
 
-        $this->argumentCompiler->expects($this->once())->method('buildRouteArguments')->with(
+        $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
             $this->equalTo(['foo' => 'bar']),
             $this->identicalTo($request)
         )->willReturn(['blah' => 'blubb']);

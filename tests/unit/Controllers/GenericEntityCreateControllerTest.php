@@ -480,7 +480,6 @@ final class GenericEntityCreateControllerTest extends TestCase
             $this->equalTo('some_factory_service')
         )->willReturn($factoryMock);
 
-        /** @var mixed $controller */
         $controller = new GenericEntityCreateController(
             $this->controllerHelper,
             $this->argumentBuilder,

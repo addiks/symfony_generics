@@ -44,7 +44,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         $this->entityRepository = $entityRepository;
     }
 
-    public function buildRouteArguments(
+    public function buildArguments(
         array $argumentsConfiguration,
         Request $request
     ): array {
@@ -53,9 +53,6 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
 
         foreach ($argumentsConfiguration as $key => $argumentConfiguration) {
             /** @var array|string $argumentConfiguration */
-
-            /** @var bool $doSet */
-            $doSet = true;
 
             /** @var string|null $parameterTypeName */
             $parameterTypeName = null;
@@ -68,13 +65,10 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             $argumentValue = $this->resolveArgumentConfiguration(
                 $argumentConfiguration,
                 $request,
-                $parameterTypeName,
-                $doSet
+                $parameterTypeName
             );
 
-            if ($doSet) {
-                $routeArguments[$key] = $argumentValue;
-            }
+            $routeArguments[$key] = $argumentValue;
         }
 
         return $routeArguments;
@@ -103,9 +97,6 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
 
                 Assert::true(is_string($argumentConfiguration) || is_array($argumentConfiguration));
 
-                /** @var bool $doSet */
-                $doSet = true;
-
                 /** @var string|null $parameterTypeName */
                 $parameterTypeName = null;
 
@@ -122,13 +113,10 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
                 $argumentValue = $this->resolveArgumentConfiguration(
                     $argumentConfiguration,
                     $request,
-                    $parameterTypeName,
-                    $doSet
+                    $parameterTypeName
                 );
 
-                if ($doSet) {
-                    $callArguments[$index] = $argumentValue;
-                }
+                $callArguments[$index] = $argumentValue;
 
             } elseif (!is_null($requestValue)) {
                 $callArguments[$index] = $requestValue;
@@ -146,8 +134,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
     private function resolveArgumentConfiguration(
         $argumentConfiguration,
         Request $request,
-        ?string $parameterTypeName,
-        bool &$doSet
+        ?string $parameterTypeName
     ) {
         /** @var mixed $argumentValue */
         $argumentValue = null;
