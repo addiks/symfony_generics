@@ -49,6 +49,11 @@ final class GenericEntityInvokeController
      */
     private $arguments;
 
+    /**
+     * @var string|null
+     */
+    private $denyAccessAttribute;
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentCompiler,
@@ -59,7 +64,8 @@ final class GenericEntityInvokeController
         Assert::keyExists($options, 'method');
 
         $options = array_merge([
-            'arguments' => []
+            'arguments' => [],
+            'deny-access-attribute' => null
         ], $options);
 
         Assert::classExists($options['entity-class']);
@@ -71,6 +77,7 @@ final class GenericEntityInvokeController
         $this->entityClass = $options['entity-class'];
         $this->methodName = $options['method'];
         $this->arguments = $options['arguments'];
+        $this->denyAccessAttribute = $options['deny-access-attribute'];
     }
 
     public function invokeEntityMethod(Request $request, string $entityId): Response
@@ -83,6 +90,10 @@ final class GenericEntityInvokeController
                 "Entity with id '%s' not found!",
                 $entityId
             ));
+        }
+
+        if (!empty($this->denyAccessAttribute)) {
+            $this->controllerHelper->denyAccessUnlessGranted($this->denyAccessAttribute, $entity);
         }
 
         $reflectionObject = new ReflectionObject($entity);

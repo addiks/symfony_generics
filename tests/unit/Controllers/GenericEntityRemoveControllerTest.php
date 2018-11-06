@@ -16,6 +16,7 @@ use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use stdClass;
 use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
+use Symfony\Component\Finder\Exception\AccessDeniedException;
 
 final class GenericEntityRemoveControllerTest extends TestCase
 {
@@ -92,6 +93,37 @@ final class GenericEntityRemoveControllerTest extends TestCase
 
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('Entity removed!', $response->getContent());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldCheckIfAccessIsGranted()
+    {
+        $this->expectException(AccessDeniedException::class);
+
+        $entity = new SampleEntity();
+
+        $this->controllerHelper->expects($this->once())->method('findEntity')->with(
+            $this->equalTo(SampleEntity::class),
+            $this->equalTo("some-id")
+        )->willReturn($entity);
+
+        $this->controllerHelper->expects($this->once())->method('denyAccessUnlessGranted')->with(
+            $this->equalTo('some-attribute'),
+            $this->identicalTo($entity)
+        )->will($this->returnCallback(
+            function () {
+                throw new AccessDeniedException('Lorem ipsum!');
+            }
+        ));
+
+        $controller = new GenericEntityRemoveController($this->controllerHelper, [
+            'entity-class' => SampleEntity::class,
+            'authorization-attribute' => 'some-attribute',
+        ]);
+
+        $controller->removeEntity("some-id");
     }
 
 }

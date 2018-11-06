@@ -37,4 +37,9 @@ interface ControllerHelperInterface
 
     public function redirectToRoute(string $route, array $parameters = array(), int $status = 301): Response;
 
+    /**
+     * @param object $subject
+     */
+    public function denyAccessUnlessGranted(string $attribute, $subject): void;
+
 }

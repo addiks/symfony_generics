@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 use stdClass;
 use ReflectionMethod;
 use InvalidArgumentException;
+use Symfony\Component\Finder\Exception\AccessDeniedException;
 
 final class GenericEntityInvokeControllerTest extends TestCase
 {
@@ -112,6 +113,43 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->equalTo(get_class($this->argumentCompiler)),
             $this->equalTo("123")
         )->willReturn(null);
+
+        $this->controller->invokeEntityMethod($request, "123");
+    }
+
+    /**
+     * @test
+     */
+    public function shouldThrowExceptionWhenAccessNotGranted()
+    {
+        $this->expectException(AccessDeniedException::class);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->controller = new GenericEntityInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            [
+                'entity-class' => get_class($this->argumentCompiler),
+                'method' => 'buildRouteArguments',
+                'deny-access-attribute' => 'foo',
+            ]
+        );
+
+        $this->controllerHelper->expects($this->once())->method('denyAccessUnlessGranted')->with(
+            $this->equalTo('foo'),
+            $this->equalTo($this->argumentCompiler)
+        )->will($this->returnCallback(
+            function () {
+                throw new AccessDeniedException("Lorem ipsum");
+            }
+        ));
+
+        $this->controllerHelper->expects($this->once())->method('findEntity')->with(
+            $this->equalTo(get_class($this->argumentCompiler)),
+            $this->equalTo("123")
+        )->willReturn($this->argumentCompiler);
 
         $this->controller->invokeEntityMethod($request, "123");
     }

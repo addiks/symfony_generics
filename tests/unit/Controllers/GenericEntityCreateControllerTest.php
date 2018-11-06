@@ -22,6 +22,7 @@ use Webmozart\Assert\Assert;
 use Serializable;
 use stdClass;
 use InvalidArgumentException;
+use Symfony\Component\Finder\Exception\AccessDeniedException;
 
 final class GenericEntityCreateControllerTest extends TestCase
 {
@@ -454,6 +455,45 @@ final class GenericEntityCreateControllerTest extends TestCase
         $request = $this->createMock(Request::class);
 
         $this->expectException(InvalidArgumentException::class);
+
+        $controller->createEntity($request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldCheckIfAccessIsGranted()
+    {
+        $this->expectException(AccessDeniedException::class);
+
+        $this->controllerHelper->expects($this->once())->method('denyAccessUnlessGranted')->will($this->returnCallback(
+            function () {
+                throw new AccessDeniedException('Lorem ipsum!');
+            }
+        ));
+
+        /** @var Serializable $factoryMock */
+        $factoryMock = $this->createMock(Serializable::class);
+        $factoryMock->method("serialize")->willReturn(new SampleEntity());
+
+        $this->container->expects($this->once())->method('get')->with(
+            $this->equalTo('some_factory_service')
+        )->willReturn($factoryMock);
+
+        /** @var mixed $controller */
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'factory' => '@some_factory_service::serialize',
+                'authorization-attribute' => 'some-attribute',
+            ]
+        );
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
 
         $controller->createEntity($request);
     }

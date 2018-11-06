@@ -71,6 +71,11 @@ final class GenericEntityCreateController
      */
     private $successResponse;
 
+    /**
+     * @var string|null
+     */
+    private $authorizationAttribute;
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentBuilder,
@@ -85,6 +90,7 @@ final class GenericEntityCreateController
             'calls' => [],
             'success-response' => "object created",
             'factory' => null,
+            'authorization-attribute' => null,
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
@@ -93,6 +99,7 @@ final class GenericEntityCreateController
         $this->entityClass = $options['entity-class'];
         $this->successResponse = $options['success-response'];
         $this->factory = $options['factory'];
+        $this->authorizationAttribute = $options['authorization-attribute'];
 
         foreach ($options['calls'] as $methodName => $arguments) {
             /** @var array $arguments */
@@ -191,6 +198,10 @@ final class GenericEntityCreateController
             );
 
             $methodReflection->invoke($entity, $callArguments);
+        }
+
+        if (!empty($this->authorizationAttribute)) {
+            $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $entity);
         }
 
         $this->controllerHelper->persistEntity($entity);

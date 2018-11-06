@@ -30,6 +30,11 @@ final class GenericEntityRemoveController
      */
     private $entityClass;
 
+    /**
+     * @var string|null
+     */
+    private $authorizationAttribute;
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         array $options
@@ -37,8 +42,13 @@ final class GenericEntityRemoveController
         Assert::keyExists($options, 'entity-class');
         Assert::null($this->controllerHelper);
 
+        $options = array_merge([
+            'authorization-attribute' => null,
+        ], $options);
+
         $this->controllerHelper = $controllerHelper;
         $this->entityClass = $options['entity-class'];
+        $this->authorizationAttribute = $options['authorization-attribute'];
     }
 
     public function removeEntity(string $id): Response
@@ -51,6 +61,10 @@ final class GenericEntityRemoveController
                 "Entity with id %s not found!",
                 $id
             ));
+        }
+
+        if (!empty($this->authorizationAttribute)) {
+            $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $entity);
         }
 
         $this->controllerHelper->removeEntity($entity);
