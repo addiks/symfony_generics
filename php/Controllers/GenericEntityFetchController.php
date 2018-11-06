@@ -22,9 +22,11 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use DOMDocument;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use ErrorException;
+use Addiks\SymfonyGenerics\Controllers\ApplyDataTemplateTrait;
 
 final class GenericEntityFetchController
 {
+    use ApplyDataTemplateTrait;
 
     /**
      * @var ControllerHelperInterface
@@ -136,55 +138,6 @@ final class GenericEntityFetchController
         }
 
         return new Response($serializedEntity);
-    }
-
-    private function applyDataTemplate(array $data, array $dataTemplate): array
-    {
-        /** @var array $result */
-        $result = array();
-
-        foreach ($dataTemplate as $key => $templateEntry) {
-            /** @var string|array $templateEntry */
-
-            /** @var mixed $entryResult */
-            $entryResult = null;
-
-            if (is_string($templateEntry)) {
-                $entryResult = $this->extractValueFromDataArray($data, explode(".", $templateEntry));
-
-            } elseif (is_array($templateEntry)) {
-                $entryResult = $this->applyDataTemplate($data, $templateEntry);
-
-            } else {
-                throw new ErrorException("Invalid entry for data-template, must be string or array!");
-            }
-
-            $result[$key] = $entryResult;
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return mixed
-     */
-    private function extractValueFromDataArray(array $data, array $path)
-    {
-        /** @var string $key */
-        $key = array_shift($path);
-
-        /** @var mixed $value */
-        $value = null;
-
-        if (isset($data[$key])) {
-            $value = $data[$key];
-
-            if (!empty($path)) {
-                $value = $this->extractValueFromDataArray($value, $path);
-            }
-        }
-
-        return $value;
     }
 
 }

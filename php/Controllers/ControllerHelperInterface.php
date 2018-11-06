@@ -25,6 +25,11 @@ interface ControllerHelperInterface
      */
     public function findEntity(string $entityClass, string $id);
 
+    /**
+     * @return array<object>
+     */
+    public function findEntities(string $entityClass, array $criteria): array;
+
     public function persistEntity($entity): void;
 
     public function removeEntity($entity): void;
