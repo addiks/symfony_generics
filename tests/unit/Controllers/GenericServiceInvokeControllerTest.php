@@ -1,0 +1,220 @@
+<?php
+/**
+ * Copyright (C) 2017  Gerrit Addiks.
+ * This package (including this file) was released under the terms of the GPL-3.0.
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/> or send me a mail so i can send you a copy.
+ * @license GPL-3.0
+ * @author Gerrit Addiks <gerrit@addiks.de>
+ */
+
+namespace Addiks\SymfonyGenerics\Tests\Unit\Controllers;
+
+use PHPUnit\Framework\TestCase;
+use Addiks\SymfonyGenerics\Controllers\GenericServiceInvokeController;
+use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
+use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
+use Psr\Container\ContainerInterface;
+use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Request;
+use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleService;
+use ReflectionMethod;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\File\Exception\AccessDeniedException;
+use ErrorException;
+
+final class GenericServiceInvokeControllerTest extends TestCase
+{
+
+    /**
+     * @var ControllerHelperInterface
+     */
+    private $controllerHelper;
+
+    /**
+     * @var ArgumentCompilerInterface
+     */
+    private $argumentCompiler;
+
+    /**
+     * @var ContainerInterface
+     */
+    private $container;
+
+    public function setUp()
+    {
+        $this->controllerHelper = $this->createMock(ControllerHelperInterface::class);
+        $this->argumentCompiler = $this->createMock(ArgumentCompilerInterface::class);
+        $this->container = $this->createMock(ContainerInterface::class);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldPreventConstructorCalledAgain()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericServiceInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            $this->container,
+            [
+                'service' => 'some_service',
+                'method' => 'doFoo'
+            ]
+        );
+
+        $controller->__construct(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            $this->container,
+            [
+                'service' => 'some_service',
+                'method' => 'doFoo'
+            ]
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldFailIfServiceIsMissing()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericServiceInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            $this->container,
+            [
+                'method' => 'doFoo'
+            ]
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldFailIfMethodIsMissing()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericServiceInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            $this->container,
+            [
+                'service' => 'some_service',
+            ]
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldCallService()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var SampleService $service */
+        $service = $this->createMock(SampleService::class);
+
+        $service->expects($this->once())->method('doFoo')->with(
+            $this->equalTo('lorem'),
+            $this->equalTo('ipsum')
+        );
+
+        $this->container->expects($this->once())->method('get')->with(
+            $this->equalTo('some_service')
+        )->willReturn($service);
+
+        $this->argumentCompiler->expects($this->once())->method('buildCallArguments')->with(
+            $this->equalTo(new ReflectionMethod($service, 'doFoo')),
+            $this->equalTo(['lorem' => 'ipsum']),
+            $this->identicalTo($request)
+        )->willReturn(['lorem', 'ipsum']);
+
+        /** @var string $expectedResponseContent */
+        $expectedResponseContent = "Service call completed";
+
+        $controller = new GenericServiceInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            $this->container,
+            [
+                'service' => 'some_service',
+                'method' => 'doFoo',
+                'arguments' => ['lorem' => 'ipsum']
+            ]
+        );
+
+        /** @var Response $actualResponse */
+        $actualResponse = $controller->callService($request);
+
+        $this->assertEquals($expectedResponseContent, $actualResponse->getContent());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldCheckIfAccessIsGranted()
+    {
+        $this->expectException(AccessDeniedException::class);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->controllerHelper->expects($this->once())->method('denyAccessUnlessGranted')->with(
+            $this->equalTo('bar'),
+            $this->identicalTo($request)
+        )->will($this->returnCallback(
+            function () {
+                throw new AccessDeniedException("Lorem ipsum");
+            }
+        ));
+
+        $controller = new GenericServiceInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            $this->container,
+            [
+                'service' => 'some_service',
+                'method' => 'doFoo',
+                'authorization-attributes' => 'bar'
+            ]
+        );
+
+        $controller->callService($request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldThrowExceptionIfServiceNotFound()
+    {
+        $this->expectException(ErrorException::class);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->container->expects($this->once())->method('get')->with(
+            $this->equalTo('some_service')
+        )->willReturn(null);
+
+        $controller = new GenericServiceInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            $this->container,
+            [
+                'service' => 'some_service',
+                'method' => 'doFoo',
+                'arguments' => ['lorem' => 'ipsum']
+            ]
+        );
+
+        $controller->callService($request);
+    }
+
+}
