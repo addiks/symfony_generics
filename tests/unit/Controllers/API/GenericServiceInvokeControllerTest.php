@@ -8,19 +8,19 @@
  * @author Gerrit Addiks <gerrit@addiks.de>
  */
 
-namespace Addiks\SymfonyGenerics\Tests\Unit\Controllers;
+namespace Addiks\SymfonyGenerics\Tests\Unit\Controllers\API;
 
 use PHPUnit\Framework\TestCase;
-use Addiks\SymfonyGenerics\Controllers\GenericServiceInvokeController;
+use Psr\Container\ContainerInterface;
+use Addiks\SymfonyGenerics\Controllers\API\GenericServiceInvokeController;
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
-use Psr\Container\ContainerInterface;
-use InvalidArgumentException;
-use Symfony\Component\HttpFoundation\Request;
 use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleService;
-use ReflectionMethod;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\File\Exception\AccessDeniedException;
+use InvalidArgumentException;
+use ReflectionMethod;
 use ErrorException;
 
 final class GenericServiceInvokeControllerTest extends TestCase

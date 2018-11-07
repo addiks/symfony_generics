@@ -8,10 +8,10 @@
  * @author Gerrit Addiks <gerrit@addiks.de>
  */
 
-namespace Addiks\SymfonyGenerics\Tests\Unit\Controllers;
+namespace Addiks\SymfonyGenerics\Tests\Unit\Controllers\API;
 
 use PHPUnit\Framework\TestCase;
-use Addiks\SymfonyGenerics\Controllers\GenericEntityCreateController;
+use Addiks\SymfonyGenerics\Controllers\API\GenericEntityCreateController;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use Symfony\Component\HttpFoundation\Request;

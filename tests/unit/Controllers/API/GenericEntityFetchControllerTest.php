@@ -8,10 +8,10 @@
  * @author Gerrit Addiks <gerrit@addiks.de>
  */
 
-namespace Addiks\SymfonyGenerics\Tests\Unit\Controllers;
+namespace Addiks\SymfonyGenerics\Tests\Unit\Controllers\API;
 
 use PHPUnit\Framework\TestCase;
-use Addiks\SymfonyGenerics\Controllers\GenericEntityFetchController;
+use Addiks\SymfonyGenerics\Controllers\API\GenericEntityFetchController;
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntity;
 use Symfony\Component\HttpFoundation\Response;

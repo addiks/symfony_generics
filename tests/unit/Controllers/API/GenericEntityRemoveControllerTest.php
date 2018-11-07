@@ -8,15 +8,15 @@
  * @author Gerrit Addiks <gerrit@addiks.de>
  */
 
-namespace Addiks\SymfonyGenerics\Tests\Unit\Controllers;
+namespace Addiks\SymfonyGenerics\Tests\Unit\Controllers\API;
 
 use PHPUnit\Framework\TestCase;
-use Addiks\SymfonyGenerics\Controllers\GenericEntityRemoveController;
+use Addiks\SymfonyGenerics\Controllers\API\GenericEntityRemoveController;
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
-use stdClass;
 use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
 use Symfony\Component\Finder\Exception\AccessDeniedException;
+use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntity;
 
 final class GenericEntityRemoveControllerTest extends TestCase
 {
@@ -36,7 +36,7 @@ final class GenericEntityRemoveControllerTest extends TestCase
         $this->controllerHelper = $this->createMock(ControllerHelperInterface::class);
 
         $this->controller = new GenericEntityRemoveController($this->controllerHelper, [
-            'entity-class' => stdClass::class
+            'entity-class' => SampleEntity::class
         ]);
     }
 
@@ -58,7 +58,7 @@ final class GenericEntityRemoveControllerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         $this->controller->__construct($this->controllerHelper, [
-            'entity-class' => stdClass::class
+            'entity-class' => SampleEntity::class
         ]);
     }
 
@@ -77,10 +77,10 @@ final class GenericEntityRemoveControllerTest extends TestCase
      */
     public function shouldRemoveEntity()
     {
-        $entity = new stdClass();
+        $entity = new SampleEntity();
 
         $this->controllerHelper->expects($this->once())->method('findEntity')->with(
-            $this->equalTo(stdClass::class),
+            $this->equalTo(SampleEntity::class),
             $this->equalTo('some-id')
         )->willReturn($entity);
 

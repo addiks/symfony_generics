@@ -10,7 +10,7 @@
  * @author Gerrit Addiks <gerrit@addiks.de>
  */
 
-namespace Addiks\SymfonyGenerics\Controllers;
+namespace Addiks\SymfonyGenerics\Controllers\API;
 
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;

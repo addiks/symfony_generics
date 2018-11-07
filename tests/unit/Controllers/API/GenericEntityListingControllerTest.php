@@ -8,10 +8,10 @@
  * @author Gerrit Addiks <gerrit@addiks.de>
  */
 
-namespace Addiks\SymfonyGenerics\Tests\Unit\Controllers;
+namespace Addiks\SymfonyGenerics\Tests\Unit\Controllers\API;
 
 use PHPUnit\Framework\TestCase;
-use Addiks\SymfonyGenerics\Controllers\GenericEntityListingController;
+use Addiks\SymfonyGenerics\Controllers\API\GenericEntityListingController;
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use InvalidArgumentException;
 use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntity;
