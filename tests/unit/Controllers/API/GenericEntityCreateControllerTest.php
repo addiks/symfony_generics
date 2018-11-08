@@ -23,6 +23,8 @@ use Serializable;
 use stdClass;
 use InvalidArgumentException;
 use Symfony\Component\Finder\Exception\AccessDeniedException;
+use ReflectionException;
+use ErrorException;
 
 final class GenericEntityCreateControllerTest extends TestCase
 {
@@ -147,10 +149,8 @@ final class GenericEntityCreateControllerTest extends TestCase
             $this->container,
             [
                 'entity-class' => SampleEntity::class,
-                'calls' => [
-                    'construct' => [
-                        'foo' => 'bar'
-                    ]
+                'arguments' => [
+                    'foo' => 'bar'
                 ]
             ]
         );
@@ -371,6 +371,7 @@ final class GenericEntityCreateControllerTest extends TestCase
         $request = $this->createMock(Request::class);
 
         $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Did not find service 'some_factory_service'!");
 
         $controller->createEntity($request);
     }
@@ -393,7 +394,7 @@ final class GenericEntityCreateControllerTest extends TestCase
         /** @var Request $request */
         $request = $this->createMock(Request::class);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(ErrorException::class);
 
         $controller->createEntity($request);
     }
@@ -423,7 +424,7 @@ final class GenericEntityCreateControllerTest extends TestCase
         /** @var Request $request */
         $request = $this->createMock(Request::class);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(ReflectionException::class);
 
         $controller->createEntity($request);
     }
@@ -454,7 +455,7 @@ final class GenericEntityCreateControllerTest extends TestCase
         /** @var Request $request */
         $request = $this->createMock(Request::class);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(ReflectionException::class);
 
         $controller->createEntity($request);
     }
@@ -466,9 +467,11 @@ final class GenericEntityCreateControllerTest extends TestCase
     {
         $this->expectException(AccessDeniedException::class);
 
-        $this->controllerHelper->expects($this->once())->method('denyAccessUnlessGranted')->will($this->returnCallback(
-            function () {
-                throw new AccessDeniedException('Lorem ipsum!');
+        $this->controllerHelper->expects($this->exactly(2))->method('denyAccessUnlessGranted')->will($this->returnCallback(
+            function ($attribute, $object) {
+                if ($object instanceof SampleEntity) {
+                    throw new AccessDeniedException('Lorem ipsum!');
+                }
             }
         ));
 

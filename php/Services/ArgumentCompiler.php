@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Webmozart\Assert\Assert;
 use Addiks\SymfonyGenerics\Services\EntityRepositoryInterface;
 use ReflectionClass;
+use ReflectionFunctionAbstract;
 
 final class ArgumentCompiler implements ArgumentCompilerInterface
 {
@@ -75,14 +76,14 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
     }
 
     public function buildCallArguments(
-        ReflectionMethod $methodReflection,
+        ReflectionFunctionAbstract $routineReflection,
         array $argumentsConfiguration,
         Request $request
     ): array {
         /** @var array<int, mixed> $callArguments */
         $callArguments = array();
 
-        foreach ($methodReflection->getParameters() as $index => $parameterReflection) {
+        foreach ($routineReflection->getParameters() as $index => $parameterReflection) {
             /** @var ReflectionParameter $parameterReflection */
 
             /** @var string $parameterName */

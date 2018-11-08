@@ -14,6 +14,7 @@ namespace Addiks\SymfonyGenerics\Services;
 
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\Request;
+use ReflectionFunctionAbstract;
 
 interface ArgumentCompilerInterface
 {
@@ -24,7 +25,7 @@ interface ArgumentCompilerInterface
     ): array;
 
     public function buildCallArguments(
-        ReflectionMethod $methodReflection,
+        ReflectionFunctionAbstract $methodReflection,
         array $argumentsConfiguration,
         Request $request
     ): array;

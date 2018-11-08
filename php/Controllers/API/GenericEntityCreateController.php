@@ -27,6 +27,9 @@ use ReflectionMethod;
 use ReflectionParameter;
 use Psr\Container\ContainerInterface;
 use ErrorException;
+use ReflectionFunction;
+use ReflectionFunctionAbstract;
+use ReflectionObject;
 
 final class GenericEntityCreateController
 {
@@ -57,9 +60,9 @@ final class GenericEntityCreateController
     private $factory = null;
 
     /**
-     * @var array<string, mixed>|null
+     * @var array<string, mixed>
      */
-    private $constructArguments;
+    private $constructArguments = array();
 
     /**
      * @var ArgumentCompilerInterface
@@ -91,6 +94,7 @@ final class GenericEntityCreateController
             'success-response' => "object created",
             'factory' => null,
             'authorization-attribute' => null,
+            'arguments' => []
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
@@ -100,43 +104,59 @@ final class GenericEntityCreateController
         $this->successResponse = $options['success-response'];
         $this->factory = $options['factory'];
         $this->authorizationAttribute = $options['authorization-attribute'];
+        $this->constructArguments = $options['arguments'];
 
         foreach ($options['calls'] as $methodName => $arguments) {
             /** @var array $arguments */
 
             Assert::isArray($arguments);
+            Assert::true(method_exists($this->entityClass, $methodName));
 
-            if ($methodName === 'construct') {
-                $this->constructArguments = $arguments;
-
-            } else {
-                Assert::true(method_exists($this->entityClass, $methodName));
-
-                $this->calls[$methodName] = $arguments;
-            }
+            $this->calls[$methodName] = $arguments;
         }
     }
 
     public function createEntity(Request $request): Response
     {
-        $classReflection = new ReflectionClass($this->entityClass);
+        /** @var object|null $factoryObject */
+        $factoryObject = null;
 
-        /** @var ReflectionMethod $constructorReflection */
-        $constructorReflection = $classReflection->getConstructor();
-
-        /** @var array<int, mixed> $constructArguments */
-        $constructArguments = array();
-
-        if (!empty($this->constructArguments)) {
-            $constructArguments = $this->argumentBuilder->buildCallArguments(
-                $constructorReflection,
-                $this->constructArguments,
-                $request
-            );
+        if (!empty($this->authorizationAttribute)) {
+            $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $request);
         }
 
-        /** @var object|null $entity */
-        $entity = null;
+        /** @var ReflectionFunctionAbstract $constructorReflection */
+        $constructorReflection = $this->findConstructorReflection($factoryObject);
+
+        /** @var array<int, mixed> $constructArguments */
+        $constructArguments = $this->argumentBuilder->buildCallArguments(
+            $constructorReflection,
+            $this->constructArguments,
+            $request
+        );
+
+        /** @var object $entity */
+        $entity = $this->createEntityByConstructor($constructorReflection, $constructArguments, $factoryObject);
+
+        $this->performPostCreationCalls($entity, $request);
+
+        if (!empty($this->authorizationAttribute)) {
+            $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $entity);
+        }
+
+        $this->controllerHelper->persistEntity($entity);
+        $this->controllerHelper->flushORM();
+
+        return new Response($this->successResponse, 200);
+    }
+
+    /**
+     * @param object $factoryObject
+     */
+    private function findConstructorReflection(&$factoryObject = null): ReflectionFunctionAbstract
+    {
+        /** @var ReflectionFunctionAbstract|null $constructorReflection */
+        $constructorReflection = null;
 
         if (!empty($this->factory)) {
             if (is_int(strpos($this->factory, '::'))) {
@@ -144,46 +164,89 @@ final class GenericEntityCreateController
 
                 if (!empty($factoryClass)) {
                     if ($factoryClass[0] == '@') {
-                        /** @var string $factoryServiceId */
-                        $factoryServiceId = substr($factoryClass, 1);
+                        # Create by factory-service-object
 
-                        /** @var object|null $factoryObject */
-                        $factoryObject = $this->container->get($factoryServiceId);
+                        $factoryObject = $this->container->get(substr($factoryClass, 1));
 
-                        Assert::methodExists($factoryObject, $factoryMethod, sprintf(
-                            "Did not find service with id '%s' that has a method '%s' to use as factory for '%s'!",
-                            $factoryServiceId,
-                            $factoryMethod,
-                            $this->entityClass
+                        Assert::object($factoryObject, sprintf(
+                            "Did not find service '%s'!",
+                            substr($factoryClass, 1)
                         ));
 
-                        # Create by factory-service-object
-                        $entity = call_user_func_array([$factoryObject, $factoryMethod], $constructArguments);
+                        $constructorReflection = (new ReflectionObject($factoryObject))->getMethod($factoryMethod);
 
                     } else {
                         # Create by static factory-method of other class
-                        $entity = call_user_func_array($this->factory, $constructArguments);
+
+                        $constructorReflection = (new ReflectionClass($factoryClass))->getMethod($factoryMethod);
                     }
+
+                } else {
+                    throw new ErrorException(sprintf(
+                        "Invalid constructor definition: '%s'!",
+                        $this->factory
+                    ));
                 }
 
             } elseif (method_exists($this->entityClass, $this->factory)) {
                 # Create by static factory method on entity class
-                $entity = call_user_func_array(
-                    sprintf("%s::%s", $this->entityClass, $this->factory),
-                    $constructArguments
-                );
+
+                $constructorReflection = (new ReflectionClass($this->entityClass))->getMethod($this->factory);
 
             } elseif (function_exists($this->factory)) {
                 # Create by factory function
-                $entity = call_user_func_array($this->factory, $constructArguments);
+
+                $constructorReflection = new ReflectionFunction($this->factory);
             }
 
         } else {
             # Create by calling the constructor directly
-            $entity = $classReflection->newInstanceArgs($constructArguments);
+
+            $constructorReflection = (new ReflectionClass($this->entityClass))->getConstructor();
+        }
+
+        return $constructorReflection;
+    }
+
+    /**
+     * @param object|null $factoryObject
+     *
+     * @return object
+     */
+    private function createEntityByConstructor(
+        ReflectionFunctionAbstract $constructorReflection,
+        array $constructArguments,
+        $factoryObject
+    ) {
+        /** @var object|null $entity */
+        $entity = null;
+
+        if ($constructorReflection instanceof ReflectionMethod) {
+            if ($constructorReflection->isConstructor()) {
+                $entity = $constructorReflection->getDeclaringClass()->newInstanceArgs($constructArguments);
+
+            } elseif ($constructorReflection->isStatic()) {
+                $entity = $constructorReflection->invokeArgs(null, $constructArguments);
+
+            } else {
+                $entity = $constructorReflection->invokeArgs($factoryObject, $constructArguments);
+            }
+
+        } elseif ($constructorReflection instanceof ReflectionFunction) {
+            $entity = $constructorReflection->invokeArgs($constructArguments);
         }
 
         Assert::isInstanceOf($entity, $this->entityClass);
+
+        return $entity;
+    }
+
+    /**
+     * @param object $entity
+     */
+    private function performPostCreationCalls($entity, Request $request): void
+    {
+        $classReflection = new ReflectionClass($this->entityClass);
 
         foreach ($this->calls as $methodName => $callArgumentConfiguration) {
             /** @var array $callArgumentConfiguration */
@@ -199,15 +262,6 @@ final class GenericEntityCreateController
 
             $methodReflection->invoke($entity, $callArguments);
         }
-
-        if (!empty($this->authorizationAttribute)) {
-            $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $entity);
-        }
-
-        $this->controllerHelper->persistEntity($entity);
-        $this->controllerHelper->flushORM();
-
-        return new Response($this->successResponse, 200);
     }
 
 }
