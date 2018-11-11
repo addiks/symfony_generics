@@ -3,7 +3,8 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/addiks/symfony_generics/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/addiks/symfony_generics/?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/addiks/symfony_generics/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/addiks/symfony_generics/?branch=master)
 
-# symfony_generics
+# Symfony Generics
+===================================
 
 THIS IS STILL UNFINISHED AND NOT YET QUITE READY FOR USE!
 
@@ -25,13 +26,13 @@ In short, these are the pro's of using this library:
 
 These components currently exist in the library:
 
-| Type       | Name                               | Description                        |
-| ---------- | ---------------------------------- | ---------------------------------- |
-| Controller | API/GenericEntityCreateController  | API to create an entity.           |
-| Controller | API/GenericEntityFetchController   | API to download an entity.         |
-| Controller | API/GenericEntityInvokeController  | API to call a method on an entity. |
-| Controller | API/GenericEntityListingController | API to get a list of entities.     |
-| Controller | API/GenericEntityRemoveController  | API to remove an entity.           |
-| Controller | API/GenericServiceInvokeController | API to call a method on a service. |
-| Controller | GenericTemplateRenderController    | Renders a template with arguments. |
-| Controller | GenericExceptionResponseController | Handle different exceptions.       |
+| Type       | Name                                                                                  | Description                        |
+| ---------- | ------------------------------------------------------------------------------------- | ---------------------------------- |
+| Controller | [API/GenericEntityCreateController](documentation/controllers/api/entity-create.md)   | API to create an entity.           |
+| Controller | [API/GenericEntityFetchController](documentation/controllers/api/entity-fetch.md)     | API to download an entity.         |
+| Controller | [API/GenericEntityInvokeController](documentation/controllers/api/entity-invoke.md)   | API to call a method on an entity. |
+| Controller | [API/GenericEntityListingController](documentation/controllers/api/entity-listing.md) | API to get a list of entities.     |
+| Controller | [API/GenericEntityRemoveController](documentation/controllers/api/entity-remove.md)   | API to remove an entity.           |
+| Controller | [API/GenericServiceInvokeController](documentation/controllers/api/service-invoke.md) | API to call a method on a service. |
+| Controller | [GenericTemplateRenderController](documentation/controllers/template-render.md)       | Renders a template with arguments. |
+| Controller | [GenericExceptionResponseController](documentation/controllers/exception-response.md) | Handle different exceptions.       |
