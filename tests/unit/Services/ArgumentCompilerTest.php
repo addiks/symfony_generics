@@ -21,6 +21,7 @@ use ReflectionType;
 use stdClass;
 use InvalidArgumentException;
 use Serializable;
+use Addiks\SymfonyGenerics\Tests\Unit\Services\SampleService;
 
 final class ArgumentCompilerTest extends TestCase
 {
@@ -106,9 +107,9 @@ final class ArgumentCompilerTest extends TestCase
 
         /** @var ReflectionType $parameterType */
         $parameterType = $this->createMock(ReflectionType::class);
-        $parameterType->method('__toString')->willReturn(stdClass::class);
+        $parameterType->method('__toString')->willReturn(SampleService::class);
 
-        /** @var ReflectionParameter $parameterBazReflection */
+        /** @var ReflectionParameter $parameterFazReflection */
         $parameterFazReflection = $this->createMock(ReflectionParameter::class);
         $parameterFazReflection->method('getName')->willReturn("faz");
         $parameterFazReflection->method('hasType')->willReturn(true);
@@ -132,18 +133,23 @@ final class ArgumentCompilerTest extends TestCase
         $argumentsConfiguration = array(
             "foo" => '$lorem',
             "baz" => '@some.service',
-            "faz" => '$lorem'
+            "faz" => [
+                'id' => 'some.service',
+                'method' => 'someCall',
+                'arguments' => [
+                    'foo' => '$lorem'
+                ]
+            ]
         );
 
-        /** @var object $someService */
-        $someService = new stdClass();
+        $someService = new SampleService();
 
         $this->container->method('get')->will($this->returnValueMap([
             ['some.service', $someService],
         ]));
 
         $this->entityRepository->expects($this->once())->method('findEntity')->with(
-            $this->equalTo(stdClass::class),
+            $this->equalTo(SampleService::class),
             $this->equalTo('ipsum')
         )->willReturn($someService);
 
@@ -163,6 +169,7 @@ final class ArgumentCompilerTest extends TestCase
         );
 
         $this->assertEquals($expectedCallArguments, $actualCallArguments);
+        $this->assertEquals('ipsum', $someService->foo);
     }
 
     /**
@@ -220,6 +227,86 @@ final class ArgumentCompilerTest extends TestCase
             'foo' => '$reqFoo',
             'bar' => '@some.service::doesNotExist',
         ], $request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldThrowExceptionWhenFetchingUnknownService()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        /** @var ReflectionMethod $methodReflection */
+        $methodReflection = $this->createMock(ReflectionMethod::class);
+
+        /** @var ReflectionParameter $parameterFazReflection */
+        $parameterFazReflection = $this->createMock(ReflectionParameter::class);
+        $parameterFazReflection->method('getName')->willReturn("faz");
+
+        $methodReflection->method("getParameters")->willReturn([
+            $parameterFazReflection
+        ]);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var array<string, mixed> $argumentsConfiguration */
+        $argumentsConfiguration = array(
+            "faz" => [
+                'id' => 'some.non-existing.service',
+            ]
+        );
+
+        /** @var array<int, mixed> $actualCallArguments */
+        $actualCallArguments = $this->argumentCompiler->buildCallArguments(
+            $methodReflection,
+            $argumentsConfiguration,
+            $request
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldThrowExceptionWhenCallArgumentIsMissing()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Missing argument 'foo' for this call!");
+
+        /** @var ReflectionMethod $methodReflection */
+        $methodReflection = $this->createMock(ReflectionMethod::class);
+
+        /** @var ReflectionParameter $parameterFazReflection */
+        $parameterFazReflection = $this->createMock(ReflectionParameter::class);
+        $parameterFazReflection->method('getName')->willReturn("faz");
+
+        $methodReflection->method("getParameters")->willReturn([
+            $parameterFazReflection
+        ]);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $someService = new SampleService();
+
+        $this->container->method('get')->will($this->returnValueMap([
+            ['some.service', $someService],
+        ]));
+
+        /** @var array<string, mixed> $argumentsConfiguration */
+        $argumentsConfiguration = array(
+            "faz" => [
+                'id' => 'some.service',
+                'method' => 'someCall',
+            ]
+        );
+
+        /** @var array<int, mixed> $actualCallArguments */
+        $actualCallArguments = $this->argumentCompiler->buildCallArguments(
+            $methodReflection,
+            $argumentsConfiguration,
+            $request
+        );
     }
 
 }

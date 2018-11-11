@@ -23,6 +23,8 @@ use Webmozart\Assert\Assert;
 use Addiks\SymfonyGenerics\Services\EntityRepositoryInterface;
 use ReflectionClass;
 use ReflectionFunctionAbstract;
+use InvalidArgumentException;
+use ReflectionException;
 
 final class ArgumentCompiler implements ArgumentCompilerInterface
 {
@@ -121,6 +123,17 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
 
             } elseif (!is_null($requestValue)) {
                 $callArguments[$index] = $requestValue;
+
+            } else {
+                try {
+                    $callArguments[$index] = $parameterReflection->getDefaultValue();
+
+                } catch (ReflectionException $exception) {
+                    throw new InvalidArgumentException(sprintf(
+                        "Missing argument '%s' for this call!",
+                        $parameterName
+                    ));
+                }
             }
         }
 
@@ -143,6 +156,27 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         if (is_array($argumentConfiguration)) {
             if (isset($argumentConfiguration['id'])) {
                 $argumentValue = $this->container->get($argumentConfiguration['id']);
+                Assert::object($argumentValue, sprintf(
+                    "Did not find service '%s'!",
+                    $argumentConfiguration['id']
+                ));
+            }
+
+            if (isset($argumentConfiguration['method'])) {
+                $methodReflection = new ReflectionMethod($argumentValue, $argumentConfiguration['method']);
+
+                if (!isset($argumentConfiguration['arguments'])) {
+                    $argumentConfiguration['arguments'] = [];
+                }
+
+                /** @var array $callArguments */
+                $callArguments = $this->buildCallArguments(
+                    $methodReflection,
+                    $argumentConfiguration['arguments'],
+                    $request
+                );
+
+                $argumentValue = $methodReflection->invokeArgs($argumentValue, $callArguments);
             }
 
         } else {
@@ -181,6 +215,9 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
                         # Create by static factory-method of other class
                         $argumentValue = call_user_func_array($argumentConfiguration, []);
                     }
+
+                } else {
+                    # TODO: What to do here? What could "::Something" be? A template?
                 }
 
             } elseif ($argumentConfiguration[0] == '$') {
