@@ -7,6 +7,7 @@ Class: Addiks\SymfonyGenerics\Controllers\GenericTemplateRenderController
 This generic controller allows to render a template and provide pre-configured arguments to that template.
 
 Supported parameters:
+
 | Key                     | Optional | Description                                         |
 | ----------------------- | -------- | --------------------------------------------------- |
 | template                | REQUIRED | Path to the template file.                          |
@@ -18,7 +19,7 @@ To understand the authorization-attribute, see the [symfony documentation on vot
 For a more detailed description of the argument configuration, see the documentation of the [argument-compiler][2].
 
 [1]: https://symfony.com/doc/current/security/voters.html
-[2]: documentation/service/argument-compiler.md
+[2]: /documentation/service/argument-compiler.md
 
 Full symfony service XML example:
 
