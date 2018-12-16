@@ -30,8 +30,14 @@ interface ControllerHelperInterface
      */
     public function findEntities(string $entityClass, array $criteria): array;
 
+    /**
+     * @param object $entity
+     */
     public function persistEntity($entity): void;
 
+    /**
+     * @param object $entity
+     */
     public function removeEntity($entity): void;
 
     public function flushORM(): void;
