@@ -309,6 +309,20 @@ final class GenericExceptionResponseControllerTest extends TestCase
     /**
      * @test
      */
+    public function shouldRejectNonArrayGivenAsInnerControllerArguments()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
+            'inner-controller' => $this->innerController,
+            'inner-controller-method' => "serialize",
+            'arguments' => "Lorem ipsum",
+        ]);
+    }
+
+    /**
+     * @test
+     */
     public function shouldRedirectFromException()
     {
         /** @var mixed $controller */

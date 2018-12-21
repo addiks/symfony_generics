@@ -22,6 +22,7 @@ use stdClass;
 use InvalidArgumentException;
 use Serializable;
 use Addiks\SymfonyGenerics\Tests\Unit\Services\SampleService;
+use Doctrine\ORM\EntityManagerInterface;
 
 final class ArgumentCompilerTest extends TestCase
 {
@@ -37,16 +38,16 @@ final class ArgumentCompilerTest extends TestCase
     private $container;
 
     /**
-     * @var EntityRepositoryInterface
+     * @var EntityManagerInterface
      */
-    private $entityRepository;
+    private $entityManager;
 
     public function setUp()
     {
         $this->container = $this->createMock(ContainerInterface::class);
-        $this->entityRepository = $this->createMock(EntityRepositoryInterface::class);
+        $this->entityManager = $this->createMock(EntityManagerInterface::class);
 
-        $this->argumentCompiler = new ArgumentCompiler($this->container, $this->entityRepository);
+        $this->argumentCompiler = new ArgumentCompiler($this->container, $this->entityManager);
     }
 
     /**
@@ -148,7 +149,7 @@ final class ArgumentCompilerTest extends TestCase
             ['some.service', $someService],
         ]));
 
-        $this->entityRepository->expects($this->once())->method('findEntity')->with(
+        $this->entityManager->expects($this->once())->method('find')->with(
             $this->equalTo(SampleService::class),
             $this->equalTo('ipsum')
         )->willReturn($someService);

@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+
+        <service
+            id="symfony_generics.controller_helper"
+            class="Addiks\SymfonyGenerics\Controllers\DefaultControllerHelper"
+        >
+            <argument type="service" id="doctrine.orm.entity_manager" />
+            <argument type="service" id="twig" />
+            <argument type="service" id="security.authorization_checker" />
+            <argument type="service" id="router" />
+            <argument type="service" id="session" />
+            <argument type="service" id="logger" />
+        </service>
+
+        <service
+            id="symfony_generics.argument_compiler"
+            class="Addiks\SymfonyGenerics\Services\ArgumentCompiler"
+        >
+            <argument type="service" id="service_container" />
+            <argument type="service" id="doctrine.orm.entity_manager" />
+        </service>
+
+    </services>
+</container>

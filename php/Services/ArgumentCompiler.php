@@ -20,11 +20,12 @@ use ReflectionType;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\Request;
 use Webmozart\Assert\Assert;
-use Addiks\SymfonyGenerics\Services\EntityRepositoryInterface;
 use ReflectionClass;
 use ReflectionFunctionAbstract;
 use InvalidArgumentException;
 use ReflectionException;
+use Doctrine\ORM\EntityManagerInterface;
+use ValueObjects\ValueObjectInterface;
 
 final class ArgumentCompiler implements ArgumentCompilerInterface
 {
@@ -35,16 +36,16 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
     private $container;
 
     /**
-     * @var EntityRepositoryInterface
+     * @var EntityManagerInterface
      */
-    private $entityRepository;
+    private $entityManager;
 
     public function __construct(
         ContainerInterface $container,
-        EntityRepositoryInterface $entityRepository
+        EntityManagerInterface $entityManager
     ) {
         $this->container = $container;
-        $this->entityRepository = $entityRepository;
+        $this->entityManager = $entityManager;
     }
 
     public function buildArguments(
@@ -94,23 +95,23 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             /** @var mixed $requestValue */
             $requestValue = $request->get($parameterName);
 
+            /** @var string|null $parameterTypeName */
+            $parameterTypeName = null;
+
+            if ($parameterReflection->hasType()) {
+                /** @var ReflectionType|null $parameterType */
+                $parameterType = $parameterReflection->getType();
+
+                if ($parameterType instanceof ReflectionType) {
+                    $parameterTypeName = $parameterType->__toString();
+                }
+            }
+
             if (isset($argumentsConfiguration[$parameterName])) {
                 /** @var array|string $argumentConfiguration */
                 $argumentConfiguration = $argumentsConfiguration[$parameterName];
 
                 Assert::true(is_string($argumentConfiguration) || is_array($argumentConfiguration));
-
-                /** @var string|null $parameterTypeName */
-                $parameterTypeName = null;
-
-                if ($parameterReflection->hasType()) {
-                    /** @var ReflectionType|null $parameterType */
-                    $parameterType = $parameterReflection->getType();
-
-                    if ($parameterType instanceof ReflectionType) {
-                        $parameterTypeName = $parameterType->__toString();
-                    }
-                }
 
                 /** @var mixed $argumentValue */
                 $argumentValue = $this->resolveArgumentConfiguration(
@@ -122,7 +123,19 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
                 $callArguments[$index] = $argumentValue;
 
             } elseif (!is_null($requestValue)) {
-                $callArguments[$index] = $requestValue;
+                if (!is_null($parameterTypeName)) {
+                    if (is_subclass_of($parameterTypeName, ValueObjectInterface::class)) {
+                        $argumentValue = $parameterTypeName::fromNative($requestValue);
+
+                        $callArguments[$index] = $argumentValue;
+                    }
+
+                } else {
+                    $callArguments[$index] = $requestValue;
+                }
+
+            } elseif ($parameterTypeName === Request::class) {
+                $callArguments[$index] = $request;
 
             } else {
                 try {
@@ -230,7 +243,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
 
         if (!empty($parameterTypeName)) {
             if (class_exists($parameterTypeName)) {
-                $argumentValue = $this->entityRepository->findEntity($parameterTypeName, $argumentValue);
+                $argumentValue = $this->entityManager->find($parameterTypeName, $argumentValue);
                 # TODO: error handling "not an entty", "entity not found", ...
             }
         }

@@ -20,6 +20,7 @@ use Symfony\Component\HttpFoundation\Response;
 use ErrorException;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use ReflectionMethod;
 
 final class GenericExceptionResponseController
 {
@@ -43,6 +44,11 @@ final class GenericExceptionResponseController
      * @var string
      */
     private $innerControllerMethod;
+
+    /**
+     * @var array
+     */
+    private $innerControllerArgumentsConfiguration;
 
     /**
      * @var string|null
@@ -77,6 +83,7 @@ final class GenericExceptionResponseController
 
         /** @var array<string, mixed> $defaults */
         $defaults = array(
+            'arguments' => [],
             'exception-responses' => [],
             'success-response' => null,
             'success-response-code' => $defaultResponseCode,
@@ -88,11 +95,13 @@ final class GenericExceptionResponseController
 
         Assert::null($this->controllerHelper);
         Assert::true(is_object($options['inner-controller']));
+        Assert::isArray($options['arguments']);
 
         $this->controllerHelper = $controllerHelper;
         $this->argumentBuilder = $argumentBuilder;
         $this->innerController = $options['inner-controller'];
         $this->innerControllerMethod = $options['inner-controller-method'];
+        $this->innerControllerArgumentsConfiguration = $options['arguments'];
         $this->successResponse = $options['success-response'];
         $this->successResponseCode = $options['success-response-code'];
         $this->successFlashMessage = $options['success-flash-message'];
@@ -127,10 +136,16 @@ final class GenericExceptionResponseController
         $innerResponse = null;
 
         try {
-            /** @var array<int, mixed> $arguments */
-            $arguments = array();# TODO
+            $methodReflection = new ReflectionMethod($this->innerController, $this->innerControllerMethod);
 
-            $innerResponse = call_user_func([$this->innerController, $this->innerControllerMethod], $arguments);
+            /** @var array<int, mixed> $arguments */
+            $arguments = $this->argumentBuilder->buildCallArguments(
+                $methodReflection,
+                $this->innerControllerArgumentsConfiguration,
+                $request
+            );
+
+            $innerResponse = call_user_func_array([$this->innerController, $this->innerControllerMethod], $arguments);
 
             Assert::isInstanceOf($innerResponse, Response::class, "Controller did not return an Response object!");
 
