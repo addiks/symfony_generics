@@ -21,8 +21,7 @@
         "doctrine/orm": "^2.5.0|^2.6.0",
         "twig/twig": "^2.5.0",
         "symfony/security": "^2.8.0|^3.4.0|^4.1.0|^4.2.0",
-        "symfony/framework-bundle": "^2.8.0|^3.4.0|^4.1.0|^4.2.0",
-        "ytake/valueobjects": "^2.0"
+        "symfony/framework-bundle": "^2.8.0|^3.4.0|^4.1.0|^4.2.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^7.4",
