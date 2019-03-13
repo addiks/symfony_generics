@@ -30,6 +30,7 @@ use ErrorException;
 use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionObject;
+use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 
 final class GenericEntityCreateController
 {
@@ -146,6 +147,14 @@ final class GenericEntityCreateController
 
         $this->controllerHelper->persistEntity($entity);
         $this->controllerHelper->flushORM();
+
+        $this->controllerHelper->dispatchEvent("symfony_generics.entity_interaction", new EntityInteractionEvent(
+            $this->entityClass,
+            null, # TODO: get id via reflection
+            $entity,
+            "__construct",
+            $constructArguments
+        ));
 
         return new Response($this->successResponse, 200);
     }

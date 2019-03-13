@@ -24,6 +24,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\EventDispatcher\Event;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * The default implementation of the controller-helper.
@@ -61,13 +63,19 @@ final class DefaultControllerHelper implements ControllerHelperInterface
      */
     private $logger;
 
+    /**
+     * @var EventDispatcherInterface
+     */
+    private $eventDispatcher;
+
     public function __construct(
         EntityManagerInterface $entityManager,
         Twig_Environment $twig,
         AuthorizationCheckerInterface $authorization,
         UrlGeneratorInterface $urlGenerator,
         Session $session,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        EventDispatcherInterface $eventDispatcher
     ) {
         $this->entityManager = $entityManager;
         $this->twig = $twig;
@@ -75,6 +83,7 @@ final class DefaultControllerHelper implements ControllerHelperInterface
         $this->urlGenerator = $urlGenerator;
         $this->session = $session;
         $this->logger = $logger;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     public function renderTemplate(string $templatePath, array $arguments = array()): Response
@@ -137,6 +146,11 @@ final class DefaultControllerHelper implements ControllerHelperInterface
 
             throw $exception;
         }
+    }
+
+    public function dispatchEvent(string $eventName, Event $event = null): Event
+    {
+        return $this->eventDispatcher->dispatch($eventName, $event);
     }
 
 }

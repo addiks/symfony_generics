@@ -22,6 +22,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use stdClass;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 final class DefaultControllerHelperTest extends TestCase
 {
@@ -61,6 +62,11 @@ final class DefaultControllerHelperTest extends TestCase
      */
     private $logger;
 
+    /**
+     * @var EventDispatcherInterface
+     */
+    private $eventDispatcher;
+
     public function setUp()
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
@@ -69,6 +75,7 @@ final class DefaultControllerHelperTest extends TestCase
         $this->urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $this->session = $this->createMock(Session::class);
         $this->logger = $this->createMock(LoggerInterface::class);
+        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
 
         $this->controllerHelper = new DefaultControllerHelper(
             $this->entityManager,
@@ -76,7 +83,8 @@ final class DefaultControllerHelperTest extends TestCase
             $this->authorization,
             $this->urlGenerator,
             $this->session,
-            $this->logger
+            $this->logger,
+            $this->eventDispatcher
         );
     }
 

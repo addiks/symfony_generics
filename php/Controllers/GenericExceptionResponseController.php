@@ -136,6 +136,9 @@ final class GenericExceptionResponseController
         $innerResponse = null;
 
         try {
+            /** @var array<int, mixed> $arguments */
+            $arguments = array();# TODO
+
             $methodReflection = new ReflectionMethod($this->innerController, $this->innerControllerMethod);
 
             /** @var array<int, mixed> $arguments */

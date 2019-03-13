@@ -16,6 +16,7 @@ use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use Webmozart\Assert\Assert;
 use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
+use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 
 final class GenericEntityRemoveController
 {
@@ -51,21 +52,28 @@ final class GenericEntityRemoveController
         $this->authorizationAttribute = $options['authorization-attribute'];
     }
 
-    public function removeEntity(string $id): Response
+    public function removeEntity(string $entityId): Response
     {
         /** @var object|null $entity */
-        $entity = $this->controllerHelper->findEntity($this->entityClass, $id);
+        $entity = $this->controllerHelper->findEntity($this->entityClass, $entityId);
 
         if (is_null($entity)) {
             throw new InvalidArgumentException(sprintf(
                 "Entity with id %s not found!",
-                $id
+                $entityId
             ));
         }
 
         if (!empty($this->authorizationAttribute)) {
             $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $entity);
         }
+
+        $this->controllerHelper->dispatchEvent("symfony_generics.entity_interaction", new EntityInteractionEvent(
+            $this->entityClass,
+            $entityId,
+            $entity,
+            "__destruct"
+        ));
 
         $this->controllerHelper->removeEntity($entity);
 

@@ -20,6 +20,7 @@ use ReflectionObject;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 
 final class GenericEntityInvokeController
 {
@@ -108,7 +109,17 @@ final class GenericEntityInvokeController
             $request
         );
 
+        $this->controllerHelper->dispatchEvent("symfony_generics.entity_interaction", new EntityInteractionEvent(
+            $this->entityClass,
+            $entityId,
+            $entity,
+            $this->methodName,
+            $callArguments
+        ));
+
         $reflectionMethod->invokeArgs($entity, $callArguments);
+
+        $this->controllerHelper->flushORM();
 
         return new Response("Entity method invoked!");
     }

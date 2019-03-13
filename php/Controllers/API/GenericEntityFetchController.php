@@ -23,6 +23,7 @@ use DOMDocument;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use ErrorException;
 use Addiks\SymfonyGenerics\Controllers\ApplyDataTemplateTrait;
+use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 
 final class GenericEntityFetchController
 {
@@ -106,6 +107,13 @@ final class GenericEntityFetchController
         if (!empty($this->authorizationAttribute)) {
             $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $entity);
         }
+
+        $this->controllerHelper->dispatchEvent("symfony_generics.entity_interaction", new EntityInteractionEvent(
+            $this->entityClass,
+            $entityId,
+            $entity,
+            "*FETCH*"
+        ));
 
         /** @var array $normalizedEntity */
         $normalizedEntity = array();

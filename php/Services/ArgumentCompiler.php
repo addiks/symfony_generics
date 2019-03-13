@@ -124,6 +124,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
 
             } elseif (!is_null($requestValue)) {
                 if (!is_null($parameterTypeName)) {
+                    /** @psalm-suppress UndefinedClass ValueObjects\ValueObjectInterface does not exist */
                     if (is_subclass_of($parameterTypeName, ValueObjectInterface::class)) {
                         $argumentValue = $parameterTypeName::fromNative($requestValue);
 
@@ -167,7 +168,17 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         $argumentValue = null;
 
         if (is_array($argumentConfiguration)) {
-            if (isset($argumentConfiguration['id'])) {
+            if (!empty($parameterTypeName) && isset($argumentConfiguration['entity-id'])) {
+                /** @var string $entityId */
+                $entityId = $argumentConfiguration['entity-id'];
+                $entityId = $this->resolveStringArgumentConfiguration($entityId, $request);
+
+                $argumentValue = $this->entityManager->find(
+                    $parameterTypeName,
+                    $entityId
+                );
+
+            } elseif (isset($argumentConfiguration['id'])) {
                 $argumentValue = $this->container->get($argumentConfiguration['id']);
                 Assert::object($argumentValue, sprintf(
                     "Did not find service '%s'!",
@@ -193,52 +204,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             }
 
         } else {
-            if (is_int(strpos($argumentConfiguration, '::'))) {
-                [$factoryClass, $factoryMethod] = explode('::', $argumentConfiguration);
-
-                if (!empty($factoryClass)) {
-                    if ($factoryClass[0] == '@') {
-                        /** @var string $factoryServiceId */
-                        $factoryServiceId = substr($factoryClass, 1);
-
-                        /** @var object|null $factoryObject */
-                        $factoryObject = $this->container->get($factoryServiceId);
-
-                        Assert::methodExists($factoryObject, $factoryMethod, sprintf(
-                            "Did not find service with id '%s' that has a method '%s'!",
-                            $factoryServiceId,
-                            $factoryMethod
-                        ));
-
-                        $factoryReflection = new ReflectionClass($factoryObject);
-
-                        /** @var ReflectionMethod $methodReflection */
-                        $methodReflection = $factoryReflection->getMethod($factoryMethod);
-
-                        $callArguments = $this->buildCallArguments(
-                            $methodReflection,
-                            [], # TODO
-                            $request
-                        );
-
-                        # Create by factory-service-object
-                        $argumentValue = call_user_func_array([$factoryObject, $factoryMethod], $callArguments);
-
-                    } else {
-                        # Create by static factory-method of other class
-                        $argumentValue = call_user_func_array($argumentConfiguration, []);
-                    }
-
-                } else {
-                    # TODO: What to do here? What could "::Something" be? A template?
-                }
-
-            } elseif ($argumentConfiguration[0] == '$') {
-                $argumentValue = $request->get(substr($argumentConfiguration, 1));
-
-            } elseif ($argumentConfiguration[0] == '@') {
-                $argumentValue = $this->container->get(substr($argumentConfiguration, 1));
-            }
+            $argumentValue = $this->resolveStringArgumentConfiguration($argumentConfiguration, $request);
         }
 
         if (!empty($parameterTypeName)) {
@@ -246,6 +212,66 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
                 $argumentValue = $this->entityManager->find($parameterTypeName, $argumentValue);
                 # TODO: error handling "not an entty", "entity not found", ...
             }
+        }
+
+        return $argumentValue;
+    }
+
+    /**
+     * @return mixed
+     */
+    private function resolveStringArgumentConfiguration(
+        string $argumentConfiguration,
+        Request $request
+    ) {
+        /** @var mixed $argumentValue */
+        $argumentValue = null;
+
+        if (is_int(strpos($argumentConfiguration, '::'))) {
+            [$factoryClass, $factoryMethod] = explode('::', $argumentConfiguration);
+
+            if (!empty($factoryClass)) {
+                if ($factoryClass[0] == '@') {
+                    /** @var string $factoryServiceId */
+                    $factoryServiceId = substr($factoryClass, 1);
+
+                    /** @var object|null $factoryObject */
+                    $factoryObject = $this->container->get($factoryServiceId);
+
+                    Assert::methodExists($factoryObject, $factoryMethod, sprintf(
+                        "Did not find service with id '%s' that has a method '%s'!",
+                        $factoryServiceId,
+                        $factoryMethod
+                    ));
+
+                    $factoryReflection = new ReflectionClass($factoryObject);
+
+                    /** @var ReflectionMethod $methodReflection */
+                    $methodReflection = $factoryReflection->getMethod($factoryMethod);
+
+                    $callArguments = $this->buildCallArguments(
+                        $methodReflection,
+                        [], # TODO
+                        $request
+                    );
+
+                    # Create by factory-service-object
+                    $argumentValue = call_user_func_array([$factoryObject, $factoryMethod], $callArguments);
+
+                } else {
+                    # Create by static factory-method of other class
+                    $argumentValue = call_user_func_array($argumentConfiguration, []);
+                }
+
+            } else {
+                # TODO: What to do here? What could "::Something" be? A template?
+            }
+
+        } elseif ($argumentConfiguration[0] == '$') {
+            $argumentValue = $request->get(substr($argumentConfiguration, 1));
+
+        } elseif ($argumentConfiguration[0] == '@') {
+            $argumentValue = $this->container->get(substr($argumentConfiguration, 1));
         }
 
         return $argumentValue;

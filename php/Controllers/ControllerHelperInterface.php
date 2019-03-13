@@ -14,6 +14,7 @@ namespace Addiks\SymfonyGenerics\Controllers;
 
 use Throwable;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\EventDispatcher\Event;
 
 interface ControllerHelperInterface
 {
@@ -52,5 +53,7 @@ interface ControllerHelperInterface
      * @param object $subject
      */
     public function denyAccessUnlessGranted(string $attribute, $subject): void;
+
+    public function dispatchEvent(string $eventName, Event $event = null): Event;
 
 }
