@@ -118,7 +118,7 @@ final class GenericExceptionResponseController
                 'message' => '', # empty => exception message used
                 'code' => '500',
                 'flash-type' => '', # empty => no message triggered
-                'flash-message' => '', # empty => exception message used
+                'flash-message' => '%s', # empty => exception message used
                 'redirect-route' => null,
                 'redirect-route-parameters' => [],
             ], $responseData);
@@ -163,7 +163,7 @@ final class GenericExceptionResponseController
                 $response = $innerResponse;
             }
 
-        } catch (Throwable $exception) {
+        } catch (Exception $exception) {
             $this->controllerHelper->handleException($exception);
 
             foreach ($this->exceptionResponses as $exceptionClass => $responseData) {
