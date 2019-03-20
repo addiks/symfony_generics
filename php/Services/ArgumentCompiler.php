@@ -50,7 +50,8 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
 
     public function buildArguments(
         array $argumentsConfiguration,
-        Request $request
+        Request $request,
+        array $additionalData = array()
     ): array {
         /** @var array<int, mixed> $routeArguments */
         $routeArguments = array();
@@ -69,7 +70,8 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             $argumentValue = $this->resolveArgumentConfiguration(
                 $argumentConfiguration,
                 $request,
-                $parameterTypeName
+                $parameterTypeName,
+                $additionalData
             );
 
             $routeArguments[$key] = $argumentValue;
@@ -81,7 +83,8 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
     public function buildCallArguments(
         ReflectionFunctionAbstract $routineReflection,
         array $argumentsConfiguration,
-        Request $request
+        Request $request,
+        array $additionalData = array()
     ): array {
         /** @var array<int, mixed> $callArguments */
         $callArguments = array();
@@ -111,14 +114,18 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
                 /** @var array|string $argumentConfiguration */
                 $argumentConfiguration = $argumentsConfiguration[$parameterName];
 
-                Assert::true(is_string($argumentConfiguration) || is_array($argumentConfiguration));
-
                 /** @var mixed $argumentValue */
-                $argumentValue = $this->resolveArgumentConfiguration(
-                    $argumentConfiguration,
-                    $request,
-                    $parameterTypeName
-                );
+                $argumentValue = $argumentConfiguration;
+
+                if (is_string($argumentConfiguration) || is_array($argumentConfiguration)) {
+                    /** @var mixed $argumentValue */
+                    $argumentValue = $this->resolveArgumentConfiguration(
+                        $argumentConfiguration,
+                        $request,
+                        $parameterTypeName,
+                        $additionalData
+                    );
+                }
 
                 $callArguments[$index] = $argumentValue;
 
@@ -162,7 +169,8 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
     private function resolveArgumentConfiguration(
         $argumentConfiguration,
         Request $request,
-        ?string $parameterTypeName
+        ?string $parameterTypeName,
+        array $additionalData = array()
     ) {
         /** @var mixed $argumentValue */
         $argumentValue = null;
@@ -171,7 +179,11 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             if (!empty($parameterTypeName) && isset($argumentConfiguration['entity-id'])) {
                 /** @var string $entityId */
                 $entityId = $argumentConfiguration['entity-id'];
-                $entityId = $this->resolveStringArgumentConfiguration($entityId, $request);
+                $entityId = $this->resolveStringArgumentConfiguration(
+                    $entityId,
+                    $request,
+                    $additionalData
+                );
 
                 $argumentValue = $this->entityManager->find(
                     $parameterTypeName,
@@ -204,7 +216,11 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             }
 
         } else {
-            $argumentValue = $this->resolveStringArgumentConfiguration($argumentConfiguration, $request);
+            $argumentValue = $this->resolveStringArgumentConfiguration(
+                $argumentConfiguration,
+                $request,
+                $additionalData
+            );
         }
 
         if (!empty($parameterTypeName)) {
@@ -222,7 +238,8 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
      */
     private function resolveStringArgumentConfiguration(
         string $argumentConfiguration,
-        Request $request
+        Request $request,
+        array $additionalData = array()
     ) {
         /** @var mixed $argumentValue */
         $argumentValue = null;
@@ -272,6 +289,33 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
 
         } elseif ($argumentConfiguration[0] == '@') {
             $argumentValue = $this->container->get(substr($argumentConfiguration, 1));
+
+        } elseif ($argumentConfiguration[0] == '%') {
+            /** @var string $key */
+            $key = substr($argumentConfiguration, 1);
+
+            if (is_int(strpos($key, '.'))) {
+                [$key, $property] = explode('.', $key);
+
+                Assert::keyExists($additionalData, $key, sprintf(
+                    'Missing additional-data key "%s"',
+                    $key
+                ));
+
+                $argumentValue = $additionalData[$key];
+
+                if (is_object($argumentValue) && method_exists($argumentValue, $property)) {
+                    $argumentValue = call_user_func([$argumentValue, $property]);
+                }
+
+            } else {
+                Assert::keyExists($additionalData, $key, sprintf(
+                    'Missing additional-data key "%s"',
+                    $key
+                ));
+
+                $argumentValue = $additionalData[$key];
+            }
         }
 
         return $argumentValue;

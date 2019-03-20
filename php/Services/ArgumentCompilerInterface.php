@@ -21,13 +21,15 @@ interface ArgumentCompilerInterface
 
     public function buildArguments(
         array $argumentsConfiguration,
-        Request $request
+        Request $request,
+        array $additionalData = array()
     ): array;
 
     public function buildCallArguments(
         ReflectionFunctionAbstract $methodReflection,
         array $argumentsConfiguration,
-        Request $request
+        Request $request,
+        array $additionalData = array()
     ): array;
 
 }

@@ -176,40 +176,6 @@ final class ArgumentCompilerTest extends TestCase
     /**
      * @test
      */
-    public function shouldRejectInvalidArgumentConfiguration()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        /** @var array $argumentsConfiguration */
-        $argumentsConfiguration = array(
-            'foo' => false
-        );
-
-        /** @var ReflectionParameter $parameterFooReflection */
-        $parameterFooReflection = $this->createMock(ReflectionParameter::class);
-        $parameterFooReflection->method('getName')->willReturn("foo");
-
-        /** @var ReflectionMethod $methodReflection */
-        $methodReflection = $this->createMock(ReflectionMethod::class);
-
-        $methodReflection->method("getParameters")->willReturn([
-            $parameterFooReflection,
-        ]);
-
-        /** @var Request $request */
-        $request = $this->createMock(Request::class);
-
-        $this->argumentCompiler->buildCallArguments(
-            $methodReflection,
-            $argumentsConfiguration,
-            $request
-        );
-
-    }
-
-    /**
-     * @test
-     */
     public function shouldRejectNonExistingFactoryMethod()
     {
         $this->expectException(InvalidArgumentException::class);

@@ -60,6 +60,21 @@ final class GenericServiceInvokeController
      */
     private $authorizationAttribute;
 
+    /**
+     * @var string|null
+     */
+    private $successRedirectRoute;
+
+    /**
+     * @var array
+     */
+    private $successRedirectArguments;
+
+    /**
+     * @var integer
+     */
+    private $successRedirectStatus;
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentCompiler,
@@ -73,6 +88,9 @@ final class GenericServiceInvokeController
         $options = array_merge([
             'arguments' => [],
             'authorization-attributes' => null,
+            'success-redirect' => null,
+            'success-redirect-arguments' => [],
+            'success-redirect-status' => 303,
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
@@ -82,6 +100,9 @@ final class GenericServiceInvokeController
         $this->method = $options['method'];
         $this->arguments = $options['arguments'];
         $this->authorizationAttribute = $options['authorization-attributes'];
+        $this->successRedirectRoute = $options['success-redirect'];
+        $this->successRedirectArguments = $options['success-redirect-arguments'];
+        $this->successRedirectStatus = (int)$options['success-redirect-status'];
     }
 
     public function callService(Request $request): Response
@@ -113,6 +134,19 @@ final class GenericServiceInvokeController
         );
 
         $reflectionMethod->invokeArgs($service, $arguments);
+
+        $this->controllerHelper->flushORM();
+
+        if (!empty($this->successRedirectRoute)) {
+            /** @var array $redirectArguments */
+            $redirectArguments = $this->argumentCompiler->buildArguments($this->successRedirectArguments, $request);
+
+            return $this->controllerHelper->redirectToRoute(
+                $this->successRedirectRoute,
+                $redirectArguments,
+                $this->successRedirectStatus
+            );
+        }
 
         return new Response("Service call completed");
     }

@@ -55,6 +55,21 @@ final class GenericEntityInvokeController
      */
     private $denyAccessAttribute;
 
+    /**
+     * @var string
+     */
+    private $successMessage;
+
+    /**
+     * @var string|null
+     */
+    private $redirectRoute;
+
+    /**
+     * @var array
+     */
+    private $redirectRouteParameters;
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentCompiler,
@@ -66,12 +81,15 @@ final class GenericEntityInvokeController
 
         $options = array_merge([
             'arguments' => [],
-            'deny-access-attribute' => null
+            'deny-access-attribute' => null,
+            'success-message' => "Entity method invoked!",
+            'redirect-route' => null,
+            'redirect-route-parameters' => [],
         ], $options);
 
         Assert::classExists($options['entity-class']);
         Assert::methodExists($options['entity-class'], $options['method']);
-        Assert::isArray($options['arguments']);
+        Assert::isArray($options['arguments'], 'Method-arguments must be array!');
 
         $this->controllerHelper = $controllerHelper;
         $this->argumentCompiler = $argumentCompiler;
@@ -79,6 +97,9 @@ final class GenericEntityInvokeController
         $this->methodName = $options['method'];
         $this->arguments = $options['arguments'];
         $this->denyAccessAttribute = $options['deny-access-attribute'];
+        $this->successMessage = $options['success-message'];
+        $this->redirectRoute = $options['redirect-route'];
+        $this->redirectRouteParameters = $options['redirect-route-parameters'];
     }
 
     public function invokeEntityMethod(Request $request, string $entityId): Response
@@ -117,11 +138,27 @@ final class GenericEntityInvokeController
             $callArguments
         ));
 
-        $reflectionMethod->invokeArgs($entity, $callArguments);
+        /** @var mixed $result */
+        $result = $reflectionMethod->invokeArgs($entity, $callArguments);
 
         $this->controllerHelper->flushORM();
 
-        return new Response("Entity method invoked!");
+        /** @var Response $response */
+        $response = null;
+
+        if (is_null($this->redirectRoute)) {
+            $response = new Response($this->successMessage);
+
+        } else {
+            $response = $this->controllerHelper->redirectToRoute(
+                $this->redirectRoute,
+                $this->argumentCompiler->buildArguments($this->redirectRouteParameters, $request, [
+                    'result' => $result
+                ])
+            );
+        }
+
+        return $response;
     }
 
 }
