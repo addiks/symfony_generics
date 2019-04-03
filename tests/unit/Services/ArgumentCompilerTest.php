@@ -23,6 +23,7 @@ use InvalidArgumentException;
 use Serializable;
 use Addiks\SymfonyGenerics\Tests\Unit\Services\SampleService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 final class ArgumentCompilerTest extends TestCase
 {
@@ -135,7 +136,7 @@ final class ArgumentCompilerTest extends TestCase
             "foo" => '$lorem',
             "baz" => '@some.service',
             "faz" => [
-                'id' => 'some.service',
+                'service-id' => 'some.service',
                 'method' => 'someCall',
                 'arguments' => [
                     'foo' => '$lorem'
@@ -199,6 +200,104 @@ final class ArgumentCompilerTest extends TestCase
     /**
      * @test
      */
+    public function shouldRejectNonExistingAdditionalDataKey()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->argumentCompiler->buildArguments([
+            'foo' => '%keyFoo',
+        ], $request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldGetAdditionalDataKey()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var array $actualResult */
+        $actualResult = $this->argumentCompiler->buildArguments([
+            'foo' => '%keyFoo',
+        ], $request, [
+            'keyFoo' => 'bar'
+        ]);
+
+        $this->assertEquals(['foo' => 'bar'], $actualResult);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectMissingMethodOnAdditionalDataKey()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->argumentCompiler->buildArguments([
+            'foo' => '%keyFoo.doSomethingImpossible',
+        ], $request, [
+            'keyFoo' => $this->createMock(stdClass::class)
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectMissingUploadedFile()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+        $request->files = $this->createMock(ParameterBagInterface::class);
+
+        $this->argumentCompiler->buildArguments([
+            'foo' => '$files.something_missing.content',
+        ], $request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldGetRequestPayload()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+        $request->expects($this->once())->method('getContent')->with(
+            $this->equalTo(false)
+        );
+
+        $this->argumentCompiler->buildArguments([
+            'foo' => '$',
+        ], $request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldResolveLiteralString()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var array $actualResult */
+        $actualResult = $this->argumentCompiler->buildArguments([
+            'foo' => '\'bar\'',
+        ], $request);
+
+        $this->assertEquals(['foo' => 'bar'], $actualResult);
+    }
+
+    /**
+     * @test
+     */
     public function shouldThrowExceptionWhenFetchingUnknownService()
     {
         $this->expectException(InvalidArgumentException::class);
@@ -220,7 +319,7 @@ final class ArgumentCompilerTest extends TestCase
         /** @var array<string, mixed> $argumentsConfiguration */
         $argumentsConfiguration = array(
             "faz" => [
-                'id' => 'some.non-existing.service',
+                'service-id' => 'some.non-existing.service',
             ]
         );
 
@@ -238,7 +337,7 @@ final class ArgumentCompilerTest extends TestCase
     public function shouldThrowExceptionWhenCallArgumentIsMissing()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Missing argument 'foo' for this call!");
+        $this->expectExceptionMessage("Missing argument 'foo' for the call to 'someCall'!");
 
         /** @var ReflectionMethod $methodReflection */
         $methodReflection = $this->createMock(ReflectionMethod::class);
@@ -263,7 +362,7 @@ final class ArgumentCompilerTest extends TestCase
         /** @var array<string, mixed> $argumentsConfiguration */
         $argumentsConfiguration = array(
             "faz" => [
-                'id' => 'some.service',
+                'service-id' => 'some.service',
                 'method' => 'someCall',
             ]
         );

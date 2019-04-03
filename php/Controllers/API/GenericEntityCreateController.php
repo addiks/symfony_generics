@@ -80,6 +80,21 @@ final class GenericEntityCreateController
      */
     private $authorizationAttribute;
 
+    /**
+     * @var string|null
+     */
+    private $successRedirectRoute;
+
+    /**
+     * @var array
+     */
+    private $successRedirectArguments;
+
+    /**
+     * @var integer
+     */
+    private $successRedirectStatus;
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentBuilder,
@@ -88,14 +103,16 @@ final class GenericEntityCreateController
     ) {
         Assert::null($this->controllerHelper);
         Assert::keyExists($options, 'entity-class');
-        Assert::true(class_exists($options['entity-class']));
 
         $options = array_merge([
             'calls' => [],
             'success-response' => "object created",
             'factory' => null,
             'authorization-attribute' => null,
-            'arguments' => []
+            'arguments' => [],
+            'success-redirect' => null,
+            'success-redirect-arguments' => [],
+            'success-redirect-status' => 303,
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
@@ -106,6 +123,9 @@ final class GenericEntityCreateController
         $this->factory = $options['factory'];
         $this->authorizationAttribute = $options['authorization-attribute'];
         $this->constructArguments = $options['arguments'];
+        $this->successRedirectRoute = $options['success-redirect'];
+        $this->successRedirectArguments = $options['success-redirect-arguments'];
+        $this->successRedirectStatus = (int)$options['success-redirect-status'];
 
         foreach ($options['calls'] as $methodName => $arguments) {
             /** @var array $arguments */
@@ -146,7 +166,6 @@ final class GenericEntityCreateController
         }
 
         $this->controllerHelper->persistEntity($entity);
-        $this->controllerHelper->flushORM();
 
         $this->controllerHelper->dispatchEvent("symfony_generics.entity_interaction", new EntityInteractionEvent(
             $this->entityClass,
@@ -155,6 +174,23 @@ final class GenericEntityCreateController
             "__construct",
             $constructArguments
         ));
+
+        $this->controllerHelper->flushORM();
+
+        if (!empty($this->successRedirectRoute)) {
+            /** @var array $redirectArguments */
+            $redirectArguments = $this->argumentBuilder->buildArguments(
+                $this->successRedirectArguments,
+                $request
+            );
+            $redirectArguments['entityId'] = $entity->getId(); # TODO: getId might not always exist! get id via doctrine
+
+            return $this->controllerHelper->redirectToRoute(
+                $this->successRedirectRoute,
+                $redirectArguments,
+                $this->successRedirectStatus
+            );
+        }
 
         return new Response($this->successResponse, 200);
     }
@@ -269,7 +305,7 @@ final class GenericEntityCreateController
                 $request
             );
 
-            $methodReflection->invoke($entity, $callArguments);
+            $methodReflection->invokeArgs($entity, $callArguments);
         }
     }
 

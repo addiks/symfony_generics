@@ -82,23 +82,6 @@ final class GenericEntityCreateControllerTest extends TestCase
     /**
      * @test
      */
-    public function shouldRejectNonExistingEntityClass()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        $controller = new GenericEntityCreateController(
-            $this->controllerHelper,
-            $this->argumentBuilder,
-            $this->container,
-            [
-                'entity-class' => "\\ClassDoes\\NotExist"
-            ]
-        );
-    }
-
-    /**
-     * @test
-     */
     public function shouldRejectMissingEntityClass()
     {
         $this->expectException(InvalidArgumentException::class);
