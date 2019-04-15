@@ -114,9 +114,16 @@ final class GenericExceptionResponseController
                 is_subclass_of($exceptionClass, Throwable::class)
             );
 
+            /** @var string $responseCode */
+            $responseCode = '500';
+
+            if (isset($responseData['redirect-route'])) {
+                $responseCode = '301';
+            }
+
             $responseData = array_merge([
                 'message' => '', # empty => exception message used
-                'code' => '500',
+                'code' => $responseCode,
                 'flash-type' => '', # empty => no message triggered
                 'flash-message' => '%s', # empty => exception message used
                 'redirect-route' => null,
@@ -188,7 +195,8 @@ final class GenericExceptionResponseController
                             $this->argumentBuilder->buildArguments(
                                 $responseData['redirect-route-parameters'],
                                 $request
-                            )
+                            ),
+                            $responseData['code']
                         );
 
                     } else {

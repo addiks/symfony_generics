@@ -327,7 +327,6 @@ final class GenericExceptionResponseControllerTest extends TestCase
      */
     public function shouldRedirectFromException()
     {
-        /** @var mixed $controller */
         $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
