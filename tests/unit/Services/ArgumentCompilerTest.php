@@ -24,6 +24,8 @@ use Serializable;
 use Addiks\SymfonyGenerics\Tests\Unit\Services\SampleService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\FileBag;
 
 final class ArgumentCompilerTest extends TestCase
 {
@@ -256,11 +258,46 @@ final class ArgumentCompilerTest extends TestCase
 
         /** @var Request $request */
         $request = $this->createMock(Request::class);
-        $request->files = $this->createMock(ParameterBagInterface::class);
+        $request->files = $this->createMock(FileBag::class);
 
         $this->argumentCompiler->buildArguments([
             'foo' => '$files.something_missing.content',
         ], $request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldGetUploadedFile()
+    {
+        /** @var UploadedFile $file */
+        $file = $this->createMock(UploadedFile::class);
+        $file->method('getClientOriginalName')->willReturn('some-original-name');
+        $file->method('getFilename')->willReturn('some-file-name');
+        $file->method('getPathname')->willReturn('data://,some-content');
+        $file->method('getMimeType')->willReturn('some-mime-type');
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+        $request->files = $this->createMock(FileBag::class);
+        $request->files->expects($this->exactly(5))->method('get')->willReturn($file);
+
+        /** @var array $actualResult */
+        $actualResult = $this->argumentCompiler->buildArguments([
+            'obj' => '$files.blah.object',
+            'ogn' => '$files.blah.originalname',
+            'fln' => '$files.blah.filename',
+            'cnt' => '$files.blah.content',
+            'mmt' => '$files.blah.mimetype',
+        ], $request);
+
+        $this->assertEquals([
+            'obj' => $file,
+            'ogn' => 'some-original-name',
+            'fln' => 'some-file-name',
+            'cnt' => 'some-content',
+            'mmt' => 'some-mime-type',
+        ], $actualResult);
     }
 
     /**

@@ -278,6 +278,8 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         /** @var mixed $argumentValue */
         $argumentValue = null;
 
+        $argumentConfiguration = trim($argumentConfiguration);
+
         if (is_int(strpos($argumentConfiguration, '::'))) {
             [$factoryClass, $factoryMethod] = explode('::', $argumentConfiguration);
 
@@ -375,12 +377,14 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
                         $argumentConfiguration = str_replace(")", "", $argumentConfiguration);
                         [$argumentConfiguration, $callArgumentsRaw] = explode('(', $argumentConfiguration);
 
-                        foreach (explode(',', $callArgumentsRaw) as $callArgumentRaw) {
-                            $callArguments[] = $this->resolveStringArgumentConfiguration(
-                                $callArgumentRaw,
-                                $request,
-                                $additionalData
-                            );
+                        if (!empty($callArgumentsRaw)) {
+                            foreach (explode(',', $callArgumentsRaw) as $callArgumentRaw) {
+                                $callArguments[] = $this->resolveStringArgumentConfiguration(
+                                    $callArgumentRaw,
+                                    $request,
+                                    $additionalData
+                                );
+                            }
                         }
                     }
 
