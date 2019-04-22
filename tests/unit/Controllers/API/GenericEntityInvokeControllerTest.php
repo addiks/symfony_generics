@@ -15,7 +15,6 @@ use Addiks\SymfonyGenerics\Controllers\API\GenericEntityInvokeController;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use Symfony\Component\HttpFoundation\Request;
-use stdClass;
 use ReflectionMethod;
 use InvalidArgumentException;
 use Symfony\Component\Finder\Exception\AccessDeniedException;

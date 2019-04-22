@@ -14,7 +14,6 @@ namespace Addiks\SymfonyGenerics\Services;
 
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 use Psr\Container\ContainerInterface;
-use ErrorException;
 use ReflectionParameter;
 use ReflectionType;
 use ReflectionMethod;

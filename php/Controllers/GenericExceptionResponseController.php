@@ -17,7 +17,6 @@ use Webmozart\Assert\Assert;
 use Exception;
 use Throwable;
 use Symfony\Component\HttpFoundation\Response;
-use ErrorException;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use ReflectionMethod;
@@ -70,9 +69,6 @@ final class GenericExceptionResponseController
      */
     private $exceptionResponses = array();
 
-    /**
-     * @param object $innerController
-     */
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentBuilder,

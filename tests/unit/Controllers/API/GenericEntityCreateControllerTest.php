@@ -18,7 +18,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntity;
-use Webmozart\Assert\Assert;
 use Serializable;
 use stdClass;
 use InvalidArgumentException;

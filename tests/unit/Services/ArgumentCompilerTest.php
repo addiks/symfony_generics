@@ -13,7 +13,6 @@ namespace Addiks\SymfonyGenerics\Tests\Unit\Services;
 use PHPUnit\Framework\TestCase;
 use Addiks\SymfonyGenerics\Services\ArgumentCompiler;
 use Psr\Container\ContainerInterface;
-use Addiks\SymfonyGenerics\Services\EntityRepositoryInterface;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\Request;
 use ReflectionParameter;
@@ -23,7 +22,6 @@ use InvalidArgumentException;
 use Serializable;
 use Addiks\SymfonyGenerics\Tests\Unit\Services\SampleService;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\FileBag;
 
