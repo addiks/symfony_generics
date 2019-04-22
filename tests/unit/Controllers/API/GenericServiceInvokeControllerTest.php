@@ -217,4 +217,74 @@ final class GenericServiceInvokeControllerTest extends TestCase
         $controller->callService($request);
     }
 
+    /**
+     * @test
+     */
+    public function shouldBeCallableByInvokingController()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var SampleService $service */
+        $service = $this->createMock(SampleService::class);
+
+        $service->expects($this->once())->method('doFoo')->with(
+            $this->equalTo('lorem'),
+            $this->equalTo('ipsum')
+        );
+
+        $this->container->expects($this->once())->method('get')->with(
+            $this->equalTo('some_service')
+        )->willReturn($service);
+
+        $this->argumentCompiler->expects($this->once())->method('buildCallArguments')->with(
+            $this->equalTo(new ReflectionMethod($service, 'doFoo')),
+            $this->equalTo(['lorem' => 'ipsum']),
+            $this->identicalTo($request)
+        )->willReturn(['lorem', 'ipsum']);
+
+        /** @var string $expectedResponseContent */
+        $expectedResponseContent = "Service call completed";
+
+        $controller = new GenericServiceInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            $this->container,
+            [
+                'service' => 'some_service',
+                'method' => 'doFoo',
+                'arguments' => ['lorem' => 'ipsum']
+            ]
+        );
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn($request);
+
+        /** @var Response $actualResponse */
+        $actualResponse = $controller();
+
+        $this->assertEquals($expectedResponseContent, $actualResponse->getContent());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectCallWithoutRequest()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericServiceInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            $this->container,
+            [
+                'service' => 'some_service',
+                'method' => 'doFoo',
+            ]
+        );
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn(null);
+
+        $controller();
+    }
+
 }

@@ -23,6 +23,7 @@ use stdClass;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 final class DefaultControllerHelperTest extends TestCase
 {
@@ -67,6 +68,11 @@ final class DefaultControllerHelperTest extends TestCase
      */
     private $eventDispatcher;
 
+    /**
+     * @var RequestStack
+     */
+    private $requestStack;
+
     public function setUp()
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
@@ -76,6 +82,7 @@ final class DefaultControllerHelperTest extends TestCase
         $this->session = $this->createMock(Session::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->requestStack = $this->createMock(RequestStack::class);
 
         $this->controllerHelper = new DefaultControllerHelper(
             $this->entityManager,
@@ -84,7 +91,8 @@ final class DefaultControllerHelperTest extends TestCase
             $this->urlGenerator,
             $this->session,
             $this->logger,
-            $this->eventDispatcher
+            $this->eventDispatcher,
+            $this->requestStack
         );
     }
 

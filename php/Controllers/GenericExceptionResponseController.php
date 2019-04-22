@@ -134,6 +134,16 @@ final class GenericExceptionResponseController
         }
     }
 
+    public function __invoke(): Response
+    {
+        /** @var Request $request */
+        $request = $this->controllerHelper->getCurrentRequest();
+
+        Assert::isInstanceOf($request, Request::class, "Cannot use controller outside of request-scope!");
+
+        return $this->executeInnerControllerSafely($request);
+    }
+
     public function executeInnerControllerSafely(Request $request): Response
     {
         /** @var Response|null $response */

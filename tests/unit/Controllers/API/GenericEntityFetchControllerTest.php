@@ -19,6 +19,7 @@ use ErrorException;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Finder\Exception\AccessDeniedException;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Request;
 
 final class GenericEntityFetchControllerTest extends TestCase
 {
@@ -46,7 +47,7 @@ final class GenericEntityFetchControllerTest extends TestCase
         )->willReturn($entity);
 
         /** @var string $expectedResponseContent */
-        $expectedResponseContent = '{"fooCalled":false,"constructArgument":"foo"}';
+        $expectedResponseContent = '{"id":"some_id","fooCalled":false,"constructArgument":"foo"}';
 
         $controller = new GenericEntityFetchController($this->controllerHelper, [
             'entity-class' => SampleEntity::class
@@ -257,5 +258,51 @@ final class GenericEntityFetchControllerTest extends TestCase
         ]);
     }
 
+    /**
+     * @test
+     */
+    public function shouldBeCallableByInvokingController()
+    {
+        $entity = new SampleEntity();
+
+        $this->controllerHelper->expects($this->once())->method('findEntity')->with(
+            $this->equalTo(SampleEntity::class),
+            $this->equalTo("some-id")
+        )->willReturn($entity);
+
+        /** @var string $expectedResponseContent */
+        $expectedResponseContent = '{"id":"some_id","fooCalled":false,"constructArgument":"foo"}';
+
+        $controller = new GenericEntityFetchController($this->controllerHelper, [
+            'entity-class' => SampleEntity::class,
+        ]);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+        $request->method("get")->willReturn('some-id');
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn($request);
+
+        /** @var Response $actualResponse */
+        $actualResponse = $controller();
+
+        $this->assertEquals($expectedResponseContent, $actualResponse->getContent());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectCallWithoutRequest()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericEntityFetchController($this->controllerHelper, [
+            'entity-class' => SampleEntity::class,
+        ]);
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn(null);
+
+        $controller();
+    }
 
 }

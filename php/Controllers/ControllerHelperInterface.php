@@ -15,11 +15,11 @@ namespace Addiks\SymfonyGenerics\Controllers;
 use Throwable;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\EventDispatcher\Event;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Request;
 
 interface ControllerHelperInterface
 {
-
-    public function renderTemplate(string $templatePath, array $arguments = array()): Response;
 
     /**
      * @return object|null
@@ -45,9 +45,15 @@ interface ControllerHelperInterface
 
     public function handleException(Throwable $exception): void;
 
+    public function getRequestStack(): RequestStack;
+
+    public function getCurrentRequest(): ?Request;
+
     public function addFlashMessage(string $message, string $type = "default"): void;
 
     public function redirectToRoute(string $route, array $parameters = array(), int $status = 301): Response;
+
+    public function renderTemplate(string $templatePath, array $arguments = array()): Response;
 
     /**
      * @param object $subject

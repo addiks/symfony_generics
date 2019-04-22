@@ -82,6 +82,45 @@ final class GenericEntityCreateControllerTest extends TestCase
     /**
      * @test
      */
+    public function shouldRedirectWhenNeeded()
+    {
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'success-redirect' => 'some_route'
+            ]
+        );
+
+        $this->controllerHelper->expects($this->once())->method('flushORM');
+        $this->controllerHelper->expects($this->once())->method('persistEntity')->with(
+            $this->equalTo(new SampleEntity())
+        );
+
+        $expectedResponse = new Response();
+
+        $this->controllerHelper->expects($this->once())->method('redirectToRoute')->with(
+            $this->equalTo('some_route'),
+            $this->equalTo([
+                'entityId' => 'some_id'
+            ]),
+            $this->equalTo(303)
+        )->willReturn($expectedResponse);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var Response $actualResponse */
+        $actualResponse = $controller->createEntity($request);
+
+        $this->assertSame($expectedResponse, $actualResponse);
+    }
+
+    /**
+     * @test
+     */
     public function shouldRejectMissingEntityClass()
     {
         $this->expectException(InvalidArgumentException::class);
@@ -481,6 +520,57 @@ final class GenericEntityCreateControllerTest extends TestCase
         $request = $this->createMock(Request::class);
 
         $controller->createEntity($request);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldBeCallableByInvokingController()
+    {
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class
+            ]
+        );
+
+        $this->controllerHelper->expects($this->once())->method('flushORM');
+        $this->controllerHelper->expects($this->once())->method('persistEntity')->with(
+            $this->equalTo(new SampleEntity())
+        );
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn($request);
+
+        /** @var Response $response */
+        $response = $controller();
+
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectCallWithoutRequest()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+            ]
+        );
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn(null);
+
+        $controller();
     }
 
 }

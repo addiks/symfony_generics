@@ -105,6 +105,16 @@ final class GenericServiceInvokeController
         $this->successRedirectStatus = (int)$options['success-redirect-status'];
     }
 
+    public function __invoke(): Response
+    {
+        /** @var Request $request */
+        $request = $this->controllerHelper->getCurrentRequest();
+
+        Assert::isInstanceOf($request, Request::class, "Cannot use controller outside of request-scope!");
+
+        return $this->callService($request);
+    }
+
     public function callService(Request $request): Response
     {
         if (!is_null($this->authorizationAttribute)) {

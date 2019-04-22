@@ -137,6 +137,16 @@ final class GenericEntityCreateController
         }
     }
 
+    public function __invoke(): Response
+    {
+        /** @var Request $request */
+        $request = $this->controllerHelper->getCurrentRequest();
+
+        Assert::isInstanceOf($request, Request::class, "Cannot use controller outside of request-scope!");
+
+        return $this->createEntity($request);
+    }
+
     public function createEntity(Request $request): Response
     {
         /** @var object|null $factoryObject */

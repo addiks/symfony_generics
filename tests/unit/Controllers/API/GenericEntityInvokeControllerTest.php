@@ -257,4 +257,74 @@ final class GenericEntityInvokeControllerTest extends TestCase
         );
     }
 
+    /**
+     * @test
+     */
+    public function shouldBeCallableByInvokingController()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+        $request->method("get")->willReturn(123);
+
+        $controller = new GenericEntityInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            [
+                'entity-class' => get_class($this->argumentCompiler),
+                'method' => 'buildArguments',
+                'arguments' => [
+                    'argumentsConfiguration' => "Lorem",
+                    'request' => "ipsum"
+                ]
+            ]
+        );
+
+        $this->controllerHelper->expects($this->once())->method('findEntity')->with(
+            $this->equalTo(get_class($this->argumentCompiler)),
+            $this->equalTo("123")
+        )->willReturn($this->argumentCompiler);
+
+        $this->argumentCompiler->expects($this->once())->method('buildCallArguments')->with(
+            $this->equalTo(new ReflectionMethod(get_class($this->argumentCompiler), 'buildArguments')),
+            $this->equalTo([
+                'argumentsConfiguration' => "Lorem",
+                'request' => "ipsum"
+            ]),
+            $this->identicalTo($request)
+        )->willReturn([
+            ['foo' => 'bar'],
+            $request
+        ]);
+
+        $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
+            $this->equalTo(['foo' => 'bar']),
+            $this->identicalTo($request)
+        );
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn($request);
+
+        $controller();
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectCallWithoutRequest()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericEntityInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            [
+                'entity-class' => get_class($this->argumentCompiler),
+                'method' => 'buildArguments',
+            ]
+        );
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn(null);
+
+        $controller();
+    }
+
 }

@@ -17,6 +17,7 @@ use Webmozart\Assert\Assert;
 use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
 use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
+use Symfony\Component\HttpFoundation\Request;
 
 final class GenericEntityRemoveController
 {
@@ -32,6 +33,11 @@ final class GenericEntityRemoveController
     private $entityClass;
 
     /**
+     * @var string
+     */
+    private $entityIdKey;
+
+    /**
      * @var string|null
      */
     private $authorizationAttribute;
@@ -45,11 +51,26 @@ final class GenericEntityRemoveController
 
         $options = array_merge([
             'authorization-attribute' => null,
+            'entity-id-key' => 'entityId',
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
         $this->entityClass = $options['entity-class'];
+        $this->entityIdKey = $options['entity-id-key'];
         $this->authorizationAttribute = $options['authorization-attribute'];
+    }
+
+    public function __invoke(): Response
+    {
+        /** @var Request $request */
+        $request = $this->controllerHelper->getCurrentRequest();
+
+        Assert::isInstanceOf($request, Request::class, "Cannot use controller outside of request-scope!");
+
+        /** @var string $entityId */
+        $entityId = (string)$request->get($this->entityIdKey);
+
+        return $this->removeEntity($entityId);
     }
 
     public function removeEntity(string $entityId): Response

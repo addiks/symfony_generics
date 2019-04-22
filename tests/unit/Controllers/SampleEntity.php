@@ -32,4 +32,9 @@ class SampleEntity
         $this->fooCalled = true;
     }
 
+    public function getId()
+    {
+        return 'some_id';
+    }
+
 }

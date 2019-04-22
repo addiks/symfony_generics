@@ -104,6 +104,16 @@ final class GenericEntityListingController
         $this->authorizationAttribute = $options['authorization-attribute'];
     }
 
+    public function __invoke(): Response
+    {
+        /** @var Request $request */
+        $request = $this->controllerHelper->getCurrentRequest();
+
+        Assert::isInstanceOf($request, Request::class, "Cannot use controller outside of request-scope!");
+
+        return $this->listEntities($request);
+    }
+
     public function listEntities(Request $request): Response
     {
         if (!is_null($this->authorizationAttribute)) {

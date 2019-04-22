@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
 use Symfony\Component\Finder\Exception\AccessDeniedException;
 use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntity;
+use Symfony\Component\HttpFoundation\Request;
 
 final class GenericEntityRemoveControllerTest extends TestCase
 {
@@ -124,6 +125,51 @@ final class GenericEntityRemoveControllerTest extends TestCase
         ]);
 
         $controller->removeEntity("some-id");
+    }
+
+    /**
+     * @test
+     */
+    public function shouldBeCallableByInvokingController()
+    {
+        $entity = new SampleEntity();
+
+        $this->controllerHelper->expects($this->once())->method('findEntity')->with(
+            $this->equalTo(SampleEntity::class),
+            $this->equalTo('some-id')
+        )->willReturn($entity);
+
+        $this->controllerHelper->expects($this->once())->method('removeEntity')->with(
+            $this->identicalTo($entity)
+        );
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+        $request->method("get")->willReturn('some-id');
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn($request);
+
+        /** @var Response $actualResponse */
+        $actualResponse = ($this->controller)();
+
+        $this->assertEquals(200, $actualResponse->getStatusCode());
+        $this->assertEquals('Entity removed!', $actualResponse->getContent());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectCallWithoutRequest()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericEntityRemoveController($this->controllerHelper, [
+            'entity-class' => SampleEntity::class,
+        ]);
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn(null);
+
+        $controller();
     }
 
 }

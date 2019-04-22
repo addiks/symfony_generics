@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\File\Exception\AccessDeniedException;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 final class GenericTemplateRenderControllerTest extends TestCase
 {
@@ -127,6 +128,61 @@ final class GenericTemplateRenderControllerTest extends TestCase
 
         $controller = new GenericTemplateRenderController($this->controllerHelper, $this->argumentCompiler, [
         ]);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldBeCallableByInvokingController()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var Response $expectedResponse */
+        $expectedResponse = $this->createMock(Response::class);
+
+        $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
+            $this->equalTo(['foo' => 'bar']),
+            $this->identicalTo($request)
+        )->willReturn([
+            'bar' => 'baz'
+        ]);
+
+        $this->controllerHelper->expects($this->once())->method('renderTemplate')->with(
+            $this->equalTo("@foo/bar/baz.html"),
+            $this->equalTo(['bar' => 'baz'])
+        )->willReturn($expectedResponse);
+
+        $controller = new GenericTemplateRenderController($this->controllerHelper, $this->argumentCompiler, [
+            'template' => "@foo/bar/baz.html",
+            'arguments' => [
+                'foo' => 'bar'
+            ]
+        ]);
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn($request);
+
+        /** @var Response $actualResponse */
+        $actualResponse = $controller();
+
+        $this->assertSame($expectedResponse, $actualResponse);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectCallWithoutRequest()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericTemplateRenderController($this->controllerHelper, $this->argumentCompiler, [
+            'template' => "@foo/bar/baz.html",
+            'arguments' => []
+        ]);
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn(null);
+
+        $controller();
     }
 
 }

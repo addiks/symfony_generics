@@ -365,4 +365,66 @@ final class GenericExceptionResponseControllerTest extends TestCase
         $this->assertSame($redirectResponse, $response);
     }
 
+    /**
+     * @test
+     */
+    public function shouldBeCallableByInvokingController()
+    {
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
+            'inner-controller' => $this->innerController,
+            'inner-controller-method' => "serialize",
+            'exception-responses' => [
+                InvalidArgumentException::class => [
+                    'redirect-route' => 'some_redirect_route',
+                    'redirect-route-parameters' => [
+                        'foo' => 'bar'
+                    ]
+                ]
+            ]
+        ]);
+
+        $this->innerController->method("serialize")->will($this->returnCallback(
+            function () {
+                throw new InvalidArgumentException("Lorem ipsum!");
+            }
+        ));
+
+        /** @var RedirectResponse $redirectResponse */
+        $redirectResponse = $this->createMock(RedirectResponse::class);
+
+        $this->controllerHelper->expects($this->once())->method('handleException');
+        $this->controllerHelper->expects($this->once())->method('redirectToRoute')->with(
+            $this->equalTo('some_redirect_route'),
+            $this->equalTo([]),
+            $this->equalTo(301)
+        )->willReturn($redirectResponse);
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn($request);
+
+        /** @var Response $response */
+        $response = $controller();
+
+        $this->assertSame($redirectResponse, $response);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectCallWithoutRequest()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
+            'inner-controller' => $this->innerController,
+            'inner-controller-method' => "serialize",
+        ]);
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn(null);
+
+        $controller();
+    }
+
 }

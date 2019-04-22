@@ -43,6 +43,11 @@ final class GenericEntityInvokeController
     /**
      * @var string
      */
+    private $entityIdKey;
+
+    /**
+     * @var string
+     */
     private $methodName;
 
     /**
@@ -85,6 +90,7 @@ final class GenericEntityInvokeController
             'success-message' => "Entity method invoked!",
             'redirect-route' => null,
             'redirect-route-parameters' => [],
+            'entity-id-key' => 'entityId',
         ], $options);
 
         Assert::classExists($options['entity-class']);
@@ -94,12 +100,26 @@ final class GenericEntityInvokeController
         $this->controllerHelper = $controllerHelper;
         $this->argumentCompiler = $argumentCompiler;
         $this->entityClass = $options['entity-class'];
+        $this->entityIdKey = $options['entity-id-key'];
         $this->methodName = $options['method'];
         $this->arguments = $options['arguments'];
         $this->denyAccessAttribute = $options['deny-access-attribute'];
         $this->successMessage = $options['success-message'];
         $this->redirectRoute = $options['redirect-route'];
         $this->redirectRouteParameters = $options['redirect-route-parameters'];
+    }
+
+    public function __invoke(): Response
+    {
+        /** @var Request $request */
+        $request = $this->controllerHelper->getCurrentRequest();
+
+        Assert::isInstanceOf($request, Request::class, "Cannot use controller outside of request-scope!");
+
+        /** @var string $entityId */
+        $entityId = (string)$request->get($this->entityIdKey);
+
+        return $this->invokeEntityMethod($request, $entityId);
     }
 
     public function invokeEntityMethod(Request $request, string $entityId): Response

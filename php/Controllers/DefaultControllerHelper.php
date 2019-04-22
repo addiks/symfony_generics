@@ -26,6 +26,8 @@ use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * The default implementation of the controller-helper.
@@ -68,6 +70,11 @@ final class DefaultControllerHelper implements ControllerHelperInterface
      */
     private $eventDispatcher;
 
+    /**
+     * @var RequestStack
+     */
+    private $requestStack;
+
     public function __construct(
         EntityManagerInterface $entityManager,
         Twig_Environment $twig,
@@ -75,7 +82,8 @@ final class DefaultControllerHelper implements ControllerHelperInterface
         UrlGeneratorInterface $urlGenerator,
         Session $session,
         LoggerInterface $logger,
-        EventDispatcherInterface $eventDispatcher
+        EventDispatcherInterface $eventDispatcher,
+        RequestStack $requestStack
     ) {
         $this->entityManager = $entityManager;
         $this->twig = $twig;
@@ -84,6 +92,7 @@ final class DefaultControllerHelper implements ControllerHelperInterface
         $this->session = $session;
         $this->logger = $logger;
         $this->eventDispatcher = $eventDispatcher;
+        $this->requestStack = $requestStack;
     }
 
     public function renderTemplate(string $templatePath, array $arguments = array()): Response
@@ -135,6 +144,16 @@ final class DefaultControllerHelper implements ControllerHelperInterface
         $url = $this->urlGenerator->generate($route, $parameters, UrlGeneratorInterface::ABSOLUTE_URL);
 
         return new RedirectResponse($url, $status);
+    }
+
+    public function getRequestStack(): RequestStack
+    {
+        return $this->requestStack;
+    }
+
+    public function getCurrentRequest(): ?Request
+    {
+        return $this->requestStack->getCurrentRequest();
     }
 
     public function denyAccessUnlessGranted(string $attribute, $subject): void

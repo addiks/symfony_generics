@@ -24,6 +24,7 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use ErrorException;
 use Addiks\SymfonyGenerics\Controllers\ApplyDataTemplateTrait;
 use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
+use Symfony\Component\HttpFoundation\Request;
 
 final class GenericEntityFetchController
 {
@@ -62,6 +63,11 @@ final class GenericEntityFetchController
     /**
      * @var string
      */
+    private $entityIdKey;
+
+    /**
+     * @var string
+     */
     private $format;
 
     public function __construct(
@@ -76,7 +82,8 @@ final class GenericEntityFetchController
             'encoder' => null,
             'normalizer' => null,
             'data-template' => null,
-            'authorization-attribute' => null
+            'authorization-attribute' => null,
+            'entity-id-key' => 'entityId',
         ], $options);
 
         Assert::true(is_null($options['encoder']) || $options['encoder'] instanceof EncoderInterface);
@@ -84,12 +91,26 @@ final class GenericEntityFetchController
         Assert::classExists($options['entity-class']);
 
         $this->controllerHelper = $controllerHelper;
+        $this->entityIdKey = $options['entity-id-key'];
         $this->encoder = $options['encoder'];
         $this->normalizer = $options['normalizer'];
         $this->entityClass = $options['entity-class'];
         $this->format = $options['format'];
         $this->dataTemplate = $options['data-template'];
         $this->authorizationAttribute = $options['authorization-attribute'];
+    }
+
+    public function __invoke(): Response
+    {
+        /** @var Request $request */
+        $request = $this->controllerHelper->getCurrentRequest();
+
+        Assert::isInstanceOf($request, Request::class, "Cannot use controller outside of request-scope!");
+
+        /** @var string $entityId */
+        $entityId = (string)$request->get($this->entityIdKey);
+
+        return $this->fetchEntity($entityId);
     }
 
     public function fetchEntity(string $entityId): Response

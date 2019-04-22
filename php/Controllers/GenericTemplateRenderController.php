@@ -66,6 +66,16 @@ final class GenericTemplateRenderController
         $this->authorizationAttribute = $options['authorization-attribute'];
     }
 
+    public function __invoke(): Response
+    {
+        /** @var Request $request */
+        $request = $this->controllerHelper->getCurrentRequest();
+
+        Assert::isInstanceOf($request, Request::class, "Cannot use controller outside of request-scope!");
+
+        return $this->renderTemplate($request);
+    }
+
     public function renderTemplate(Request $request): Response
     {
         if (!is_null($this->authorizationAttribute)) {

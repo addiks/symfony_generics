@@ -214,4 +214,66 @@ final class GenericEntityListingControllerTest extends TestCase
         $controller->listEntities($request);
     }
 
+    /**
+     * @test
+     */
+    public function shouldBeCallableByInvokingController()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var string $expectedResponseContent */
+        $expectedResponseContent = '[{"lorem":false,"ipsum":"foo"},{"lorem":false,"ipsum":"foo"}]';
+
+        /** @var SampleEntity $entityA */
+        $entityA = $this->createMock(SampleEntity::class);
+
+        /** @var SampleEntity $entityB */
+        $entityB = $this->createMock(SampleEntity::class);
+
+        $this->controllerHelper->expects($this->once())->method('findEntities')->with(
+            $this->equalTo(SampleEntity::class),
+            $this->equalTo(['blah' => 'blubb'])
+        )->willReturn([$entityA, $entityB]);
+
+        $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
+            $this->equalTo(['foo' => 'bar']),
+            $this->identicalTo($request)
+        )->willReturn(['blah' => 'blubb']);
+
+        $controller = new GenericEntityListingController($this->controllerHelper, $this->argumentCompiler, [
+            'entity-class' => SampleEntity::class,
+            'data-template' => [
+                'lorem' => 'fooCalled',
+                'ipsum' => 'constructArgument'
+            ],
+            'criteria' => [
+                'foo' => 'bar'
+            ]
+        ]);
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn($request);
+
+        /** @var Response $actualResponse */
+        $actualResponse = $controller();
+
+        $this->assertEquals($expectedResponseContent, $actualResponse->getContent());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectCallWithoutRequest()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $controller = new GenericEntityListingController($this->controllerHelper, $this->argumentCompiler, [
+            'entity-class' => SampleEntity::class,
+        ]);
+
+        $this->controllerHelper->method('getCurrentRequest')->willReturn(null);
+
+        $controller();
+    }
+
 }
