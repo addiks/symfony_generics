@@ -27,5 +27,29 @@
             <argument type="service" id="doctrine.orm.entity_manager" />
         </service>
 
+        <service
+            id="symfony_generics.controller.error_handler.default"
+            class="Addiks\SymfonyGenerics\Controllers\GenericExceptionResponseController"
+        >
+            <tag name="symfony_generics.error_handler" key="default" success_flash_message="" />
+            <argument type="service" id="symfony_generics.controller_helper" />
+            <argument type="service" id="symfony_generics.argument_compiler" />
+            <argument type="collection">
+                <argument
+                    key="inner-controller"
+                    type="service"
+                    id="symfony_generics.controller.error_handler.default.inner"
+                />
+                <argument key="success-flash-message">%success_flash_message%</argument>
+                <argument key="exception-responses" type="collection">
+                    <argument key="Exception" type="collection">
+                        <argument key="flash-type">danger</argument>
+                        <argument key="code">307</argument>
+                        <argument key="redirect-route">%error_route%</argument>
+                    </argument>
+                </argument>
+            </argument>
+        </service>
+
     </services>
 </container>

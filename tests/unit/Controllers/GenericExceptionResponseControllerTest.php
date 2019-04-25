@@ -20,6 +20,7 @@ use DivisionByZeroError;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\ParameterBag;
 
 final class GenericExceptionResponseControllerTest extends TestCase
 {
@@ -358,6 +359,8 @@ final class GenericExceptionResponseControllerTest extends TestCase
 
         /** @var Request $request */
         $request = $this->createMock(Request::class);
+        $request->attributes = $this->createMock(ParameterBag::class);
+        $request->attributes->method('get')->willReturn([]);
 
         /** @var Response $response */
         $response = $controller->executeInnerControllerSafely($request);
@@ -401,6 +404,8 @@ final class GenericExceptionResponseControllerTest extends TestCase
 
         /** @var Request $request */
         $request = $this->createMock(Request::class);
+        $request->attributes = $this->createMock(ParameterBag::class);
+        $request->attributes->method('get')->willReturn([]);
 
         $this->controllerHelper->method('getCurrentRequest')->willReturn($request);
 

@@ -60,7 +60,7 @@ final class GenericExceptionResponseController
     private $successResponseCode;
 
     /**
-     * @var string|null
+     * @var string
      */
     private $successFlashMessage;
 
@@ -79,11 +79,12 @@ final class GenericExceptionResponseController
 
         /** @var array<string, mixed> $defaults */
         $defaults = array(
+            'inner-controller-method' => '__invoke',
             'arguments' => [],
             'exception-responses' => [],
             'success-response' => null,
             'success-response-code' => $defaultResponseCode,
-            'success-flash-message' => null,
+            'success-flash-message' => "",
         );
 
         /** @var mixed $options */
@@ -165,7 +166,7 @@ final class GenericExceptionResponseController
 
             Assert::isInstanceOf($innerResponse, Response::class, "Controller did not return an Response object!");
 
-            if (!is_null($this->successFlashMessage)) {
+            if (!empty($this->successFlashMessage)) {
                 $this->controllerHelper->addFlashMessage($this->successFlashMessage, "success");
             }
 
@@ -196,12 +197,18 @@ final class GenericExceptionResponseController
                     }
 
                     if (!empty($responseData['redirect-route'])) {
-                        $response = $this->controllerHelper->redirectToRoute(
-                            $responseData['redirect-route'],
+                        /** @var array $redirectRouteParameters */
+                        $redirectRouteParameters = array_merge(
+                            $request->attributes->get('_route_params'),
                             $this->argumentBuilder->buildArguments(
                                 $responseData['redirect-route-parameters'],
                                 $request
-                            ),
+                            )
+                        );
+
+                        $response = $this->controllerHelper->redirectToRoute(
+                            $responseData['redirect-route'],
+                            $redirectRouteParameters,
                             $responseData['code']
                         );
 
