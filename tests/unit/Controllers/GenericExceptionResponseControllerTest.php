@@ -248,10 +248,8 @@ final class GenericExceptionResponseControllerTest extends TestCase
     /**
      * @test
      */
-    public function shouldNotHandleThrowables()
+    public function shouldHandleThrowables()
     {
-        $this->expectException(DivisionByZeroError::class);
-
         $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",

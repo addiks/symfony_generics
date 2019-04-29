@@ -171,14 +171,29 @@ final class DecoratorTemplateCompilerPass implements CompilerPassInterface
             );
         }
 
-        if (is_array($newArgument)) {
-            foreach ($newArgument as &$value) {
-                $value = $this->filterArgument(
-                    $value,
+        if (is_array($oldArgument)) {
+            $newArgument = array();
+
+            foreach ($oldArgument as $oldKey => $oldValue) {
+                /** @var mixed $oldValue */
+
+                /** @var int|string $newKey */
+                $newKey = $this->filterArgument(
+                    $oldKey,
                     $parameters,
                     $decoratorServiceId,
                     $newDecoratorServiceId
                 );
+
+                /** @var mixed $newValue */
+                $newValue = $this->filterArgument(
+                    $oldValue,
+                    $parameters,
+                    $decoratorServiceId,
+                    $newDecoratorServiceId
+                );
+
+                $newArgument[$newKey] = $newValue;
             }
         }
 

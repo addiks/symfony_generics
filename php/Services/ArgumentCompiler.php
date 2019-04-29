@@ -426,6 +426,10 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         } elseif ($argumentConfiguration[0] == '$') {
             $argumentValue = $request->get(substr($argumentConfiguration, 1));
 
+            if (is_string($argumentValue)) {
+                $argumentValue = trim($argumentValue);
+            }
+
         } elseif ($argumentConfiguration[0] == '@') {
             $argumentValue = $this->container->get(substr($argumentConfiguration, 1));
 

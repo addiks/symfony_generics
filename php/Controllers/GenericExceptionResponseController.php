@@ -107,8 +107,8 @@ final class GenericExceptionResponseController
             /** @var array<string, mixed> $responseData */
 
             Assert::true(
-                is_subclass_of($exceptionClass, Exception::class) ||
-                is_subclass_of($exceptionClass, Throwable::class)
+                is_a($exceptionClass, Exception::class, true) ||
+                is_a($exceptionClass, Throwable::class, true)
             );
 
             /** @var string $responseCode */
@@ -125,6 +125,7 @@ final class GenericExceptionResponseController
                 'flash-message' => '%s', # empty => exception message used
                 'redirect-route' => null,
                 'redirect-route-parameters' => [],
+                'filter' => '',
             ], $responseData);
 
             $this->exceptionResponses[$exceptionClass] = $responseData;
@@ -177,11 +178,17 @@ final class GenericExceptionResponseController
                 $response = $innerResponse;
             }
 
-        } catch (Exception $exception) {
+        } catch (Throwable $exception) {
             $this->controllerHelper->handleException($exception);
 
             foreach ($this->exceptionResponses as $exceptionClass => $responseData) {
                 if (is_a($exception, $exceptionClass)) {
+                    if (!empty($responseData['filter'])) {
+                        if (!preg_match("/" . $responseData['filter'] . "/is", $exception->getMessage())) {
+                            continue;
+                        }
+                    }
+
                     /** @var string $responseMessage */
                     $responseMessage = $responseData['message'];
 
@@ -215,6 +222,8 @@ final class GenericExceptionResponseController
                     } else {
                         $response = new Response($responseMessage, $responseData['code']);
                     }
+
+                    break;
                 }
             }
 
