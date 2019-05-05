@@ -12,10 +12,10 @@
 
 namespace Addiks\SymfonyGenerics\Arguments;
 
-use Addiks\SymfonyGenerics\Arguments\ArgumentInterface;
+use Addiks\SymfonyGenerics\Arguments\Argument;
 use Doctrine\Common\Persistence\ObjectManager;
 
-final class EntityArgument implements ArgumentInterface
+final class EntityArgument implements Argument
 {
 
     /**
@@ -24,7 +24,7 @@ final class EntityArgument implements ArgumentInterface
     private $entityClass;
 
     /**
-     * @var ArgumentInterface
+     * @var Argument
      */
     private $id;
 
@@ -36,18 +36,21 @@ final class EntityArgument implements ArgumentInterface
     public function __construct(
         ObjectManager $objectManager,
         string $entityClass,
-        ArgumentInterface $id
+        Argument $id
     ) {
         $this->entityClass = $entityClass;
         $this->id = $id;
         $this->objectManager = $objectManager;
     }
 
-    public function getValue()
+    public function resolve()
     {
+        /** @var string $entityId */
+        $entityId = $this->id->resolve();
+
         return $this->objectManager->find(
             $this->entityClass,
-            $this->id->getValue()
+            $entityId
         );
     }
 

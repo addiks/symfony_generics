@@ -12,12 +12,19 @@
 
 namespace Addiks\SymfonyGenerics\Arguments;
 
-interface ArgumentInterface
+interface ArgumentContextInterface
 {
+
+    /**
+     * @param mixed $value
+     */
+    public function set(string $key, $value): void;
+
+    public function has(string $key): bool;
 
     /**
      * @return mixed
      */
-    public function getValue();
+    public function get(string $key);
 
 }

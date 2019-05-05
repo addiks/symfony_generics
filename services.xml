@@ -28,6 +28,80 @@
         </service>
 
         <service
+            id="symfony_generics.argument_factory"
+            class="Addiks\SymfonyGenerics\Services\ArgumentFactoryAggregate"
+        >
+            <argument type="collection">
+                <argument type="service">
+                    <service
+                        class="Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentCallFactory"
+                        id="symfony_generics.argument_factory.call"
+                    >
+                        <argument type="service" id="symfony_generics.argument_factory.lazy_load_proxy" />
+                    </service>
+                    <service
+                        class="Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ServiceArgumentFactory"
+                        id="symfony_generics.argument_factory.service"
+                    >
+                        <argument type="service" id="service_container" />
+                    </service>
+                    <service
+                        class="Addiks\SymfonyGenerics\Arguments\ArgumentFactory\AdditionalDataArgumentFactory"
+                        id="symfony_generics.argument_factory.additional_data"
+                    >
+                        <argument type="service" id="symfony_generics.argument_factory.context" />
+                    </service>
+                    <service
+                        class="Addiks\SymfonyGenerics\Arguments\ArgumentFactory\EntityArgumentFactory"
+                        id="symfony_generics.argument_factory.entity"
+                    >
+                        <argument type="service" id="doctrine.orm.entity_manager" />
+                        <argument type="service" id="symfony_generics.argument_factory.lazy_load_proxy" />
+                    </service>
+                    <service
+                        class="Addiks\SymfonyGenerics\Arguments\ArgumentFactory\RequestArgumentFactory"
+                        id="symfony_generics.argument_factory.request"
+                    >
+                        <argument type="service" id="request_stack" />
+                    </service>
+                    <service
+                        class="Addiks\SymfonyGenerics\Arguments\ArgumentFactory\RequestFileArgumentFactory"
+                        id="symfony_generics.argument_factory.request_file"
+                    >
+                        <argument type="service" id="request_stack" />
+                    </service>
+                    <service
+                        class="Addiks\SymfonyGenerics\Arguments\ArgumentFactory\RequestPayloadArgumentFactory"
+                        id="symfony_generics.argument_factory.request_payload"
+                    >
+                        <argument type="service" id="request_stack" />
+                    </service>
+                    <service
+                        class="Addiks\SymfonyGenerics\Arguments\ArgumentFactory\LiteralArgumentFactory"
+                        id="symfony_generics.argument_factory.literal"
+                    />
+                </argument>
+            </argument>
+        </service>
+
+        <service
+            id="symfony_generics.argument_factory.lazy_load_proxy"
+            class="Addiks\SymfonyGenerics\Services\ArgumentFactoryLazyLoadProxy"
+        >
+            <argument type="service" id="service_container" />
+            <argument>symfony_generics.argument_factory</argument>
+        </service>
+
+        <service
+            id="symfony_generics.argument_factory.context"
+            class="Addiks\SymfonyGenerics\Arguments\ArgumentContext"
+        />
+
+
+
+
+
+        <service
             id="symfony_generics.controller.error_handler.default"
             class="Addiks\SymfonyGenerics\Controllers\GenericExceptionResponseController"
         >

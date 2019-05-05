@@ -12,14 +12,14 @@
 
 namespace Addiks\SymfonyGenerics\Arguments;
 
-use Addiks\SymfonyGenerics\Arguments\ArgumentInterface;
+use Addiks\SymfonyGenerics\Arguments\Argument;
 use Psr\Container\ContainerInterface;
 
-final class ServiceArgument implements ArgumentInterface
+final class ServiceArgument implements Argument
 {
 
     /**
-     * @var ArgumentInterface
+     * @var Argument
      */
     private $serviceId;
 
@@ -30,15 +30,18 @@ final class ServiceArgument implements ArgumentInterface
 
     public function __construct(
         ContainerInterface $container,
-        ArgumentInterface $serviceId
+        Argument $serviceId
     ) {
         $this->container = $container;
         $this->serviceId = $serviceId;
     }
 
-    public function getValue()
+    public function resolve()
     {
-        return $this->container->get($this->serviceId->getValue());
+        /** @var string $serviceId */
+        $serviceId = $this->serviceId->resolve();
+
+        return $this->container->get($serviceId);
     }
 
 }

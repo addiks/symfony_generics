@@ -12,33 +12,32 @@
 
 namespace Addiks\SymfonyGenerics\Arguments;
 
-use Addiks\SymfonyGenerics\Arguments\Argument;
 use Addiks\SymfonyGenerics\Arguments\ArgumentContextInterface;
+use Webmozart\Assert\Assert;
 
-final class AdditionalDataArgument implements Argument
+final class ArgumentContext implements ArgumentContextInterface
 {
 
     /**
-     * @var string
+     * @var array<string, mixed>
      */
-    private $key;
+    private $variables = array();
 
-    /**
-     * @var ArgumentContextInterface
-     */
-    private $context;
-
-    public function __construct(
-        string $key,
-        ArgumentContextInterface $context
-    ) {
-        $this->key = $key;
-        $this->context = $context;
+    public function set(string $key, $value): void
+    {
+        $this->variables[$key] = $value;
     }
 
-    public function resolve()
+    public function has(string $key): bool
     {
-        return $this->context->get($this->key);
+        return array_key_exists($key, $this->variables);
+    }
+
+    public function get(string $key)
+    {
+        Assert::keyExists($this->variables, $key);
+
+        return $this->variables[$key];
     }
 
 }

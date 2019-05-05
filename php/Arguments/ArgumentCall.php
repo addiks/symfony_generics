@@ -12,15 +12,15 @@
 
 namespace Addiks\SymfonyGenerics\Arguments;
 
-use Addiks\SymfonyGenerics\Arguments\ArgumentInterface;
+use Addiks\SymfonyGenerics\Arguments\Argument;
 use Closure;
 use Webmozart\Assert\Assert;
 
-final class ArgumentCall implements ArgumentInterface
+final class ArgumentCall implements Argument
 {
 
     /**
-     * @var ArgumentInterface
+     * @var Argument
      */
     private $callee;
 
@@ -30,38 +30,39 @@ final class ArgumentCall implements ArgumentInterface
     private $methodName;
 
     /**
-     * @var array<ArgumentInterface>
+     * @var array<Argument>
      */
     private $arguments = array();
 
     public function __construct(
-        ArgumentInterface $callee,
+        Argument $callee,
         string $methodName,
         array $arguments
     ) {
         $this->callee = $callee;
         $this->methodName = $methodName;
-        $this->arguments = array_map(function (ArgumentInterface $argument): ArgumentInterface {
+        $this->arguments = array_map(function (Argument $argument): Argument {
             return $argument;
         }, $arguments);
     }
 
-    public function getValue()
+    public function resolve()
     {
         /** @var Closure $callee */
-        $callee = $this->callee->getValue();
-        Assert::isCallable($callee);
+        $callee = $this->callee->resolve();
+        Assert::object($callee);
+        Assert::methodExists($callee, $this->methodName);
 
         /** @var array<mixed> $arguments */
         $arguments = array_map(
             /** @return mixed */
-            function (ArgumentInterface $argument) {
-                return $argument->getValue();
+            function (Argument $argument) {
+                return $argument->resolve();
             },
             $this->arguments
         );
 
-        return call_user_func([$callee, $this->methodName], $arguments);
+        return call_user_func_array([$callee, $this->methodName], $arguments);
     }
 
 }

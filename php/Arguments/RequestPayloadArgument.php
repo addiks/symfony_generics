@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Request;
 use Webmozart\Assert\Assert;
 
-final class RequestArgument implements Argument
+final class RequestPayloadArgument implements Argument
 {
 
     /**
@@ -25,17 +25,9 @@ final class RequestArgument implements Argument
      */
     private $requestStack;
 
-    /**
-     * @var string
-     */
-    private $key;
-
-    public function __construct(
-        RequestStack $requestStack,
-        string $key
-    ) {
+    public function __construct(RequestStack $requestStack)
+    {
         $this->requestStack = $requestStack;
-        $this->key = $key;
     }
 
     public function resolve()
@@ -49,7 +41,7 @@ final class RequestArgument implements Argument
             "Cannot resolve request-argument without active request!"
         );
 
-        return $request->get($this->key);
+        return $request->getContent(false);
     }
 
 }

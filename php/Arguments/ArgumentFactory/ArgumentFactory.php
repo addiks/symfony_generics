@@ -10,29 +10,19 @@
  * @author Gerrit Addiks <gerrit@addiks.de>
  */
 
-namespace Addiks\SymfonyGenerics\Arguments;
+namespace Addiks\SymfonyGenerics\Arguments\ArgumentFactory;
 
 use Addiks\SymfonyGenerics\Arguments\Argument;
 
-final class LiteralArgument implements Argument
+interface ArgumentFactory
 {
 
-    /**
-     * @var mixed
-     */
-    private $literal;
+    public function understandsString(string $source): bool;
 
-    /**
-     * @param mixed $literal
-     */
-    public function __construct($literal)
-    {
-        $this->literal = $literal;
-    }
+    public function understandsArray(array $source): bool;
 
-    public function resolve()
-    {
-        return $this->literal;
-    }
+    public function createArgumentFromString(string $source): Argument;
+
+    public function createArgumentFromArray(array $source): Argument;
 
 }

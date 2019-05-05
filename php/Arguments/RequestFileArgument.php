@@ -16,8 +16,10 @@ use Addiks\SymfonyGenerics\Arguments\Argument;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Request;
 use Webmozart\Assert\Assert;
+use Symfony\Component\HttpFoundation\FileBag;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-final class RequestArgument implements Argument
+final class RequestFileArgument implements Argument
 {
 
     /**
@@ -30,12 +32,19 @@ final class RequestArgument implements Argument
      */
     private $key;
 
+    /**
+     * @var string
+     */
+    private $property;
+
     public function __construct(
         RequestStack $requestStack,
-        string $key
+        string $key,
+        string $property
     ) {
         $this->requestStack = $requestStack;
         $this->key = $key;
+        $this->property = $property;
     }
 
     public function resolve()
@@ -49,7 +58,19 @@ final class RequestArgument implements Argument
             "Cannot resolve request-argument without active request!"
         );
 
-        return $request->get($this->key);
+        /** @var FileBag $files */
+        $files = $request->files;
+
+        /** @var UploadedFile $file */
+        $file = $files->get($this->key);
+
+        return [
+            'object' => $file,
+            'originalname' => $file->getClientOriginalName(),
+            'filename' => $file->getFilename(),
+            'content' => file_get_contents($file->getPathname()),
+            'mimetype' => $file->getMimeType(),
+        ][$this->property];
     }
 
 }

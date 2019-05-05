@@ -12,27 +12,12 @@
 
 namespace Addiks\SymfonyGenerics\Arguments;
 
-use Addiks\SymfonyGenerics\Arguments\Argument;
-
-final class LiteralArgument implements Argument
+interface Argument
 {
 
     /**
-     * @var mixed
+     * @return mixed
      */
-    private $literal;
-
-    /**
-     * @param mixed $literal
-     */
-    public function __construct($literal)
-    {
-        $this->literal = $literal;
-    }
-
-    public function resolve()
-    {
-        return $this->literal;
-    }
+    public function resolve();
 
 }
