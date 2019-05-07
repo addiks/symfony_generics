@@ -50,7 +50,6 @@ final class ArgumentCall implements Argument
     {
         /** @var Closure $callee */
         $callee = $this->callee->resolve();
-        Assert::object($callee);
         Assert::methodExists($callee, $this->methodName);
 
         /** @var array<mixed> $arguments */

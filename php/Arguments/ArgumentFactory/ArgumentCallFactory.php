@@ -33,7 +33,7 @@ final class ArgumentCallFactory implements ArgumentFactory
 
     public function understandsString(string $source): bool
     {
-        return strpos($source, '::') > 0;
+        return 1 === preg_match("/^[a-zA-Z0-9_-]+\:\:[a-zA-Z0-9_-]+/is", $source);
     }
 
     public function understandsArray(array $source): bool
@@ -43,10 +43,10 @@ final class ArgumentCallFactory implements ArgumentFactory
 
     public function createArgumentFromString(string $source): Argument
     {
+        Assert::true($this->understandsString($source));
+
         /** @var array<Argument> $arguments */
         $arguments = array();
-
-        Assert::contains($source, '::');
 
         /** @var int|bool $argumentsPosition */
         $argumentsPosition = strpos($source, '(');

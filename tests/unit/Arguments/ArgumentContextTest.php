@@ -13,6 +13,7 @@ namespace Addiks\SymfonyGenerics\Tests\Unit\Arguments;
 use PHPUnit\Framework\TestCase;
 use Addiks\SymfonyGenerics\Arguments\ArgumentContext;
 use stdClass;
+use InvalidArgumentException;
 
 final class ArgumentContextTest extends TestCase
 {
@@ -51,6 +52,16 @@ final class ArgumentContextTest extends TestCase
         $this->assertEquals(1234, $context->get("foo"));
         $this->assertEquals(['lorem' => 'ipsum', 'dolor' => 'amet'], $context->get("bar"));
         $this->assertEquals(new stdClass(), $context->get("baz"));
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectGettingUnknownVariable()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (new ArgumentContext())->get("foo");
     }
 
 }

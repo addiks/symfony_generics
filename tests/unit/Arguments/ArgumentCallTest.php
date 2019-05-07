@@ -13,6 +13,8 @@ namespace Addiks\SymfonyGenerics\Tests\Unit\Arguments;
 use PHPUnit\Framework\TestCase;
 use Addiks\SymfonyGenerics\Arguments\ArgumentCall;
 use Addiks\SymfonyGenerics\Arguments\Argument;
+use InvalidArgumentException;
+use stdClass;
 
 final class ArgumentCallTest extends TestCase
 {
@@ -50,6 +52,38 @@ final class ArgumentCallTest extends TestCase
         $this->assertEquals("some-foo", $foo);
         $this->assertEquals(31415, $bar);
         return "some-result";
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectNonObjectCallee()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        /** @var Argument $callee */
+        $callee = $this->createMock(Argument::class);
+        $callee->method("resolve")->willReturn("non-object");
+
+        $subject = new ArgumentCall($callee, "someMethod", []);
+
+        $subject->resolve();
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectCalleeWithoutCalledMethod()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        /** @var Argument $callee */
+        $callee = $this->createMock(Argument::class);
+        $callee->method("resolve")->willReturn($this->createMock(stdClass::class));
+
+        $subject = new ArgumentCall($callee, "someMethod", []);
+
+        $subject->resolve();
     }
 
 }

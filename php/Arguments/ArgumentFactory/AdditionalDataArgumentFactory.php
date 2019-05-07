@@ -33,7 +33,7 @@ final class AdditionalDataArgumentFactory implements ArgumentFactory
 
     public function understandsString(string $source): bool
     {
-        return strpos($source, '%') === 0 && strlen($source) > 1;
+        return 1 === preg_match("/^\%[a-zA-Z0-9_-]+\%$/is", $source);
     }
 
     public function understandsArray(array $source): bool
@@ -43,17 +43,17 @@ final class AdditionalDataArgumentFactory implements ArgumentFactory
 
     public function createArgumentFromString(string $source): Argument
     {
-        Assert::startsWith($source, '%');
+        Assert::true($this->understandsString($source));
 
         /** @var string $key */
-        $key = substr($source, 1);
+        $key = substr($source, 1, strlen($source) - 2);
 
         return new AdditionalDataArgument($key, $this->context);
     }
 
     public function createArgumentFromArray(array $source): Argument
     {
-        Assert::keyExists($source, 'key');
+        Assert::true($this->understandsArray($source));
 
         return new AdditionalDataArgument($source['key'], $this->context);
     }
