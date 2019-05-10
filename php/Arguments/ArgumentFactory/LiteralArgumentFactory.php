@@ -31,10 +31,7 @@ final class LiteralArgumentFactory implements ArgumentFactory
 
     public function createArgumentFromString(string $source): Argument
     {
-        if ($source[0] === '"') {
-            $source = substr($source, 1, strlen($source) - 2);
-
-        } elseif ($source[0] === "'") {
+        if ($source[0] === '"' || $source[0] === "'") {
             $source = substr($source, 1, strlen($source) - 2);
         }
 
