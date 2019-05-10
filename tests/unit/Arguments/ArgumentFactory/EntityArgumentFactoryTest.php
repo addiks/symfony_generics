@@ -11,19 +11,26 @@
 namespace Addiks\SymfonyGenerics\Tests\Unit\Arguments\ArgumentFactory;
 
 use PHPUnit\Framework\TestCase;
-use Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentCallFactory;
 use Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentFactory;
 use InvalidArgumentException;
 use Addiks\SymfonyGenerics\Arguments\ArgumentCall;
 use Addiks\SymfonyGenerics\Arguments\Argument;
+use Addiks\SymfonyGenerics\Arguments\ArgumentFactory\EntityArgumentFactory;
+use Doctrine\Common\Persistence\ObjectManager;
+use Addiks\SymfonyGenerics\Arguments\EntityArgument;
 
-final class ArgumentCallFactoryTest extends TestCase
+final class EntityArgumentFactoryTest extends TestCase
 {
 
     /**
-     * @var ArgumentCallFactory
+     * @var EntityArgumentFactory
      */
     private $factory;
+
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
 
     /**
      * @var ArgumentFactory
@@ -32,9 +39,10 @@ final class ArgumentCallFactoryTest extends TestCase
 
     public function setUp()
     {
+        $this->objectManager = $this->createMock(ObjectManager::class);
         $this->argumentFactory = $this->createMock(ArgumentFactory::class);
 
-        $this->factory = new ArgumentCallFactory($this->argumentFactory);
+        $this->factory = new EntityArgumentFactory($this->objectManager, $this->argumentFactory);
     }
 
     /**
@@ -52,12 +60,10 @@ final class ArgumentCallFactoryTest extends TestCase
     public function dataProviderForShouldKnowIfUnderstandString()
     {
         return array(
-            [true, 'a::b'],
-            [true, 'foo::bar'],
-            [true, 'foo::bar(baz)'],
-            [false, '::b'],
-            [false, 'a::'],
-            [false, '::'],
+            [true, 'Foo#bar'],
+            [false, 'Foo#'],
+            [false, '#bar'],
+            [false, '#'],
         );
     }
 
@@ -76,10 +82,9 @@ final class ArgumentCallFactoryTest extends TestCase
     public function dataProviderForShouldKnowIfUnderstandArray()
     {
         return array(
-            [true,  ['callee' => 'foo', 'method' => 'bar']],
-            [true,  ['callee' => 'foo', 'method' => 'bar', 'arguments' => []]],
-            [false, ['method' => 'bar']],
-            [false, ['callee' => 'foo']],
+            [true,  ['entity-class' => 'foo', 'entity-id' => 'bar']],
+            [false, ['entity-id' => 'bar']],
+            [false, ['entity-class' => 'foo']],
         );
     }
 
@@ -88,7 +93,7 @@ final class ArgumentCallFactoryTest extends TestCase
      * @dataProvider dataProviderForShouldCreateCallArgumentFromString
      */
     public function shouldCreateCallArgumentFromString(
-        ?ArgumentCall $expectedResult,
+        ?EntityArgument $expectedResult,
         string $source,
         bool $shouldRejectCreation
     ) {
@@ -106,15 +111,13 @@ final class ArgumentCallFactoryTest extends TestCase
 
     public function dataProviderForShouldCreateCallArgumentFromString(): array
     {
+        $this->setUp();
+
         return array(
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', []), 'some-callee::someMethod', false],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', [
-                $this->createMock(Argument::class),
-                $this->createMock(Argument::class)
-            ]), 'some-callee::someMethod(a, b)', false],
-            [null, 'a::', true],
-            [null, '::b', true],
-            [null, '::', true],
+            [new EntityArgument($this->objectManager, 'Foo', $this->createMock(Argument::class)), 'Foo#bar', false],
+            [null, 'a#', true],
+            [null, '#b', true],
+            [null, '#', true],
         );
     }
 
@@ -123,7 +126,7 @@ final class ArgumentCallFactoryTest extends TestCase
      * @dataProvider dataProviderForShouldCreateCallArgumentFromArray
      */
     public function shouldCreateCallArgumentFromArray(
-        $expectedResult,
+        ?EntityArgument $expectedResult,
         array $source,
         bool $shouldRejectCreation
     ) {
@@ -142,50 +145,15 @@ final class ArgumentCallFactoryTest extends TestCase
 
     public function dataProviderForShouldCreateCallArgumentFromArray(): array
     {
+        $this->setUp();
+
         return array(
             [null, [], true],
-            [null, ['method' => 'foo'], true],
-            [null, ['callee' => 'bar'], true],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', []), [
-                'callee' => 'some-callee',
-                'method' => 'someMethod'
-            ], false],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', []), [
-                'callee' => ['some-callee'],
-                'method' => 'someMethod'
-            ], false],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', [
-                $this->createMock(Argument::class),
-                $this->createMock(Argument::class)
-            ]), [
-                'callee' => 'some-callee',
-                'method' => 'someMethod',
-                'arguments' => [
-                    'foo',
-                    'bar'
-                ]
-            ], false],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', [
-                $this->createMock(Argument::class),
-                $this->createMock(Argument::class)
-            ]), [
-                'callee' => ['some-callee'],
-                'method' => 'someMethod',
-                'arguments' => [
-                    'foo',
-                    'bar'
-                ]
-            ], false],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', [
-                $this->createMock(Argument::class),
-                $this->createMock(Argument::class)
-            ]), [
-                'callee' => 'some-callee',
-                'method' => 'someMethod',
-                'arguments' => [
-                    ['foo'],
-                    ['bar']
-                ]
+            [null, ['entity-id' => 'foo'], true],
+            [null, ['entity-class' => 'bar'], true],
+            [new EntityArgument($this->objectManager, 'Foo', $this->createMock(Argument::class)), [
+                'entity-class' => 'Foo',
+                'entity-id' => 'bar'
             ], false],
         );
     }

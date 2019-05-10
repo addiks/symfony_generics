@@ -33,7 +33,7 @@ final class RequestArgumentFactory implements ArgumentFactory
 
     public function understandsString(string $source): bool
     {
-        return strpos($source, '$') === 0 && strlen($source) > 1;
+        return 1 === preg_match('/^\$[a-zA-Z0-9_]+$/is', $source);
     }
 
     public function understandsArray(array $source): bool
@@ -43,7 +43,7 @@ final class RequestArgumentFactory implements ArgumentFactory
 
     public function createArgumentFromString(string $source): Argument
     {
-        Assert::startsWith($source, "$");
+        Assert::true($this->understandsString($source));
 
         /** @var string $key */
         $key = substr($source, 1);

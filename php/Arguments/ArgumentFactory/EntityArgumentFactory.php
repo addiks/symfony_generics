@@ -41,7 +41,10 @@ final class EntityArgumentFactory implements ArgumentFactory
 
     public function understandsString(string $source): bool
     {
-        return strpos($source, '#') > 0;
+        /** @var int $hasPosition */
+        $hasPosition = strpos($source, '#');
+
+        return $hasPosition > 0 && strlen($source) > $hasPosition + 1;
     }
 
     public function understandsArray(array $source): bool
@@ -51,7 +54,7 @@ final class EntityArgumentFactory implements ArgumentFactory
 
     public function createArgumentFromString(string $source): Argument
     {
-        Assert::contains($source, '#');
+        Assert::true($this->understandsString($source));
 
         [$entityClass, $idSource] = explode('#', $source);
 
