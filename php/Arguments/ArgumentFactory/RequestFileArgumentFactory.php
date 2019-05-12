@@ -45,7 +45,13 @@ final class RequestFileArgumentFactory implements ArgumentFactory
     {
         Assert::startsWith($source, '$files.');
 
-        [, $key, $property] = explode(".", $source);
+        if (substr_count($source, '.') > 1) {
+            [, $key, $property] = explode(".", $source);
+
+        } else {
+            $property = 'content';
+            [, $key] = explode(".", $source);
+        }
 
         return new RequestFileArgument($this->requestStack, $key, $property);
     }

@@ -43,8 +43,6 @@ final class RequestPayloadArgumentFactory implements ArgumentFactory
 
     public function createArgumentFromString(string $source): Argument
     {
-        Assert::eq('$', $source);
-
         return new RequestPayloadArgument($this->requestStack);
     }
 
