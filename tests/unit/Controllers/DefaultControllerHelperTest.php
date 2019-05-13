@@ -24,6 +24,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
+use Doctrine\Common\Persistence\ObjectRepository;
 
 final class DefaultControllerHelperTest extends TestCase
 {
@@ -94,6 +96,59 @@ final class DefaultControllerHelperTest extends TestCase
             $this->eventDispatcher,
             $this->requestStack
         );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRenderTemplate()
+    {
+        $this->twig->expects($this->once())->method('render')->with(
+            $this->equalTo('some-template'),
+            $this->equalTo(['foo', 'bar'])
+        )->willReturn('some-response');
+
+        /** @var Response $actualResult */
+        $actualResult = $this->controllerHelper->renderTemplate('some-template', ['foo', 'bar']);
+
+        $this->assertEquals(new Response('some-response'), $actualResult);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldFindEntity()
+    {
+        $this->entityManager->expects($this->once())->method('find')->with(
+            $this->equalTo('some-class'),
+            $this->equalTo('foo')
+        )->willReturn('some-entity');
+
+        /** @var mixed $actualResult */
+        $actualResult = $this->controllerHelper->findEntity('some-class', 'foo');
+
+        $this->assertEquals('some-entity', $actualResult);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldFindEntities()
+    {
+        /** @var ObjectRepository $repository */
+        $repository = $this->createMock(ObjectRepository::class);
+        $repository->method('findBy')->with(
+            $this->equalTo(['foo' => 'bar'])
+        )->willReturn(['some-entity', 'some-other-entity']);
+
+        $this->entityManager->expects($this->once())->method('getRepository')->with(
+            $this->equalTo('some-class')
+        )->willReturn($repository);
+
+        /** @var mixed $actualResult */
+        $actualResult = $this->controllerHelper->findEntities('some-class', ['foo' => 'bar']);
+
+        $this->assertEquals(['some-entity', 'some-other-entity'], $actualResult);
     }
 
     /**
