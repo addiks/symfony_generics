@@ -15,6 +15,9 @@ use Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentFactoryAggregate;
 use Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentFactory;
 use stdClass;
 use InvalidArgumentException;
+use Addiks\SymfonyGenerics\Arguments\Argument;
+use Addiks\SymfonyGenerics\Arguments\LiteralArgument;
+use Addiks\SymfonyGenerics\Arguments\EntityArgument;
 
 final class ArgumentFactoryAggregateTest extends TestCase
 {
@@ -128,6 +131,134 @@ final class ArgumentFactoryAggregateTest extends TestCase
             [true,  ["foo"], false, true,  false],
             [true,  ["foo"], false, false, true],
         );
+    }
+
+    /**
+     * @test
+     * @dataProvider dataProviderForShouldCreateArgumentFromString
+     */
+    public function shouldCreateArgumentFromString(
+        $expectedResult,
+        string $source,
+        bool $au,
+        ?Argument $ar,
+        bool $bu,
+        ?Argument $br,
+        bool $cu,
+        ?Argument $cr,
+        bool $expectException
+    ) {
+        if ($expectException) {
+            $this->expectException(InvalidArgumentException::class);
+        }
+
+        $this->innerArgumentFactoryA->expects($this->any())->method('understandsString')->with(
+            $this->equalTo($source)
+        )->willReturn($au);
+        $this->innerArgumentFactoryB->expects($this->any())->method('understandsString')->with(
+            $this->equalTo($source)
+        )->willReturn($bu);
+        $this->innerArgumentFactoryC->expects($this->any())->method('understandsString')->with(
+            $this->equalTo($source)
+        )->willReturn($cu);
+
+        $this->innerArgumentFactoryA->expects($this->any())->method('createArgumentFromString')->with(
+            $this->equalTo($source)
+        )->willReturn($ar);
+        $this->innerArgumentFactoryB->expects($this->any())->method('createArgumentFromString')->with(
+            $this->equalTo($source)
+        )->willReturn($br);
+        $this->innerArgumentFactoryC->expects($this->any())->method('createArgumentFromString')->with(
+            $this->equalTo($source)
+        )->willReturn($cr);
+
+        /** @var mixed $actualResult */
+        $actualResult = $this->factoryAggregate->createArgumentFromString($source);
+
+        $this->assertEquals($expectedResult, $actualResult);
+    }
+
+    public function dataProviderForShouldCreateArgumentFromString()
+    {
+        return array(
+            [new LiteralArgument(true), 'foo', true, new LiteralArgument(true), false, null, false, null, false],
+            [new LiteralArgument(true), 'foo', false, null, true, new LiteralArgument(true), true, new LiteralArgument(false), false],
+            [new LiteralArgument(true), 'foo', false, null, false, null, true, new LiteralArgument(true), false],
+            [null, 'foo', false, null, false, null, false, null, true],
+        );
+    }
+
+    /**
+     * @test
+     * @dataProvider dataProviderForShouldCreateArgumentFromArray
+     */
+    public function shouldCreateArgumentFromArray(
+        $expectedResult,
+        array $source,
+        bool $au,
+        ?Argument $ar,
+        bool $bu,
+        ?Argument $br,
+        bool $cu,
+        ?Argument $cr,
+        bool $expectException
+    ) {
+        if ($expectException) {
+            $this->expectException(InvalidArgumentException::class);
+        }
+
+        $this->innerArgumentFactoryA->expects($this->any())->method('understandsArray')->with(
+            $this->equalTo($source)
+        )->willReturn($au);
+        $this->innerArgumentFactoryB->expects($this->any())->method('understandsArray')->with(
+            $this->equalTo($source)
+        )->willReturn($bu);
+        $this->innerArgumentFactoryC->expects($this->any())->method('understandsArray')->with(
+            $this->equalTo($source)
+        )->willReturn($cu);
+
+        $this->innerArgumentFactoryA->expects($this->any())->method('createArgumentFromArray')->with(
+            $this->equalTo($source)
+        )->willReturn($ar);
+        $this->innerArgumentFactoryB->expects($this->any())->method('createArgumentFromArray')->with(
+            $this->equalTo($source)
+        )->willReturn($br);
+        $this->innerArgumentFactoryC->expects($this->any())->method('createArgumentFromArray')->with(
+            $this->equalTo($source)
+        )->willReturn($cr);
+
+        /** @var mixed $actualResult */
+        $actualResult = $this->factoryAggregate->createArgumentFromArray($source);
+
+        $this->assertEquals($expectedResult, $actualResult);
+    }
+
+    public function dataProviderForShouldCreateArgumentFromArray()
+    {
+        return array(
+            [new LiteralArgument(true), ['foo'], true, new LiteralArgument(true), false, null, false, null, false],
+            [new LiteralArgument(true), ['foo'], false, null, true, new LiteralArgument(true), true, new LiteralArgument(false), false],
+            [new LiteralArgument(true), ['foo'], false, null, false, null, true, new LiteralArgument(true), false],
+            [null, ['foo'], false, null, false, null, false, null, true],
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldNotUnderstandAnythingWihtoutInnerFactories()
+    {
+        $this->assertFalse((new ArgumentFactoryAggregate([]))->understandsString(""));
+        $this->assertFalse((new ArgumentFactoryAggregate([]))->understandsArray([]));
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectConstructorBeingCalledTwice()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->factoryAggregate->__construct([]);
     }
 
 }

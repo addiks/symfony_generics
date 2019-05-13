@@ -58,6 +58,7 @@ final class ArgumentCallFactoryTest extends TestCase
             [false, '::b'],
             [false, 'a::'],
             [false, '::'],
+            [false, ''],
         );
     }
 
@@ -116,6 +117,19 @@ final class ArgumentCallFactoryTest extends TestCase
             [null, '::b', true],
             [null, '::', true],
         );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldCreateArgumentsFromArgumentsInString()
+    {
+        $this->argumentFactory->expects($this->exactly(3))->method('createArgumentFromString')->withConsecutive(
+            [$this->equalTo('a')],
+            [$this->equalTo('b')],
+            [$this->equalTo('some-callee')]
+        )->willReturn($this->createMock(Argument::class));
+        $this->factory->createArgumentFromString('some-callee::someMethod(a, b)');
     }
 
     /**

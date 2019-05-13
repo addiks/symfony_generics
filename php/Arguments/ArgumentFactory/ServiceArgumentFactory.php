@@ -44,7 +44,7 @@ final class ServiceArgumentFactory implements ArgumentFactory
 
     public function createArgumentFromString(string $source): Argument
     {
-        Assert::startsWith($source, '@');
+        Assert::true($this->understandsString($source));
 
         /** @var string $serviceId */
         $serviceId = substr($source, 1);
@@ -54,9 +54,9 @@ final class ServiceArgumentFactory implements ArgumentFactory
 
     public function createArgumentFromArray(array $source): Argument
     {
-        Assert::keyExists($source, 'service-id');
+        Assert::true($this->understandsArray($source));
 
-        return new ServiceArgument($this->container, $source['service-id']);
+        return new ServiceArgument($this->container, new LiteralArgument($source['service-id']));
     }
 
 }

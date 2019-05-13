@@ -60,13 +60,11 @@ final class ArgumentCallFactory implements ArgumentFactory
             $argumentsSources = str_replace(')', '', $argumentsSources);
 
             foreach (explode(',', $argumentsSources) as $argumentsSource) {
-                $arguments[] = $this->argumentFactory->createArgumentFromString($argumentsSource);
+                $arguments[] = $this->argumentFactory->createArgumentFromString(trim($argumentsSource));
             }
 
             $sourceWithoutArguments = substr($source, 0, $argumentsPosition);
         }
-
-        Assert::contains($sourceWithoutArguments, '::');
 
         [$calleeSource, $methodName] = explode('::', $sourceWithoutArguments);
 

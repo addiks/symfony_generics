@@ -41,10 +41,7 @@ final class EntityArgumentFactory implements ArgumentFactory
 
     public function understandsString(string $source): bool
     {
-        /** @var int $hasPosition */
-        $hasPosition = strpos($source, '#');
-
-        return $hasPosition > 0 && strlen($source) > $hasPosition + 1;
+        return 1 === preg_match('/^[a-zA-Z0-9_\\\\]+\\#.+/is', $source);
     }
 
     public function understandsArray(array $source): bool

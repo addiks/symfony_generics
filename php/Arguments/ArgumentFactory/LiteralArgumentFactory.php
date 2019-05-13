@@ -31,8 +31,8 @@ final class LiteralArgumentFactory implements ArgumentFactory
 
     public function createArgumentFromString(string $source): Argument
     {
-        if ($source[0] === '"' || $source[0] === "'") {
-            $source = substr($source, 1, strlen($source) - 2);
+        if (preg_match("/^\'(.*)\'$/is", $source, $matches) || preg_match("/^\"(.*)\"$/is", $source, $matches)) {
+            $source = $matches[1];
         }
 
         return new LiteralArgument($source);
