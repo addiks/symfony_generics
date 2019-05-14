@@ -13,6 +13,7 @@ namespace Addiks\SymfonyGenerics\Events;
 use PHPUnit\Framework\TestCase;
 use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 use stdClass;
+use InvalidArgumentException;
 
 final class EntityInteractionEventTest extends TestCase
 {
@@ -35,6 +36,38 @@ final class EntityInteractionEventTest extends TestCase
             "stdClass",
             "some-entity-id",
             $this->entity,
+            "someMethod",
+            ['foo', 'bar']
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectNonExistingClass()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new EntityInteractionEvent(
+            "doesNotExist",
+            "some-entity-id",
+            $this->entity,
+            "someMethod",
+            ['foo', 'bar']
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRejectNonObjectEntity()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new EntityInteractionEvent(
+            "stdClass",
+            "some-entity-id",
+            "entity",
             "someMethod",
             ['foo', 'bar']
         );

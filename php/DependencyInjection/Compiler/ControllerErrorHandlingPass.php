@@ -44,9 +44,10 @@ final class ControllerErrorHandlingPass implements CompilerPassInterface
                 $errorHandlerDefinition = $container->getDefinition($errorHandlerServiceId);
 
                 foreach ($taggedControllers as $controllerServiceId => $tags) {
-                    /** @var array $tagData */
+                    /** @var array $tags */
 
                     foreach ($tags as $tagData) {
+                        /** @var array $tagData */
                         $tagData = array_merge([
                             'decorates' => $controllerServiceId
                         ], $errorHandlerTag, $tagData);
@@ -56,7 +57,6 @@ final class ControllerErrorHandlingPass implements CompilerPassInterface
                 }
             }
         }
-
     }
 
 }
