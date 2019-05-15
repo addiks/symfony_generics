@@ -80,6 +80,7 @@ final class DecoratorTemplateCompilerPass implements CompilerPassInterface
         /** @var array<string, mixed> $newDecoratorTags */
         $newDecoratorTags = $decoratorDefinition->getTags();
 
+        Assert::keyExists($newDecoratorTags, $this->tagNameDecorates);
         unset($newDecoratorTags[$this->tagNameDecorates]);
 
         $decoratorDefinition->setTags($newDecoratorTags);
