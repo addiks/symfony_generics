@@ -106,11 +106,6 @@ final class GenericExceptionResponseController
         foreach ($options['exception-responses'] as $exceptionClass => $responseData) {
             /** @var array<string, mixed> $responseData */
 
-            Assert::true(
-                is_a($exceptionClass, Exception::class, true) ||
-                is_a($exceptionClass, Throwable::class, true)
-            );
-
             /** @var string $responseCode */
             $responseCode = '500';
 
@@ -119,6 +114,7 @@ final class GenericExceptionResponseController
             }
 
             $responseData = array_merge([
+                'exception-class' => is_int($exceptionClass) ?null :$exceptionClass,
                 'message' => '', # empty => exception message used
                 'code' => $responseCode,
                 'flash-type' => '', # empty => no message triggered
@@ -128,7 +124,12 @@ final class GenericExceptionResponseController
                 'filter' => '',
             ], $responseData);
 
-            $this->exceptionResponses[$exceptionClass] = $responseData;
+            Assert::true(
+                is_a($responseData['exception-class'], Throwable::class, true) ||
+                empty($responseData['exception-class'])
+            );
+
+            $this->exceptionResponses[] = $responseData;
         }
     }
 
@@ -181,14 +182,42 @@ final class GenericExceptionResponseController
         } catch (Throwable $exception) {
             $this->controllerHelper->handleException($exception);
 
-            foreach ($this->exceptionResponses as $exceptionClass => $responseData) {
-                if (is_a($exception, $exceptionClass)) {
-                    if (!empty($responseData['filter'])) {
-                        if (!preg_match("/" . $responseData['filter'] . "/is", $exception->getMessage())) {
-                            continue;
-                        }
-                    }
+            foreach ($this->exceptionResponses as $responseData) {
 
+                if (!empty($responseData['exception-class']) && !is_a($exception, $responseData['exception-class'])) {
+                    continue;
+                }
+
+                if (!empty($responseData['filter'])) {
+                    if (!preg_match("/" . $responseData['filter'] . "/is", $exception->getMessage())) {
+                        continue;
+                    }
+                }
+
+                if (!empty($responseData['flash-type'])) {
+                    /** @var string $flashMessage */
+                    $flashMessage = sprintf($responseData['flash-message'], $exception->getMessage());
+
+                    $this->controllerHelper->addFlashMessage($flashMessage, $responseData['flash-type']);
+                }
+
+                if (!empty($responseData['redirect-route'])) {
+                    /** @var array $redirectRouteParameters */
+                    $redirectRouteParameters = array_merge(
+                        $request->attributes->get('_route_params'),
+                        $this->argumentBuilder->buildArguments(
+                            $responseData['redirect-route-parameters'],
+                            $request
+                        )
+                    );
+
+                    $response = $this->controllerHelper->redirectToRoute(
+                        $responseData['redirect-route'],
+                        $redirectRouteParameters,
+                        $responseData['code']
+                    );
+
+                } else {
                     /** @var string $responseMessage */
                     $responseMessage = $responseData['message'];
 
@@ -196,35 +225,10 @@ final class GenericExceptionResponseController
                         $responseMessage = $exception->getMessage();
                     }
 
-                    if (!empty($responseData['flash-type'])) {
-                        /** @var string $flashMessage */
-                        $flashMessage = sprintf($responseData['flash-message'], $exception->getMessage());
-
-                        $this->controllerHelper->addFlashMessage($flashMessage, $responseData['flash-type']);
-                    }
-
-                    if (!empty($responseData['redirect-route'])) {
-                        /** @var array $redirectRouteParameters */
-                        $redirectRouteParameters = array_merge(
-                            $request->attributes->get('_route_params'),
-                            $this->argumentBuilder->buildArguments(
-                                $responseData['redirect-route-parameters'],
-                                $request
-                            )
-                        );
-
-                        $response = $this->controllerHelper->redirectToRoute(
-                            $responseData['redirect-route'],
-                            $redirectRouteParameters,
-                            $responseData['code']
-                        );
-
-                    } else {
-                        $response = new Response($responseMessage, $responseData['code']);
-                    }
-
-                    break;
+                    $response = new Response($responseMessage, $responseData['code']);
                 }
+
+                break;
             }
 
             if (is_null($response)) {

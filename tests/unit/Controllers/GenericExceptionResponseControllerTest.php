@@ -21,6 +21,7 @@ use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\ParameterBag;
+use ErrorException;
 
 final class GenericExceptionResponseControllerTest extends TestCase
 {
@@ -154,6 +155,10 @@ final class GenericExceptionResponseControllerTest extends TestCase
             'inner-controller' => $this->innerController,
             'inner-controller-method' => "serialize",
             'exception-responses' => [
+                ErrorException::class => [
+                    'flash-type' => 'danger',
+                    'flash-message' => 'Error happened!'
+                ],
                 InvalidArgumentException::class => [
                     'flash-type' => 'danger',
                     'flash-message' => 'Something happened: %s'
@@ -181,6 +186,57 @@ final class GenericExceptionResponseControllerTest extends TestCase
 
         $this->assertEquals("Lorem ipsum!", $response->getContent());
         $this->assertEquals(500, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldFilterByExceptionMessage()
+    {
+        /** @var mixed $controller */
+        $controller = new GenericExceptionResponseController($this->controllerHelper, $this->argumentBuilder, [
+            'inner-controller' => $this->innerController,
+            'inner-controller-method' => "serialize",
+            'exception-responses' => [
+                [
+                    'filter' => 'f..',
+                    'flash-type' => 'danger',
+                    'flash-message' => 'Foohoohoo'
+                ],
+                [
+                    'filter' => 'b..',
+                    'flash-type' => 'danger',
+                    'flash-message' => 'Barharhar'
+                ],
+                [
+                    'filter' => 'b.z',
+                    'flash-type' => 'danger',
+                    'flash-message' => 'Bazhazhaz'
+                ],
+                [
+                    'filter' => 'b..',
+                    'flash-type' => 'danger',
+                    'flash-message' => 'Barhar'
+                ],
+            ]
+        ]);
+
+        $this->innerController->method("serialize")->will($this->returnCallback(
+            function () {
+                throw new InvalidArgumentException("Lorem bar ipsum!");
+            }
+        ));
+
+        $this->controllerHelper->expects($this->once())->method('handleException');
+        $this->controllerHelper->expects($this->once())->method('addFlashMessage')->with(
+            $this->equalTo('Barharhar'),
+            $this->equalTo('danger')
+        );
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $controller->executeInnerControllerSafely($request);
     }
 
     /**
