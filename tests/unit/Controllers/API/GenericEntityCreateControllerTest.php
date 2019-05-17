@@ -24,6 +24,7 @@ use InvalidArgumentException;
 use Symfony\Component\Finder\Exception\AccessDeniedException;
 use ReflectionException;
 use ErrorException;
+use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 
 final class GenericEntityCreateControllerTest extends TestCase
 {
@@ -65,6 +66,16 @@ final class GenericEntityCreateControllerTest extends TestCase
         );
 
         $this->controllerHelper->expects($this->once())->method('flushORM');
+        $this->controllerHelper->expects($this->once())->method('dispatchEvent')->with(
+            $this->equalTo('symfony_generics.entity_interaction'),
+            $this->equalTo(new EntityInteractionEvent(
+                SampleEntity::class,
+                null, # TODO: get id via reflection
+                new SampleEntity(),
+                "__construct",
+                []
+            ))
+        );
         $this->controllerHelper->expects($this->once())->method('persistEntity')->with(
             $this->equalTo(new SampleEntity())
         );

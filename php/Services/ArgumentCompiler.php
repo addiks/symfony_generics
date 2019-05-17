@@ -279,7 +279,10 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
 
         $argumentConfiguration = trim($argumentConfiguration);
 
-        if (is_int(strpos($argumentConfiguration, '::'))) {
+        if (empty($argumentConfiguration)) {
+            $argumentValue = "";
+
+        } elseif (is_int(strpos($argumentConfiguration, '::'))) {
             [$factoryClass, $factoryMethod] = explode('::', $argumentConfiguration);
 
             /** @var array<string> $callArgumentConfigurations */
@@ -471,6 +474,8 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             $id = $this->resolveStringArgumentConfiguration($idRaw, $request);
 
             $argumentValue = $this->entityManager->find($entityClass, $id);
+
+            Assert::object($argumentValue, sprintf("Did not find entity %s with id '%s'!", $entityClass, $id));
 
         } else {
             $argumentValue = $argumentConfiguration;

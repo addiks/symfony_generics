@@ -98,33 +98,4 @@ final class BarTest extends TestCase
         $compilerPass->process($container);
     }
 
-    /**
-     * @test
-     */
-    public function shouldExpectTypeTagInDecoratorTags()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        /** @var Definition $decoratorDefinition */
-        $decoratorDefinition = $this->createMock(Definition::class);
-        $decoratorDefinition->method('getTags')->willReturn([
-        ]);
-
-        /** @var ContainerBuilder $container */
-        $container = $this->createMock(ContainerBuilder::class);
-        $container->expects($this->once())->method('findTaggedServiceIds')->with(
-            $this->equalTo("some.tag.name")
-        )->willReturn([
-            'some-decorator-service-id' => [
-                ['decorates' => 'some-decorated-service-id', 'some_param' => 'some-resolved']
-            ]
-        ]);
-        $container->expects($this->once())->method('getDefinition')->with(
-            $this->equalTo('some-decorator-service-id')
-        )->willReturn($decoratorDefinition);
-
-        $compilerPass = new DecoratorTemplateCompilerPass("some.tag.name");
-        $compilerPass->process($container);
-    }
-
 }

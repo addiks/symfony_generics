@@ -110,7 +110,7 @@ final class GenericExceptionResponseController
             $responseCode = '500';
 
             if (isset($responseData['redirect-route'])) {
-                $responseCode = '301';
+                $responseCode = '303';
             }
 
             $responseData = array_merge([

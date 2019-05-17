@@ -85,7 +85,7 @@ final class GenericEntityCreateController
     private $successRedirectArguments;
 
     /**
-     * @var integer
+     * @var int
      */
     private $successRedirectStatus;
 
@@ -98,6 +98,9 @@ final class GenericEntityCreateController
         Assert::null($this->controllerHelper);
         Assert::keyExists($options, 'entity-class');
 
+        /** @var int $defaultRedirectStatus */
+        $defaultRedirectStatus = 303;
+
         $options = array_merge([
             'calls' => [],
             'success-response' => "object created",
@@ -106,7 +109,7 @@ final class GenericEntityCreateController
             'arguments' => [],
             'success-redirect' => null,
             'success-redirect-arguments' => [],
-            'success-redirect-status' => 303,
+            'success-redirect-status' => $defaultRedirectStatus,
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
@@ -119,7 +122,7 @@ final class GenericEntityCreateController
         $this->constructArguments = $options['arguments'];
         $this->successRedirectRoute = $options['success-redirect'];
         $this->successRedirectArguments = $options['success-redirect-arguments'];
-        $this->successRedirectStatus = (int)$options['success-redirect-status'];
+        $this->successRedirectStatus = $options['success-redirect-status'];
 
         foreach ($options['calls'] as $methodName => $arguments) {
             /** @var array $arguments */

@@ -408,7 +408,7 @@ final class GenericExceptionResponseControllerTest extends TestCase
         $this->controllerHelper->expects($this->once())->method('redirectToRoute')->with(
             $this->equalTo('some_redirect_route'),
             $this->equalTo([]),
-            $this->equalTo(301)
+            $this->equalTo(303)
         )->willReturn($redirectResponse);
 
         /** @var Request $request */
@@ -453,7 +453,7 @@ final class GenericExceptionResponseControllerTest extends TestCase
         $this->controllerHelper->expects($this->once())->method('redirectToRoute')->with(
             $this->equalTo('some_redirect_route'),
             $this->equalTo([]),
-            $this->equalTo(301)
+            $this->equalTo(303)
         )->willReturn($redirectResponse);
 
         /** @var Request $request */
