@@ -85,12 +85,15 @@ final class GenericServiceInvokeController
         Assert::keyExists($options, 'service');
         Assert::keyExists($options, 'method');
 
+        /** @var int $defaultRedirectStatus */
+        $defaultRedirectStatus = 303;
+
         $options = array_merge([
             'arguments' => [],
             'authorization-attributes' => null,
             'success-redirect' => null,
             'success-redirect-arguments' => [],
-            'success-redirect-status' => 303,
+            'success-redirect-status' => $defaultRedirectStatus,
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
@@ -102,7 +105,7 @@ final class GenericServiceInvokeController
         $this->authorizationAttribute = $options['authorization-attributes'];
         $this->successRedirectRoute = $options['success-redirect'];
         $this->successRedirectArguments = $options['success-redirect-arguments'];
-        $this->successRedirectStatus = (int)$options['success-redirect-status'];
+        $this->successRedirectStatus = $options['success-redirect-status'];
     }
 
     public function __invoke(): Response

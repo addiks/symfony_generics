@@ -130,6 +130,8 @@ final class GenericServiceInvokeControllerTest extends TestCase
             $this->equalTo('some_service')
         )->willReturn($service);
 
+        $this->controllerHelper->expects($this->once())->method('flushORM');
+
         $this->argumentCompiler->expects($this->once())->method('buildCallArguments')->with(
             $this->equalTo(new ReflectionMethod($service, 'doFoo')),
             $this->equalTo(['lorem' => 'ipsum']),
@@ -154,6 +156,49 @@ final class GenericServiceInvokeControllerTest extends TestCase
         $actualResponse = $controller->callService($request);
 
         $this->assertEquals($expectedResponseContent, $actualResponse->getContent());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRedirectWhenNeeded()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var SampleService $service */
+        $service = $this->createMock(SampleService::class);
+
+        $this->container->expects($this->once())->method('get')->with(
+            $this->equalTo('some_service')
+        )->willReturn($service);
+
+        $this->argumentCompiler->expects($this->once())->method('buildCallArguments')->with(
+            $this->equalTo(new ReflectionMethod($service, 'doFoo')),
+            $this->equalTo(['lorem' => 'ipsum']),
+            $this->identicalTo($request)
+        )->willReturn(['lorem', 'ipsum']);
+
+        $controller = new GenericServiceInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            $this->container,
+            [
+                'service' => 'some_service',
+                'method' => 'doFoo',
+                'arguments' => ['lorem' => 'ipsum'],
+                'success-redirect' => 'some_redirect_route'
+            ]
+        );
+
+        $this->controllerHelper->expects($this->once())->method('redirectToRoute')->with(
+            $this->equalTo("some_redirect_route"),
+            $this->equalTo([]),
+            $this->equalTo(303)
+        );
+
+        $controller->callService($request);
+
     }
 
     /**
