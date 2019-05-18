@@ -18,6 +18,7 @@ use InvalidArgumentException;
 use Symfony\Component\Finder\Exception\AccessDeniedException;
 use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntity;
 use Symfony\Component\HttpFoundation\Request;
+use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 
 final class GenericEntityRemoveControllerTest extends TestCase
 {
@@ -138,6 +139,15 @@ final class GenericEntityRemoveControllerTest extends TestCase
             $this->equalTo(SampleEntity::class),
             $this->equalTo('some-id')
         )->willReturn($entity);
+        $this->controllerHelper->expects($this->once())->method('dispatchEvent')->with(
+            $this->equalTo("symfony_generics.entity_interaction"),
+            $this->equalTo(new EntityInteractionEvent(
+                SampleEntity::class,
+                'some-id',
+                $entity,
+                "__destruct"
+            ))
+        );
 
         $this->controllerHelper->expects($this->once())->method('removeEntity')->with(
             $this->identicalTo($entity)

@@ -26,6 +26,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Doctrine\Common\Persistence\ObjectRepository;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\EventDispatcher\Event;
 
 final class DefaultControllerHelperTest extends TestCase
 {
@@ -184,6 +186,43 @@ final class DefaultControllerHelperTest extends TestCase
     {
         $this->entityManager->expects($this->once())->method('flush');
         $this->controllerHelper->flushORM();
+    }
+
+    /**
+     * @test
+     */
+    public function shouldHaveRequestStack()
+    {
+        $this->assertSame($this->requestStack, $this->controllerHelper->getRequestStack());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldHaveCurrentRequest()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->requestStack->method("getCurrentRequest")->willReturn($request);
+
+        $this->assertSame($request, $this->controllerHelper->getCurrentRequest());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldDispatchEvent()
+    {
+        /** @var Event $event */
+        $event = $this->createMock(Event::class);
+
+        $this->eventDispatcher->expects($this->once())->method('dispatch')->with(
+            $this->equalTo('foo'),
+            $this->equalTo($event)
+        )->willReturn($event);
+
+        $this->assertSame($event, $this->controllerHelper->dispatchEvent("foo", $event));
     }
 
     /**

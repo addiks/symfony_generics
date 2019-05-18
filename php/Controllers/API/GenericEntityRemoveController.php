@@ -68,7 +68,7 @@ final class GenericEntityRemoveController
         Assert::isInstanceOf($request, Request::class, "Cannot use controller outside of request-scope!");
 
         /** @var string $entityId */
-        $entityId = (string)$request->get($this->entityIdKey);
+        $entityId = $request->get($this->entityIdKey);
 
         return $this->removeEntity($entityId);
     }

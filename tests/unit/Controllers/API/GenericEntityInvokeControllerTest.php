@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 use ReflectionMethod;
 use InvalidArgumentException;
 use Symfony\Component\Finder\Exception\AccessDeniedException;
+use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 
 final class GenericEntityInvokeControllerTest extends TestCase
 {
@@ -68,6 +69,18 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->equalTo(get_class($this->argumentCompiler)),
             $this->equalTo("123")
         )->willReturn($this->argumentCompiler);
+
+        $this->controllerHelper->expects($this->once())->method('flushORM');
+        $this->controllerHelper->expects($this->once())->method('dispatchEvent')->with(
+            $this->equalTo("symfony_generics.entity_interaction"),
+            $this->equalTo(new EntityInteractionEvent(
+                get_class($this->argumentCompiler),
+                "123",
+                $this->argumentCompiler,
+                'buildArguments',
+                [['foo' => 'bar'], $request]
+            ))
+        );
 
         $this->argumentCompiler->expects($this->once())->method('buildCallArguments')->with(
             $this->equalTo(new ReflectionMethod(get_class($this->argumentCompiler), 'buildArguments')),
