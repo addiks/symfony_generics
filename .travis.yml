@@ -6,6 +6,7 @@ notifications:
 install:
 - composer install
 script:
-- vendor/bin/phpunit
 - vendor/bin/psalm
-- vendor/bin/infection -s -vv --min-msi=50
+- vendor/bin/phpunit tests/unit/
+- vendor/bin/phpunit tests/integration/
+- vendor/bin/infection -s -vv --min-msi=90

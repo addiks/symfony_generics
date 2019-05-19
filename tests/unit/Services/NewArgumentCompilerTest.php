@@ -8,7 +8,7 @@
  * @author Gerrit Addiks <gerrit@addiks.de>
  */
 
-namespace Addiks;
+namespace Addiks\SymfonyGenerics\Tests\Unit\Services;
 
 use PHPUnit\Framework\TestCase;
 use Addiks\SymfonyGenerics\Services\NewArgumentCompiler;
