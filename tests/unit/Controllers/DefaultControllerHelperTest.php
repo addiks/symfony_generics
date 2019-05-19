@@ -300,7 +300,7 @@ final class DefaultControllerHelperTest extends TestCase
     /**
      * @test
      */
-    public function shouldDenyAccessUnlessGranted()
+    public function shouldDenyAccessWhenNotGranted()
     {
         $this->expectException(AccessDeniedException::class);
 
@@ -321,6 +321,22 @@ final class DefaultControllerHelperTest extends TestCase
 
             throw $exception;
         }
+    }
+
+    /**
+     * @test
+     */
+    public function shouldNotDenyAccessWhenGranted()
+    {
+        /** @var stdClass $subject */
+        $subject = $this->createMock(stdClass::class);
+
+        $this->authorization->expects($this->once())->method('isGranted')->with(
+            $this->equalTo("foo"),
+            $this->equalTo($subject)
+        )->willReturn(true);
+
+        $this->controllerHelper->denyAccessUnlessGranted("foo", $subject);
     }
 
 }

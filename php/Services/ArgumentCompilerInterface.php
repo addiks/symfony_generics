@@ -29,6 +29,7 @@ interface ArgumentCompilerInterface
         ReflectionFunctionAbstract $methodReflection,
         array $argumentsConfiguration,
         Request $request,
+        array $predefinedArguments = array(),
         array $additionalData = array()
     ): array;
 

@@ -27,4 +27,6 @@ interface ArgumentContextInterface
      */
     public function get(string $key);
 
+    public function clear(): void;
+
 }

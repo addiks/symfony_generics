@@ -40,4 +40,9 @@ final class ArgumentContext implements ArgumentContextInterface
         return $this->variables[$key];
     }
 
+    public function clear(): void
+    {
+        $this->variables = array();
+    }
+
 }
