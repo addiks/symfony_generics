@@ -208,7 +208,7 @@ final class ArgumentCompilerTest extends TestCase
         $request = $this->createMock(Request::class);
 
         $this->argumentCompiler->buildArguments([
-            'foo' => '%keyFoo',
+            'foo' => '%keyFoo%',
         ], $request);
     }
 
@@ -222,7 +222,7 @@ final class ArgumentCompilerTest extends TestCase
 
         /** @var array $actualResult */
         $actualResult = $this->argumentCompiler->buildArguments([
-            'foo' => '%keyFoo',
+            'foo' => '%keyFoo%',
         ], $request, [
             'keyFoo' => 'bar'
         ]);
@@ -241,7 +241,7 @@ final class ArgumentCompilerTest extends TestCase
         $request = $this->createMock(Request::class);
 
         $this->argumentCompiler->buildArguments([
-            'foo' => '%keyFoo.doSomethingImpossible',
+            'foo' => '%keyFoo.doSomethingImpossible%',
         ], $request, [
             'keyFoo' => $this->createMock(stdClass::class)
         ]);

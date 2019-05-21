@@ -20,6 +20,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Doctrine\ORM\EntityManager;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Addiks\SymfonyGenerics\Tests\Integration\Arguments\ServiceSample;
+use Symfony\Component\HttpFoundation\FileBag;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+
+require_once(__DIR__ . '/ServiceSample.php');
 
 final class ArgumentCompilerTest extends TestCase
 {
@@ -44,6 +49,11 @@ final class ArgumentCompilerTest extends TestCase
      */
     private $loader;
 
+    /**
+     * @var EntityManager
+     */
+    private $entityManager;
+
     public function setUp()
     {
         $this->container = new ContainerBuilder();
@@ -55,7 +65,9 @@ final class ArgumentCompilerTest extends TestCase
 
         $this->loader->load('services.xml');
 
-        $this->container->set('doctrine.orm.entity_manager', $this->createMock(EntityManager::class));
+        $this->entityManager = $this->createMock(EntityManager::class);
+
+        $this->container->set('doctrine.orm.entity_manager', $this->entityManager);
         $this->container->set('request_stack', new RequestStack());
 
         $this->oldCompiler = $this->container->get('symfony_generics.argument_compiler');
@@ -66,13 +78,38 @@ final class ArgumentCompilerTest extends TestCase
      * @test
      * @dataProvider dataProviderForShouldBuildArguments
      */
-    public function shouldBuildArguments($expectedResult, string $argumentsConfiguration, array $additionalData)
+    public function shouldBuildArguments($expectedResult, $argumentsConfiguration)
     {
         /** @var Request $request */
         $request = $this->createMock(Request::class);
         $request->method("getContent")->willReturn("request-content");
+        $request->method("get")->will($this->returnValueMap([
+            ['foo', null, 'foo-result'],
+        ]));
+
+        /** @var UploadedFile $file */
+        $file = $this->createMock(UploadedFile::class);
+        $file->method('getPathname')->willReturn('data://,some-file-content');
+        $file->method('getClientOriginalName')->willReturn('some-original-file-name');
+        $file->method('getFilename')->willReturn('some-file-name');
+        $file->method('getMimeType')->willReturn('some/mime-type');
+
+        $request->files = $this->createMock(FileBag::class);
+        $request->files->expects($this->any())->method('get')->with($this->equalTo('foo'))->willReturn($file);
+
+        $someService = new ServiceSample();
+
+        $this->entityManager->method('find')->will($this->returnValueMap([
+            ['Foo\\Bar\\Baz', 'foo-result', null, null, $someService],
+            ['Foo\\Bar\\Baz', '123', null, null, $someService],
+        ]));
 
         $this->container->get('request_stack')->push($request);
+
+        $this->container->set('some_service', $someService);
+
+        /** @var mixed $additionalData */
+        $additionalData = ['some_additional_argument' => 'addArgRes'];
 
         /** @var mixed $actualOldResult */
         $actualOldResult = $this->oldCompiler->buildArguments([$argumentsConfiguration], $request, $additionalData);
@@ -87,8 +124,25 @@ final class ArgumentCompilerTest extends TestCase
     public function dataProviderForShouldBuildArguments()
     {
         return array(
-            [null, "", []],
-            ["request-content", "$", []],
+            [null, ""],
+            ["literal", "literal"],
+            ["literal", "'literal'"],
+            ["literal", '"literal"'],
+            ["request-content", '$'],
+            ["foo-result", '$foo'],
+            ["some-file-content", '$files.foo'],
+            [$this->createMock(UploadedFile::class), '$files.foo.object'],
+            ["some-original-file-name", '$files.foo.originalname'],
+            ["some-file-name", '$files.foo.filename'],
+            ["some-file-content", '$files.foo.content'],
+            ["some/mime-type", '$files.foo.mimetype'],
+            [new ServiceSample(), 'Foo\\Bar\\Baz#123'],
+            [new ServiceSample(), 'Foo\\Bar\\Baz#$foo'],
+            ["#qwe#foo#", 'Foo\\Bar\\Baz#$foo::bar'],
+            ["#baz#foo#", 'Foo\\Bar\\Baz#$foo::bar(baz)'],
+            ["#qwe#foo#", '@some_service::bar'],
+            ["#asd#baz#", '@some_service::bar(\'asd\', baz)'],
+            ["addArgRes", '%some_additional_argument%'],
         );
     }
 

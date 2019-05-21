@@ -401,12 +401,19 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         } elseif ($argumentConfiguration[0] == "'" && $argumentConfiguration[strlen($argumentConfiguration) - 1] == "'") {
             $argumentValue = substr($argumentConfiguration, 1, strlen($argumentConfiguration) - 2);
 
+        } elseif ($argumentConfiguration[0] == '"' && $argumentConfiguration[strlen($argumentConfiguration) - 1] == '"') {
+            $argumentValue = substr($argumentConfiguration, 1, strlen($argumentConfiguration) - 2);
+
         } elseif ($argumentConfiguration == '$') {
             $argumentValue = $request->getContent(false);
 
         } elseif (substr($argumentConfiguration, 0, 7) === '$files.') {
             /** @var FileBag $files */
             $files = $request->files;
+
+            if (substr_count($argumentConfiguration, '.') <= 1) {
+                $argumentConfiguration .= ".content";
+            }
 
             [, $filesKey, $fileArgument] = explode(".", $argumentConfiguration);
 
@@ -436,9 +443,9 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         } elseif ($argumentConfiguration[0] == '@') {
             $argumentValue = $this->container->get(substr($argumentConfiguration, 1));
 
-        } elseif ($argumentConfiguration[0] == '%') {
+        } elseif ($argumentConfiguration[0] == '%' && $argumentConfiguration[-1] == '%') {
             /** @var string $key */
-            $key = substr($argumentConfiguration, 1);
+            $key = substr($argumentConfiguration, 1, strlen($argumentConfiguration) - 2);
 
             if (is_int(strpos($key, '.'))) {
                 [$key, $methodName] = explode('.', $key);
@@ -453,7 +460,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
                 Assert::methodExists($argumentValue, $methodName, sprintf(
                     "Missing method '%s' on '%s'!",
                     $methodName,
-                    $argumentConfiguration
+                    str_replace("%", "%%", $argumentConfiguration)
                 ));
 
                 $argumentValue = call_user_func([$argumentValue, $methodName]);
