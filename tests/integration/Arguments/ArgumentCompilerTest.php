@@ -106,10 +106,14 @@ final class ArgumentCompilerTest extends TestCase
 
         $this->container->get('request_stack')->push($request);
 
+        $this->container->set('some.service', $someService);
         $this->container->set('some_service', $someService);
 
-        /** @var mixed $additionalData */
-        $additionalData = ['some_additional_argument' => 'addArgRes'];
+        /** @var array $additionalData */
+        $additionalData = [
+            'some_additional_argument' => 'addArgRes',
+            'some_argument_service' => $someService
+        ];
 
         /** @var mixed $actualOldResult */
         $actualOldResult = $this->oldCompiler->buildArguments([$argumentsConfiguration], $request, $additionalData);
@@ -143,9 +147,12 @@ final class ArgumentCompilerTest extends TestCase
             [new ServiceSample(), 'Foo\\Bar\\Baz#$foo'],
             ["#qwe#foo#", 'Foo\\Bar\\Baz#$foo::bar'],
             ["#baz#foo#", 'Foo\\Bar\\Baz#$foo::bar(baz)'],
-            ["#qwe#foo#", '@some_service::bar'],
+            ["#qwe#foo#", '@some.service::bar'],
+            ["#qwe#foo#", '  @some.service::bar  '],
+            ["#qwe#foo#", "\n@some.service::bar\n"],
             ["#asd#baz#", '@some_service::bar(\'asd\', baz)'],
             ["addArgRes", '%some_additional_argument%'],
+            ["#qwe#foo#", '%some_argument_service%::bar'],
         );
     }
 

@@ -399,6 +399,15 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
                         }
                     }
 
+                    if ($factoryClass[0] === '%' && $factoryClass[-1] === '%') {
+                        /** @var string $key */
+                        $key = substr($factoryClass, 1, strlen($factoryClass) - 2);
+
+                        if (isset($additionalData[$key])) {
+                            $argumentConfiguration = [$additionalData[$key], $factoryMethod];
+                        }
+                    }
+
                     # Create by static factory-method of other class
                     $argumentValue = call_user_func_array($argumentConfiguration, $callArguments);
                 }

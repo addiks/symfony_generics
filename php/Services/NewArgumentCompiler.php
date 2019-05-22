@@ -169,7 +169,7 @@ final class NewArgumentCompiler implements ArgumentCompilerInterface
                 $argumentConfiguration
             ));
 
-            $argument = $this->argumentFactory->createArgumentFromString($argumentConfiguration);
+            $argument = $this->argumentFactory->createArgumentFromString(trim($argumentConfiguration));
         }
 
         return $argument->resolve();
