@@ -9,4 +9,4 @@ script:
 - vendor/bin/psalm
 - vendor/bin/phpunit tests/unit/
 - vendor/bin/phpunit tests/integration/
-- vendor/bin/infection -s -vv --min-msi=90
+- vendor/bin/infection -s -vv --min-msi=80
