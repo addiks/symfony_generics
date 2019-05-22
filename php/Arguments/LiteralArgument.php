@@ -32,6 +32,16 @@ final class LiteralArgument implements Argument
 
     public function resolve()
     {
+        if ($this->literal === 'true') {
+            return true;
+
+        } elseif ($this->literal === 'false') {
+            return false;
+
+        } elseif ($this->literal === 'null') {
+            return null;
+        }
+
         return $this->literal;
     }
 

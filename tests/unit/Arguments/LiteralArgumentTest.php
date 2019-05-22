@@ -25,4 +25,31 @@ final class LiteralArgumentTest extends TestCase
         $this->assertEquals("some-literal", $argument->resolve());
     }
 
+    /**
+     * @test
+     */
+    public function shouldResolveTrueLiteral()
+    {
+        $argument = new LiteralArgument("true");
+        $this->assertEquals(true, $argument->resolve());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldResolveFalseLiteral()
+    {
+        $argument = new LiteralArgument("false");
+        $this->assertEquals(false, $argument->resolve());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldResolveNullLiteral()
+    {
+        $argument = new LiteralArgument("null");
+        $this->assertEquals(null, $argument->resolve());
+    }
+
 }

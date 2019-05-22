@@ -125,6 +125,9 @@ final class ArgumentCompilerTest extends TestCase
     {
         return array(
             [null, ""],
+            [true, "true"],
+            [false, "false"],
+            [null, "null"],
             ["literal", "literal"],
             ["literal", "'literal'"],
             ["literal", '"literal"'],

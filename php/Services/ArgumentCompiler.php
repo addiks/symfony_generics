@@ -282,6 +282,15 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         if (empty($argumentConfiguration)) {
             $argumentValue = "";
 
+        } elseif ($argumentConfiguration === 'true') {
+            $argumentValue = true;
+
+        } elseif ($argumentConfiguration === 'false') {
+            $argumentValue = false;
+
+        } elseif ($argumentConfiguration === 'null') {
+            $argumentValue = null;
+
         } elseif (is_int(strpos($argumentConfiguration, '::'))) {
             [$factoryClass, $factoryMethod] = explode('::', $argumentConfiguration);
 
