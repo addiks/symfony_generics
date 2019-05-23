@@ -148,87 +148,19 @@ final class GenericExceptionResponseController
         /** @var Response|null $response */
         $response = null;
 
-        /** @var Response|null $innerResponse */
-        $innerResponse = null;
-
         try {
-            /** @var array<int, mixed> $arguments */
-            $arguments = array();# TODO
-
-            $methodReflection = new ReflectionMethod($this->innerController, $this->innerControllerMethod);
-
-            /** @var array<int, mixed> $arguments */
-            $arguments = $this->argumentBuilder->buildCallArguments(
-                $methodReflection,
-                $this->innerControllerArgumentsConfiguration,
-                $request
-            );
-
-            $innerResponse = call_user_func_array([$this->innerController, $this->innerControllerMethod], $arguments);
-
-            Assert::isInstanceOf($innerResponse, Response::class, "Controller did not return an Response object!");
-
-            if (!empty($this->successFlashMessage)) {
-                $this->controllerHelper->addFlashMessage($this->successFlashMessage, "success");
-            }
-
-            if (!is_null($this->successResponse)) {
-                $response = new Response($this->successResponse, $this->successResponseCode);
-
-            } else {
-                $response = $innerResponse;
-            }
+            $response = $this->executeInnerControllerUnsafely($request);
 
         } catch (Throwable $exception) {
             $this->controllerHelper->handleException($exception);
 
             foreach ($this->exceptionResponses as $responseData) {
+                /** @var array<string, mixed> $responseData */
 
-                if (!empty($responseData['exception-class']) && !is_a($exception, $responseData['exception-class'])) {
-                    continue;
+                if ($this->shouldApplyResponseDataForException($exception, $responseData)) {
+                    $response = $this->applyResponseDataForException($request, $exception, $responseData);
+                    break;
                 }
-
-                if (!empty($responseData['filter'])) {
-                    if (!preg_match("/" . $responseData['filter'] . "/is", $exception->getMessage())) {
-                        continue;
-                    }
-                }
-
-                if (!empty($responseData['flash-type'])) {
-                    /** @var string $flashMessage */
-                    $flashMessage = sprintf($responseData['flash-message'], $exception->getMessage());
-
-                    $this->controllerHelper->addFlashMessage($flashMessage, $responseData['flash-type']);
-                }
-
-                if (!empty($responseData['redirect-route'])) {
-                    /** @var array $redirectRouteParameters */
-                    $redirectRouteParameters = array_merge(
-                        $request->attributes->get('_route_params'),
-                        $this->argumentBuilder->buildArguments(
-                            $responseData['redirect-route-parameters'],
-                            $request
-                        )
-                    );
-
-                    $response = $this->controllerHelper->redirectToRoute(
-                        $responseData['redirect-route'],
-                        $redirectRouteParameters,
-                        $responseData['code']
-                    );
-
-                } else {
-                    /** @var string $responseMessage */
-                    $responseMessage = $responseData['message'];
-
-                    if (empty($responseMessage)) {
-                        $responseMessage = $exception->getMessage();
-                    }
-
-                    $response = new Response($responseMessage, $responseData['code']);
-                }
-
-                break;
             }
 
             if (is_null($response)) {
@@ -237,6 +169,105 @@ final class GenericExceptionResponseController
         }
 
         return $response;
+    }
+
+    private function executeInnerControllerUnsafely(Request $request): Response
+    {
+        $methodReflection = new ReflectionMethod($this->innerController, $this->innerControllerMethod);
+
+        /** @var array<int, mixed> $arguments */
+        $arguments = $this->argumentBuilder->buildCallArguments(
+            $methodReflection,
+            $this->innerControllerArgumentsConfiguration,
+            $request
+        );
+
+        /** @var Response $innerResponse */
+        $innerResponse = call_user_func_array([$this->innerController, $this->innerControllerMethod], $arguments);
+
+        Assert::isInstanceOf($innerResponse, Response::class, "Controller did not return an Response object!");
+
+        if (!empty($this->successFlashMessage)) {
+            $this->controllerHelper->addFlashMessage($this->successFlashMessage, "success");
+        }
+
+        if (!is_null($this->successResponse)) {
+            $response = new Response($this->successResponse, $this->successResponseCode);
+
+        } else {
+            $response = $innerResponse;
+        }
+
+        return $response;
+    }
+
+    private function shouldApplyResponseDataForException(Throwable $exception, array $responseData): bool
+    {
+        if (!empty($responseData['exception-class']) && !is_a($exception, $responseData['exception-class'])) {
+            return false;
+        }
+
+        if (!empty($responseData['filter'])) {
+            if (!preg_match("/" . $responseData['filter'] . "/is", $exception->getMessage())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function createRedirectResponseForException(Request $request, array $responseData): Response
+    {
+        /** @var array $redirectRouteParameters */
+        $redirectRouteParameters = array_merge(
+            $request->attributes->get('_route_params'),
+            $this->argumentBuilder->buildArguments(
+                $responseData['redirect-route-parameters'],
+                $request
+            )
+        );
+
+        return $this->controllerHelper->redirectToRoute(
+            $responseData['redirect-route'],
+            $redirectRouteParameters,
+            $responseData['code']
+        );
+    }
+
+    private function applyResponseDataForException(Request $request, Throwable $exception, array $responseData): Response
+    {
+        $this->handleFlashMessageForException($exception, $responseData);
+
+        if (!empty($responseData['redirect-route'])) {
+            $response = $this->createRedirectResponseForException($request, $responseData);
+
+        } else {
+            $response = $this->createMessageResponseForException($exception, $responseData);
+        }
+
+        return $response;
+    }
+
+    private function createMessageResponseForException(Throwable $exception, array $responseData): Response
+    {
+        /** @var string $responseMessage */
+        $responseMessage = $responseData['message'];
+
+        if (empty($responseMessage)) {
+            $responseMessage = $exception->getMessage();
+        }
+
+        return new Response($responseMessage, $responseData['code']);
+    }
+
+    private function handleFlashMessageForException(Throwable $exception, array $responseData): void
+    {
+        if (!empty($responseData['flash-type'])) {
+            /** @var string $flashMessage */
+            $flashMessage = sprintf($responseData['flash-message'], $exception->getMessage());
+
+            $this->controllerHelper->addFlashMessage($flashMessage, $responseData['flash-type']);
+        }
     }
 
 }
