@@ -20,14 +20,6 @@
         </service>
 
         <service
-            id="symfony_generics.argument_compiler"
-            class="Addiks\SymfonyGenerics\Services\ArgumentCompiler"
-        >
-            <argument type="service" id="service_container" />
-            <argument type="service" id="doctrine.orm.entity_manager" />
-        </service>
-
-        <service
             id="symfony_generics.argument_factory"
             class="Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentFactoryAggregate"
         >
@@ -112,8 +104,8 @@
         />
 
         <service
-            id="symfony_generics.argument_compiler.new"
-            class="Addiks\SymfonyGenerics\Services\NewArgumentCompiler"
+            id="symfony_generics.argument_compiler"
+            class="Addiks\SymfonyGenerics\Services\ArgumentCompiler"
         >
             <argument type="service" id="symfony_generics.argument_factory.lazy_load_proxy" />
             <argument type="service" id="request_stack" />

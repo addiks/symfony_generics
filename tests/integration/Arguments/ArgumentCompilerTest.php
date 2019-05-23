@@ -12,7 +12,6 @@ namespace Addiks\SymfonyGenerics\Tests\Integration\Arguments;
 
 use PHPUnit\Framework\TestCase;
 use Addiks\SymfonyGenerics\Services\ArgumentCompiler;
-use Addiks\SymfonyGenerics\Services\NewArgumentCompiler;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\Config\FileLocator;
@@ -32,12 +31,7 @@ final class ArgumentCompilerTest extends TestCase
     /**
      * @var ArgumentCompiler
      */
-    private $oldCompiler;
-
-    /**
-     * @var NewArgumentCompiler
-     */
-    private $newCompiler;
+    private $compiler;
 
     /**
      * @var ContainerInterface
@@ -70,8 +64,7 @@ final class ArgumentCompilerTest extends TestCase
         $this->container->set('doctrine.orm.entity_manager', $this->entityManager);
         $this->container->set('request_stack', new RequestStack());
 
-        $this->oldCompiler = $this->container->get('symfony_generics.argument_compiler');
-        $this->newCompiler = $this->container->get('symfony_generics.argument_compiler.new');
+        $this->compiler = $this->container->get('symfony_generics.argument_compiler');
     }
 
     /**
@@ -115,14 +108,10 @@ final class ArgumentCompilerTest extends TestCase
             'some_argument_service' => $someService
         ];
 
-        /** @var mixed $actualOldResult */
-        $actualOldResult = $this->oldCompiler->buildArguments([$argumentsConfiguration], $request, $additionalData);
+        /** @var mixed $actualResult */
+        $actualResult = $this->compiler->buildArguments([$argumentsConfiguration], $request, $additionalData);
 
-        /** @var mixed $actualOldResult */
-        $actualNewResult = $this->newCompiler->buildArguments([$argumentsConfiguration], $request, $additionalData);
-
-        $this->assertEquals($expectedResult, $actualNewResult[0]);
-        $this->assertEquals($expectedResult, $actualOldResult[0]);
+        $this->assertEquals($expectedResult, $actualResult[0]);
     }
 
     public function dataProviderForShouldBuildArguments()

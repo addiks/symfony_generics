@@ -12,18 +12,15 @@ namespace Addiks\SymfonyGenerics\Tests\Unit\Services;
 
 use PHPUnit\Framework\TestCase;
 use Addiks\SymfonyGenerics\Services\ArgumentCompiler;
-use Psr\Container\ContainerInterface;
-use ReflectionMethod;
+use Addiks\SymfonyGenerics\Arguments\ArgumentContextInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentFactory;
 use Symfony\Component\HttpFoundation\Request;
+use Addiks\SymfonyGenerics\Arguments\Argument;
+use ReflectionFunctionAbstract;
 use ReflectionParameter;
 use ReflectionType;
-use stdClass;
-use InvalidArgumentException;
-use Serializable;
-use Addiks\SymfonyGenerics\Tests\Unit\Services\SampleService;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\HttpFoundation\FileBag;
+use ReflectionException;
 
 final class ArgumentCompilerTest extends TestCase
 {
@@ -31,382 +28,246 @@ final class ArgumentCompilerTest extends TestCase
     /**
      * @var ArgumentCompiler
      */
-    private $argumentCompiler;
+    private $compiler;
 
     /**
-     * @var ContainerInterface
+     * @var ArgumentFactory
      */
-    private $container;
+    private $argumentFactory;
 
     /**
-     * @var EntityManagerInterface
+     * @var RequestStack
      */
-    private $entityManager;
+    private $requestStack;
+
+    /**
+     * @var ArgumentContextInterface
+     */
+    private $argumentContext;
 
     public function setUp()
     {
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
+        $this->argumentFactory = $this->createMock(ArgumentFactory::class);
+        $this->requestStack = $this->createMock(RequestStack::class);
+        $this->argumentContext = $this->createMock(ArgumentContextInterface::class);
 
-        $this->argumentCompiler = new ArgumentCompiler($this->container, $this->entityManager);
+        $this->compiler = new ArgumentCompiler(
+            $this->argumentFactory,
+            $this->requestStack,
+            $this->argumentContext
+        );
     }
 
     /**
      * @test
+     * @dataProvider dataProviderForShouldBuildArguments
      */
-    public function shouldBuildArguments()
+    public function shouldBuildArguments($expectedArguments, array $argumentsConfiguration)
     {
         /** @var Request $request */
         $request = $this->createMock(Request::class);
-        $request->method('get')->will($this->returnValueMap([
-            ['reqFoo', null, 'ipsum'],
-        ]));
 
-        $someObject = new stdClass();
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
-        /** @var Serializable $someService */
-        $someService = $this->createMock(Serializable::class);
-        $someService->method('serialize')->willReturn($someObject);
-
-        $this->container->method('get')->will($this->returnValueMap([
-            ['some.service', $someService],
-        ]));
-
-        /** @var array<string, mixed> $expectedRouteArguments */
-        $expectedRouteArguments = array(
-            'foo' => 'ipsum',
-            'bar' => $someObject
+        $this->argumentContext->expects($this->once())->method('clear');
+        $this->argumentContext->expects($this->once())->method('set')->with(
+            $this->equalTo('foo'),
+            $this->equalTo('bar')
         );
 
-        /** @var array<string, mixed> $actualRouteArguments */
-        $actualRouteArguments = $this->argumentCompiler->buildArguments([
-            'foo' => '$reqFoo',
-            'bar' => '@some.service::serialize',
-        ], $request);
+        /** @var Argument $argument */
+        $argument = $this->createMock(Argument::class);
+        $argument->method('resolve')->willReturn('dolor');
 
-        $this->assertEquals($expectedRouteArguments, $actualRouteArguments);
-    }
+        $this->argumentFactory->method('understandsString')->willReturn(true);
+        $this->argumentFactory->method('createArgumentFromString')->willReturn($argument);
+        $this->argumentFactory->method('understandsArray')->willReturn(true);
+        $this->argumentFactory->method('createArgumentFromArray')->willReturn($argument);
 
-    /**
-     * @test
-     */
-    public function shouldBuildCallArguments()
-    {
-        /** @var ReflectionMethod $methodReflection */
-        $methodReflection = $this->createMock(ReflectionMethod::class);
-
-        /** @var ReflectionParameter $parameterFooReflection */
-        $parameterFooReflection = $this->createMock(ReflectionParameter::class);
-        $parameterFooReflection->method('getName')->willReturn("foo");
-
-        /** @var ReflectionParameter $parameterBarReflection */
-        $parameterBarReflection = $this->createMock(ReflectionParameter::class);
-        $parameterBarReflection->method('getName')->willReturn("bar");
-
-        /** @var ReflectionParameter $parameterBazReflection */
-        $parameterBazReflection = $this->createMock(ReflectionParameter::class);
-        $parameterBazReflection->method('getName')->willReturn("baz");
-
-        /** @var ReflectionType $parameterType */
-        $parameterType = $this->createMock(ReflectionType::class);
-        $parameterType->method('__toString')->willReturn(SampleService::class);
-
-        /** @var ReflectionParameter $parameterFazReflection */
-        $parameterFazReflection = $this->createMock(ReflectionParameter::class);
-        $parameterFazReflection->method('getName')->willReturn("faz");
-        $parameterFazReflection->method('hasType')->willReturn(true);
-        $parameterFazReflection->method('getType')->willReturn($parameterType);
-
-        $methodReflection->method("getParameters")->willReturn([
-            $parameterFooReflection,
-            $parameterBarReflection,
-            $parameterBazReflection,
-            $parameterFazReflection
-        ]);
-
-        /** @var Request $request */
-        $request = $this->createMock(Request::class);
-        $request->method('get')->will($this->returnValueMap([
-            ['lorem', null, 'ipsum'],
-            ['bar', null, 'blah'],
-        ]));
-
-        /** @var array<string, mixed> $argumentsConfiguration */
-        $argumentsConfiguration = array(
-            "foo" => '$lorem',
-            "baz" => '@some.service',
-            "faz" => [
-                'service-id' => 'some.service',
-                'method' => 'someCall',
-                'arguments' => [
-                    'foo' => '$lorem'
-                ]
-            ]
-        );
-
-        $someService = new SampleService();
-
-        $this->container->method('get')->will($this->returnValueMap([
-            ['some.service', $someService],
-        ]));
-
-        $this->entityManager->expects($this->once())->method('find')->with(
-            $this->equalTo(SampleService::class),
-            $this->equalTo('ipsum')
-        )->willReturn($someService);
-
-        /** @var array<int, mixed> $expectedCallArguments */
-        $expectedCallArguments = array(
-            'ipsum',
-            'blah',
-            $someService,
-            $someService
-        );
-
-        /** @var array<int, mixed> $actualCallArguments */
-        $actualCallArguments = $this->argumentCompiler->buildCallArguments(
-            $methodReflection,
+        /** @var mixed $actualArguments */
+        $actualArguments = $this->compiler->buildArguments(
             $argumentsConfiguration,
-            $request
+            $request,
+            ['foo' => 'bar']
         );
 
-        $this->assertEquals($expectedCallArguments, $actualCallArguments);
-        $this->assertEquals('ipsum', $someService->foo);
+        $this->assertEquals($expectedArguments, $actualArguments);
+    }
+
+    public function dataProviderForShouldBuildArguments(): array
+    {
+        return array(
+            [[], []],
+            [['lorem' => 'dolor'], ['lorem' => '$ipsum']],
+            [['lorem' => 'dolor'], ['lorem' => ['$ipsum']]],
+        );
     }
 
     /**
      * @test
      */
-    public function shouldRejectNonExistingFactoryMethod()
+    public function shouldExpectArgumentFactoryToUnderstandString()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Argument 'dolor' could not be understood!");
 
         /** @var Request $request */
         $request = $this->createMock(Request::class);
 
-        /** @var Serializable $someService */
-        $someService = $this->createMock(Serializable::class);
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
-        $this->container->method('get')->will($this->returnValueMap([
-            ['some.service', $someService],
-        ]));
+        /** @var Argument $argument */
+        $argument = $this->createMock(Argument::class);
 
-        $this->argumentCompiler->buildArguments([
-            'foo' => '$reqFoo',
-            'bar' => '@some.service::doesNotExist',
-        ], $request);
+        $this->argumentFactory->method('understandsString')->willReturn(false);
+
+        $this->compiler->buildArguments(['lorem' => 'dolor'], $request, []);
     }
 
     /**
      * @test
      */
-    public function shouldRejectNonExistingAdditionalDataKey()
+    public function shouldExpectArgumentFactoryToUnderstandArray()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Argument 'array(0=>'dolor',)' could not be understood!");
 
         /** @var Request $request */
         $request = $this->createMock(Request::class);
 
-        $this->argumentCompiler->buildArguments([
-            'foo' => '%keyFoo%',
-        ], $request);
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        /** @var Argument $argument */
+        $argument = $this->createMock(Argument::class);
+
+        $this->argumentFactory->method('understandsString')->willReturn(false);
+
+        $this->compiler->buildArguments(['lorem' => ['dolor']], $request, []);
     }
 
     /**
      * @test
      */
-    public function shouldGetAdditionalDataKey()
+    public function shouldExpectArgumentToBeArrayOrString()
     {
+        $this->expectExceptionMessage("Arguments must be defined as string or array!");
+
         /** @var Request $request */
         $request = $this->createMock(Request::class);
 
-        /** @var array $actualResult */
-        $actualResult = $this->argumentCompiler->buildArguments([
-            'foo' => '%keyFoo%',
-        ], $request, [
-            'keyFoo' => 'bar'
-        ]);
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
-        $this->assertEquals(['foo' => 'bar'], $actualResult);
+        /** @var Argument $argument */
+        $argument = $this->createMock(Argument::class);
+
+        $this->argumentFactory->method('understandsString')->willReturn(false);
+
+        $this->compiler->buildArguments(['lorem' => 3.1415], $request, []);
     }
 
     /**
      * @test
+     * @dataProvider dataProviderForShouldBuildCallArguments
      */
-    public function shouldRejectMissingMethodOnAdditionalDataKey()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        /** @var Request $request */
-        $request = $this->createMock(Request::class);
-
-        $this->argumentCompiler->buildArguments([
-            'foo' => '%keyFoo.doSomethingImpossible%',
-        ], $request, [
-            'keyFoo' => $this->createMock(stdClass::class)
-        ]);
-    }
-
-    /**
-     * @test
-     */
-    public function shouldRejectMissingUploadedFile()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        /** @var Request $request */
-        $request = $this->createMock(Request::class);
-        $request->files = $this->createMock(FileBag::class);
-
-        $this->argumentCompiler->buildArguments([
-            'foo' => '$files.something_missing.content',
-        ], $request);
-    }
-
-    /**
-     * @test
-     */
-    public function shouldGetUploadedFile()
-    {
-        /** @var UploadedFile $file */
-        $file = $this->createMock(UploadedFile::class);
-        $file->method('getClientOriginalName')->willReturn('some-original-name');
-        $file->method('getFilename')->willReturn('some-file-name');
-        $file->method('getPathname')->willReturn('data://,some-content');
-        $file->method('getMimeType')->willReturn('some-mime-type');
-
-        /** @var Request $request */
-        $request = $this->createMock(Request::class);
-        $request->files = $this->createMock(FileBag::class);
-        $request->files->expects($this->exactly(5))->method('get')->willReturn($file);
-
-        /** @var array $actualResult */
-        $actualResult = $this->argumentCompiler->buildArguments([
-            'obj' => '$files.blah.object',
-            'ogn' => '$files.blah.originalname',
-            'fln' => '$files.blah.filename',
-            'cnt' => '$files.blah.content',
-            'mmt' => '$files.blah.mimetype',
-        ], $request);
-
-        $this->assertEquals([
-            'obj' => $file,
-            'ogn' => 'some-original-name',
-            'fln' => 'some-file-name',
-            'cnt' => 'some-content',
-            'mmt' => 'some-mime-type',
-        ], $actualResult);
-    }
-
-    /**
-     * @test
-     */
-    public function shouldGetRequestPayload()
+    public function shouldBuildCallArguments($expectedArguments, array $parameters, array $argumentsConfiguration)
     {
         /** @var Request $request */
         $request = $this->createMock(Request::class);
-        $request->expects($this->once())->method('getContent')->with(
-            $this->equalTo(false)
+
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $this->argumentContext->expects($this->once())->method('clear');
+        $this->argumentContext->expects($this->once())->method('set')->with(
+            $this->equalTo('foo'),
+            $this->equalTo('bar')
         );
 
-        $this->argumentCompiler->buildArguments([
-            'foo' => '$',
-        ], $request);
-    }
+        /** @var ReflectionFunctionAbstract $routineReflection */
+        $routineReflection = $this->createMock(ReflectionFunctionAbstract::class);
+        $routineReflection->method('getParameters')->willReturn($parameters);
 
-    /**
-     * @test
-     */
-    public function shouldResolveLiteralString()
-    {
-        /** @var Request $request */
-        $request = $this->createMock(Request::class);
+        /** @var Argument $argument */
+        $argument = $this->createMock(Argument::class);
+        $argument->method('resolve')->willReturn('dolor');
 
-        /** @var array $actualResult */
-        $actualResult = $this->argumentCompiler->buildArguments([
-            'foo' => '\'bar\'',
-        ], $request);
+        $this->argumentFactory->method('understandsString')->willReturn(true);
+        $this->argumentFactory->method('createArgumentFromString')->willReturn($argument);
+        $this->argumentFactory->method('understandsArray')->willReturn(true);
+        $this->argumentFactory->method('createArgumentFromArray')->willReturn($argument);
 
-        $this->assertEquals(['foo' => 'bar'], $actualResult);
-    }
-
-    /**
-     * @test
-     */
-    public function shouldThrowExceptionWhenFetchingUnknownService()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        /** @var ReflectionMethod $methodReflection */
-        $methodReflection = $this->createMock(ReflectionMethod::class);
-
-        /** @var ReflectionParameter $parameterFazReflection */
-        $parameterFazReflection = $this->createMock(ReflectionParameter::class);
-        $parameterFazReflection->method('getName')->willReturn("faz");
-
-        $methodReflection->method("getParameters")->willReturn([
-            $parameterFazReflection
-        ]);
-
-        /** @var Request $request */
-        $request = $this->createMock(Request::class);
-
-        /** @var array<string, mixed> $argumentsConfiguration */
-        $argumentsConfiguration = array(
-            "faz" => [
-                'service-id' => 'some.non-existing.service',
-            ]
-        );
-
-        /** @var array<int, mixed> $actualCallArguments */
-        $actualCallArguments = $this->argumentCompiler->buildCallArguments(
-            $methodReflection,
+        /** @var mixed $actualArguments */
+        $actualArguments = $this->compiler->buildCallArguments(
+            $routineReflection,
             $argumentsConfiguration,
-            $request
+            $request,
+            ['abc' => 'def'],
+            ['foo' => 'bar']
+        );
+
+        $this->assertEquals($expectedArguments, $actualArguments);
+    }
+
+    public function dataProviderForShouldBuildCallArguments()
+    {
+        /** @var ReflectionParameter $blahParameter */
+        $blahParameter = $this->createMock(ReflectionParameter::class);
+        $blahParameter->method('hasType')->willReturn(false);
+        $blahParameter->method('getName')->willReturn("blah");
+
+        /** @var ReflectionType $requestParameterType */
+        $requestParameterType = $this->createMock(ReflectionType::class);
+        $requestParameterType->method('__toString')->willReturn(Request::class);
+
+        /** @var ReflectionParameter $requestParameter */
+        $requestParameter = $this->createMock(ReflectionParameter::class);
+        $requestParameter->method('hasType')->willReturn(true);
+        $requestParameter->method('getType')->willReturn($requestParameterType);
+        $requestParameter->method('getName')->willReturn("blah");
+
+        return array(
+            [[], [], []],
+            [
+                ['blah' => 'dolor', 'abc' => 'def'],
+                ['blah' => $blahParameter, 'abc' => $blahParameter],
+                ['blah' => '$ipsum']
+            ],
+            [
+                ['blah' => $this->createMock(Request::class), 'abc' => 'def', 'blubb' => "dolor"],
+                ['blah' => $requestParameter, 'abc' => $blahParameter, 'blubb' => $blahParameter,],
+                ['blubb' => '$ipsum']
+            ],
         );
     }
 
     /**
      * @test
      */
-    public function shouldThrowExceptionWhenCallArgumentIsMissing()
+    public function shouldCatchReflectionException()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Missing argument 'foo' for the call to 'someCall'!");
-
-        /** @var ReflectionMethod $methodReflection */
-        $methodReflection = $this->createMock(ReflectionMethod::class);
-
-        /** @var ReflectionParameter $parameterFazReflection */
-        $parameterFazReflection = $this->createMock(ReflectionParameter::class);
-        $parameterFazReflection->method('getName')->willReturn("faz");
-
-        $methodReflection->method("getParameters")->willReturn([
-            $parameterFazReflection
-        ]);
+        $this->expectExceptionMessage("Missing argument 'blah' for the call to 'doSomething'!");
 
         /** @var Request $request */
         $request = $this->createMock(Request::class);
 
-        $someService = new SampleService();
+        /** @var ReflectionParameter $parameterWithoutDefaultValue */
+        $parameterWithoutDefaultValue = $this->createMock(ReflectionParameter::class);
+        $parameterWithoutDefaultValue->method('hasType')->willReturn(false);
+        $parameterWithoutDefaultValue->method('getName')->willReturn("blah");
+        $parameterWithoutDefaultValue->method('getDefaultValue')->will($this->returnCallback(
+            function () {
+                throw new ReflectionException("We don't have a default value, bro!");
+            }
+        ));
 
-        $this->container->method('get')->will($this->returnValueMap([
-            ['some.service', $someService],
-        ]));
+        /** @var ReflectionFunctionAbstract $routineReflection */
+        $routineReflection = $this->createMock(ReflectionFunctionAbstract::class);
+        $routineReflection->method('getParameters')->willReturn([$parameterWithoutDefaultValue]);
+        $routineReflection->method('getName')->willReturn("doSomething");
 
-        /** @var array<string, mixed> $argumentsConfiguration */
-        $argumentsConfiguration = array(
-            "faz" => [
-                'service-id' => 'some.service',
-                'method' => 'someCall',
-            ]
-        );
-
-        /** @var array<int, mixed> $actualCallArguments */
-        $actualCallArguments = $this->argumentCompiler->buildCallArguments(
-            $methodReflection,
-            $argumentsConfiguration,
-            $request
+        $this->compiler->buildCallArguments(
+            $routineReflection,
+            [],
+            $request,
+            [],
+            []
         );
     }
 
