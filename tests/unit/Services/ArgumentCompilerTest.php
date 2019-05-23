@@ -198,7 +198,7 @@ final class ArgumentCompilerTest extends TestCase
             $routineReflection,
             $argumentsConfiguration,
             $request,
-            ['abc' => 'def'],
+            [1 => 'def'],
             ['foo' => 'bar']
         );
 
@@ -225,14 +225,14 @@ final class ArgumentCompilerTest extends TestCase
         return array(
             [[], [], []],
             [
-                ['blah' => 'dolor', 'abc' => 'def'],
-                ['blah' => $blahParameter, 'abc' => $blahParameter],
-                ['blah' => '$ipsum']
+                ['dolor', 'def'],
+                [$blahParameter, $blahParameter],
+                [0 => '$ipsum']
             ],
             [
-                ['blah' => $this->createMock(Request::class), 'abc' => 'def', 'blubb' => "dolor"],
-                ['blah' => $requestParameter, 'abc' => $blahParameter, 'blubb' => $blahParameter,],
-                ['blubb' => '$ipsum']
+                [$this->createMock(Request::class), 'def', "dolor"],
+                [$requestParameter, $blahParameter, $blahParameter,],
+                [2 => '$ipsum']
             ],
         );
     }
@@ -247,18 +247,20 @@ final class ArgumentCompilerTest extends TestCase
         /** @var Request $request */
         $request = $this->createMock(Request::class);
 
+        /** @var ReflectionFunctionAbstract $routineReflection */
+        $routineReflection = $this->createMock(ReflectionFunctionAbstract::class);
+
         /** @var ReflectionParameter $parameterWithoutDefaultValue */
         $parameterWithoutDefaultValue = $this->createMock(ReflectionParameter::class);
         $parameterWithoutDefaultValue->method('hasType')->willReturn(false);
         $parameterWithoutDefaultValue->method('getName')->willReturn("blah");
+        $parameterWithoutDefaultValue->method('getDeclaringFunction')->willReturn($routineReflection);
         $parameterWithoutDefaultValue->method('getDefaultValue')->will($this->returnCallback(
             function () {
                 throw new ReflectionException("We don't have a default value, bro!");
             }
         ));
 
-        /** @var ReflectionFunctionAbstract $routineReflection */
-        $routineReflection = $this->createMock(ReflectionFunctionAbstract::class);
         $routineReflection->method('getParameters')->willReturn([$parameterWithoutDefaultValue]);
         $routineReflection->method('getName')->willReturn("doSomething");
 

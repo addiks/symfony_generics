@@ -99,42 +99,11 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
                 continue;
             }
 
-            /** @var string $parameterName */
-            $parameterName = $parameterReflection->getName();
-
-            /** @var string|null $parameterTypeName */
-            $parameterTypeName = null;
-
-            if ($parameterReflection->hasType()) {
-                /** @var ReflectionType|null $parameterType */
-                $parameterType = $parameterReflection->getType();
-
-                if ($parameterType instanceof ReflectionType) {
-                    $parameterTypeName = $parameterType->__toString();
-                }
-            }
-
-            if (isset($argumentsConfiguration[$parameterName])) {
-                $callArguments[$index] = $this->resolveArgumentConfiguration($argumentsConfiguration[$parameterName]);
-
-            } elseif (isset($argumentsConfiguration[$index])) {
-                $callArguments[$index] = $this->resolveArgumentConfiguration($argumentsConfiguration[$index]);
-
-            } elseif ($parameterTypeName === Request::class) {
-                $callArguments[$index] = $this->requestStack->getCurrentRequest();
-
-            } else {
-                try {
-                    $callArguments[$index] = $parameterReflection->getDefaultValue();
-
-                } catch (ReflectionException $exception) {
-                    throw new InvalidArgumentException(sprintf(
-                        "Missing argument '%s' for the call to '%s'!",
-                        $parameterName,
-                        $routineReflection->getName()
-                    ));
-                }
-            }
+            $callArguments[$index] = $this->resolveParameterReflection(
+                $parameterReflection,
+                $argumentsConfiguration,
+                $index
+            );
         }
 
         return $callArguments;
@@ -173,6 +142,76 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         }
 
         return $argument->resolve();
+    }
+
+    /**
+     * @return mixed
+     */
+    private function resolveParameterReflection(
+        ReflectionParameter $parameterReflection,
+        array $argumentsConfiguration,
+        int $index
+    ) {
+        /** @var string $parameterName */
+        $parameterName = $parameterReflection->getName();
+
+        /** @var string|null $parameterTypeName */
+        $parameterTypeName = $this->getTypeNameFromReflectionParameter($parameterReflection);
+
+        if (isset($argumentsConfiguration[$parameterName])) {
+            return $this->resolveArgumentConfiguration($argumentsConfiguration[$parameterName]);
+
+        } elseif (isset($argumentsConfiguration[$index])) {
+            return $this->resolveArgumentConfiguration($argumentsConfiguration[$index]);
+
+        } elseif ($parameterTypeName === Request::class) {
+            return $this->requestStack->getCurrentRequest();
+
+        } else {
+            return $this->getDefaultValueFromParameterReflectionSafely($parameterReflection);
+        }
+
+        return null;
+    }
+
+    /**
+     * @return mixed
+     */
+    private function getDefaultValueFromParameterReflectionSafely(ReflectionParameter $parameterReflection)
+    {
+        try {
+            return $parameterReflection->getDefaultValue();
+
+        } catch (ReflectionException $exception) {
+            /** @var string $parameterName */
+            $parameterName = $parameterReflection->getName();
+
+            /** @var ReflectionFunctionAbstract $routineReflection */
+            $routineReflection = $parameterReflection->getDeclaringFunction();
+
+            throw new InvalidArgumentException(sprintf(
+                "Missing argument '%s' for the call to '%s'!",
+                $parameterName,
+                $routineReflection->getName()
+            ));
+        }
+    }
+
+    private function getTypeNameFromReflectionParameter(ReflectionParameter $parameterReflection): ?string
+    {
+        /** @var string|null $parameterTypeName */
+        $parameterTypeName = null;
+
+        if ($parameterReflection->hasType()) {
+            /** @var ReflectionType|null $parameterType */
+            $parameterType = $parameterReflection->getType();
+
+            if ($parameterType instanceof ReflectionType) {
+                $parameterTypeName = $parameterType->__toString();
+            }
+        }
+
+        return $parameterTypeName;
     }
 
 }
