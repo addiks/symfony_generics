@@ -4,7 +4,6 @@
 [![Code Coverage][15]][16]
 
 # Symfony Generic Components
-===================================
 
 This is a collection of configurable generic components to use for symfony. (Currently it mostly consists of generic
 controllers.) I believe that as a developer you should focus your work as much as possible to model and mold your
