@@ -3,22 +3,26 @@
 [![Scrutinizer Code Quality][13]][14]
 [![Code Coverage][15]][16]
 
-# Symfony Generics
+# Symfony Generic Components
 ===================================
 
-THIS IS STILL UNFINISHED AND NOT YET QUITE READY FOR USE!
-
 This is a collection of configurable generic components to use for symfony. (Currently it mostly consists of generic
-controllers.) I believe that as a developer you should concentrate your work as much as possible to model and mold your
+controllers.) I believe that as a developer you should focus your work as much as possible to model and mold your
 domain of choice into software. Other technical necessities (such as controllers) should be reduced as much as possible.
 
-The generic components are built in a way that they can be re-used multiple times in different configurations to replace
-components in your software that you would otherwise would have to build from scratch. This not only saves you time, it
-also improves the quality of your software because all the components in this library are fully tested. Most
-individually implemented components are not tested, especially the ones that are not directly related to the business-
-model (please be honest, are your compenents fully tested?).
+The generic components in this library are built in a way that they can be re-used multiple times in different
+configurations to replace components in your software that you would otherwise would have to build from scratch.
+This not only saves you time, it also improves the quality of your software because all the components in this library
+are fully tested and thus by extension a bigger part of your application becomes tested.
 
-In short, these are the pro's of using this library:
+Additionally, if you use generic components instead of writing everything by hand, your application becomes more uniform
+and machine-readable & -interpretable. For example: If you use generic controllers it is easy to tell which controllers
+just render a template, you could write a [smoke-test][17] that just executes all template-render-controllers and checks
+if any errors happen. Because you know that these controllers just render a template and do nothing else, you know that
+you can execute them without side-effect. Without doing much, you would have already tested a big portion of your
+application. (I actually plan to include such a smoke-test in this library in the future.)
+
+In short, these are the advantages of using this library:
 * Less code to write and maintain
 * More time for the things that make your software unique
 * A bigger part of your application will be battle-tested
@@ -53,3 +57,4 @@ These components currently exist in the library:
 [14]: https://scrutinizer-ci.com/g/addiks/symfony_generics/?branch=master
 [15]: https://scrutinizer-ci.com/g/addiks/symfony_generics/badges/coverage.png?b=master
 [16]: https://scrutinizer-ci.com/g/addiks/symfony_generics/?branch=master
+[17]: https://en.wikipedia.org/wiki/Smoke_testing_%28software%29
