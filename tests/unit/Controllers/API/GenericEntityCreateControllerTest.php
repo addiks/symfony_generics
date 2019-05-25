@@ -25,6 +25,7 @@ use Symfony\Component\Finder\Exception\AccessDeniedException;
 use ReflectionException;
 use ErrorException;
 use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
+use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntityWithoutConstructor;
 
 final class GenericEntityCreateControllerTest extends TestCase
 {
@@ -581,6 +582,33 @@ final class GenericEntityCreateControllerTest extends TestCase
         $this->controllerHelper->method('getCurrentRequest')->willReturn(null);
 
         $controller();
+    }
+
+    /**
+     * @test
+     */
+    public function shouldCreateAnEntityThatHasNoConstructor()
+    {
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntityWithoutConstructor::class
+            ]
+        );
+
+        $this->controllerHelper->expects($this->once())->method('persistEntity')->with(
+            $this->equalTo(new SampleEntityWithoutConstructor())
+        );
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var Response $response */
+        $response = $controller->createEntity($request);
+
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
 }

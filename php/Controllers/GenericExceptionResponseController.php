@@ -65,7 +65,7 @@ final class GenericExceptionResponseController
     private $successFlashMessage;
 
     /**
-     * @var array<string, array<string, mixed>>
+     * @var array<int, array<string, mixed>>
      */
     private $exceptionResponses = array();
 
@@ -182,8 +182,11 @@ final class GenericExceptionResponseController
             $request
         );
 
+        /** @var callable $controllerCallback */
+        $controllerCallback = [$this->innerController, $this->innerControllerMethod];
+
         /** @var Response $innerResponse */
-        $innerResponse = call_user_func_array([$this->innerController, $this->innerControllerMethod], $arguments);
+        $innerResponse = call_user_func_array($controllerCallback, $arguments);
 
         Assert::isInstanceOf($innerResponse, Response::class, "Controller did not return an Response object!");
 

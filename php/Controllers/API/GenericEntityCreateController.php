@@ -89,6 +89,16 @@ final class GenericEntityCreateController
      */
     private $successRedirectStatus;
 
+    /**
+     * @var string
+     */
+    private $entityIdKey;
+
+    /**
+     * @var string
+     */
+    private $entityIdGetter;
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentBuilder,
@@ -110,12 +120,16 @@ final class GenericEntityCreateController
             'success-redirect' => null,
             'success-redirect-arguments' => [],
             'success-redirect-status' => $defaultRedirectStatus,
+            'entity-id-getter' => 'getId',
+            'entity-id-key' => 'entityId',
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
         $this->argumentBuilder = $argumentBuilder;
         $this->container = $container;
         $this->entityClass = $options['entity-class'];
+        $this->entityIdGetter = $options['entity-id-getter'];
+        $this->entityIdKey = $options['entity-id-key'];
         $this->successResponse = $options['success-response'];
         $this->factory = $options['factory'];
         $this->authorizationAttribute = $options['authorization-attribute'];
@@ -153,18 +167,28 @@ final class GenericEntityCreateController
             $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $request);
         }
 
-        /** @var ReflectionFunctionAbstract $constructorReflection */
+        /** @var ReflectionFunctionAbstract|null $constructorReflection */
         $constructorReflection = $this->findConstructorReflection($factoryObject);
 
         /** @var array<int, mixed> $constructArguments */
-        $constructArguments = $this->argumentBuilder->buildCallArguments(
-            $constructorReflection,
-            $this->constructArguments,
-            $request
-        );
+        $constructArguments = array();
 
-        /** @var object $entity */
-        $entity = $this->createEntityByConstructor($constructorReflection, $constructArguments, $factoryObject);
+        if ($constructorReflection instanceof ReflectionFunctionAbstract) {
+            $constructArguments = $this->argumentBuilder->buildCallArguments(
+                $constructorReflection,
+                $this->constructArguments,
+                $request
+            );
+
+            /** @var object $entity */
+            $entity = $this->createEntityByConstructor($constructorReflection, $constructArguments, $factoryObject);
+
+        } else {
+            /** @var string $entityClass */
+            $entityClass = $this->entityClass;
+
+            $entity = new $entityClass();
+        }
 
         $this->performPostCreationCalls($entity, $request);
 
@@ -190,7 +214,11 @@ final class GenericEntityCreateController
                 $this->successRedirectArguments,
                 $request
             );
-            $redirectArguments['entityId'] = $entity->getId(); # TODO: getId might not always exist! get id via doctrine
+
+            /** @var callable $idGetterCallback */
+            $idGetterCallback = [$entity, $this->entityIdGetter];
+
+            $redirectArguments[$this->entityIdKey] = call_user_func($idGetterCallback);
 
             return $this->controllerHelper->redirectToRoute(
                 $this->successRedirectRoute,
@@ -205,7 +233,7 @@ final class GenericEntityCreateController
     /**
      * @param object $factoryObject
      */
-    private function findConstructorReflection(&$factoryObject = null): ReflectionFunctionAbstract
+    private function findConstructorReflection(&$factoryObject = null): ?ReflectionFunctionAbstract
     {
         /** @var ReflectionFunctionAbstract|null $constructorReflection */
         $constructorReflection = null;

@@ -48,7 +48,7 @@ final class ArgumentCall implements Argument
 
     public function resolve()
     {
-        /** @var Closure $callee */
+        /** @var object|string $callee */
         $callee = $this->callee->resolve();
         Assert::methodExists($callee, $this->methodName);
 
@@ -61,7 +61,10 @@ final class ArgumentCall implements Argument
             $this->arguments
         );
 
-        return call_user_func_array([$callee, $this->methodName], $arguments);
+        /** @var callable $callback */
+        $callback = [$callee, $this->methodName];
+
+        return call_user_func_array($callback, $arguments);
     }
 
 }
