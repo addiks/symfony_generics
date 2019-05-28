@@ -611,4 +611,60 @@ final class GenericEntityCreateControllerTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
     }
 
+    /**
+     * @test
+     */
+    public function shouldCreateAnEntityUsingAStaticFactory()
+    {
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'factory' => 'someStaticFactory'
+            ]
+        );
+
+        $this->controllerHelper->expects($this->once())->method('persistEntity')->with(
+            $this->equalTo(new SampleEntity("static foo"))
+        );
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var Response $response */
+        $response = $controller->createEntity($request);
+
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldCreateAnEntityUsingRegularFunction()
+    {
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'factory' => 'someStaticFactory'
+            ]
+        );
+
+        $this->controllerHelper->expects($this->once())->method('persistEntity')->with(
+            $this->equalTo(new SampleEntity("static foo"))
+        );
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var Response $response */
+        $response = $controller->createEntity($request);
+
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
 }

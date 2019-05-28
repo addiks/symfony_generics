@@ -27,6 +27,11 @@ class SampleEntity
         $this->constructArgument = $foo;
     }
 
+    public static function someStaticFactory(string $foo = "foo"): SampleEntity
+    {
+        return new SampleEntity("static " . $foo);
+    }
+
     public function doFoo()
     {
         $this->fooCalled = true;

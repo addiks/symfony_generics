@@ -52,6 +52,12 @@ final class ArgumentContextTest extends TestCase
         $this->assertEquals(1234, $context->get("foo"));
         $this->assertEquals(['lorem' => 'ipsum', 'dolor' => 'amet'], $context->get("bar"));
         $this->assertEquals(new stdClass(), $context->get("baz"));
+
+        $context->clear();
+
+        $this->assertFalse($context->has("foo"));
+        $this->assertFalse($context->has("bar"));
+        $this->assertFalse($context->has("baz"));
     }
 
     /**
