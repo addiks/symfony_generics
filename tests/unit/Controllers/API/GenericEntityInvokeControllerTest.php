@@ -19,6 +19,8 @@ use ReflectionMethod;
 use InvalidArgumentException;
 use Symfony\Component\Finder\Exception\AccessDeniedException;
 use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
+use Symfony\Component\HttpFoundation\Response;
+use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntity;
 
 final class GenericEntityInvokeControllerTest extends TestCase
 {
@@ -98,6 +100,48 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->equalTo(['foo' => 'bar']),
             $this->identicalTo($request)
         );
+
+        $this->controller->invokeEntityMethod($request, "123");
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRedirectAfterInvokation()
+    {
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        $this->controller = new GenericEntityInvokeController(
+            $this->controllerHelper,
+            $this->argumentCompiler,
+            [
+                'entity-class' => SampleEntity::class,
+                'method' => 'getId',
+                'redirect-route' => 'some-redirect-route',
+                'redirect-route-parameters' => ['some-redirect-route-parameters']
+            ]
+        );
+
+        /** @var SampleEntity $entity */
+        $entity = $this->createMock(SampleEntity::class);
+        $entity->method('getId')->willReturn("some-result");
+
+        $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
+            $this->equalTo(['some-redirect-route-parameters']),
+            $this->identicalTo($request),
+            $this->equalTo(['result' => "some-result"])
+        )->willReturn(['foo' => 'bar']);
+
+        $this->controllerHelper->expects($this->once())->method('findEntity')->with(
+            $this->equalTo(SampleEntity::class),
+            $this->equalTo("123")
+        )->willReturn($entity);
+
+        $this->controllerHelper->expects($this->once())->method('redirectToRoute')->with(
+            $this->equalTo('some-redirect-route'),
+            $this->equalTo(['foo' => 'bar'])
+        )->willReturn($this->createMock(Response::class));
 
         $this->controller->invokeEntityMethod($request, "123");
     }
