@@ -21,6 +21,7 @@ use ReflectionFunctionAbstract;
 use ReflectionParameter;
 use ReflectionType;
 use ReflectionException;
+use Closure;
 
 final class ArgumentCompilerTest extends TestCase
 {
@@ -207,31 +208,40 @@ final class ArgumentCompilerTest extends TestCase
 
     public function dataProviderForShouldBuildCallArguments()
     {
-        /** @var ReflectionParameter $blahParameter */
-        $blahParameter = $this->createMock(ReflectionParameter::class);
-        $blahParameter->method('hasType')->willReturn(false);
-        $blahParameter->method('getName')->willReturn("blah");
+        /** @var TestCase $testCase */
+        $testCase = $this;
 
-        /** @var ReflectionType $requestParameterType */
-        $requestParameterType = $this->createMock(ReflectionType::class);
-        $requestParameterType->method('__toString')->willReturn(Request::class);
+        /** @var Closure $buildParameter */
+        $buildParameter = function (string $name, bool $hasType = false, $parameterTypeName = null) use ($testCase) {
 
-        /** @var ReflectionParameter $requestParameter */
-        $requestParameter = $this->createMock(ReflectionParameter::class);
-        $requestParameter->method('hasType')->willReturn(true);
-        $requestParameter->method('getType')->willReturn($requestParameterType);
-        $requestParameter->method('getName')->willReturn("blah");
+            /** @var ReflectionType $parameterType */
+            $parameterType = $testCase->createMock(ReflectionType::class);
+            $parameterType->method('__toString')->willReturn($parameterTypeName);
+
+            /** @var ReflectionParameter $parameter */
+            $parameter = $testCase->createMock(ReflectionParameter::class);
+            $parameter->method('hasType')->willReturn($hasType);
+            $parameter->method('getType')->willReturn(is_string($parameterTypeName) ?$parameterType :null);
+            $parameter->method('getName')->willReturn($name);
+
+            return $parameter;
+        };
 
         return array(
             [[], [], []],
             [
                 ['dolor', 'def'],
-                [$blahParameter, $blahParameter],
+                [$buildParameter("blah"), $buildParameter("blah")],
                 [0 => '$ipsum']
             ],
             [
+                ['dolor'],
+                [$buildParameter("blah")],
+                ['blah' => 'asd']
+            ],
+            [
                 [$this->createMock(Request::class), 'def', "dolor"],
-                [$requestParameter, $blahParameter, $blahParameter,],
+                [$buildParameter("blah", true, Request::class), $buildParameter("blah"), $buildParameter("blah")],
                 [2 => '$ipsum']
             ],
         );
