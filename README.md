@@ -2,6 +2,11 @@
 [![Scrutinizer Build Status][11]][12]
 [![Scrutinizer Code Quality][13]][14]
 [![Code Coverage][15]][16]
+[![Total Downloads][18]][19]
+[![Licence][20]][19]
+[![Version][21]][19]
+[![PHP][22]][19]
+[![PHP][23]][19]
 
 # Symfony Generic Components
 
@@ -57,3 +62,9 @@ These components currently exist in the library:
 [15]: https://scrutinizer-ci.com/g/addiks/symfony_generics/badges/coverage.png?b=master
 [16]: https://scrutinizer-ci.com/g/addiks/symfony_generics/?branch=master
 [17]: https://en.wikipedia.org/wiki/Smoke_testing_%28software%29
+[18]: https://img.shields.io/packagist/dm/addiks/symfony_generics.svg
+[19]: https://packagist.org/packages/addiks/symfony_generics
+[20]: https://img.shields.io/packagist/l/addiks/symfony_generics.svg
+[21]: https://img.shields.io/packagist/v/addiks/symfony_generics.svg
+[22]: https://img.shields.io/travis/php-v/addiks/symfony_generics.svg
+[23]: https://img.shields.io/github/last-commit/addiks/symfony_generics.svg
