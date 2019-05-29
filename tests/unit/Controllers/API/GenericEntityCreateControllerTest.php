@@ -27,6 +27,11 @@ use ErrorException;
 use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntityWithoutConstructor;
 
+function createSampleEntity(string $foo = "foo")
+{
+    return new SampleEntity("function " . $foo);
+}
+
 final class GenericEntityCreateControllerTest extends TestCase
 {
 
@@ -642,7 +647,7 @@ final class GenericEntityCreateControllerTest extends TestCase
     /**
      * @test
      */
-    public function shouldCreateAnEntityUsingRegularFunction()
+    public function shouldCreateAnEntityUsingStaticFactory()
     {
         $controller = new GenericEntityCreateController(
             $this->controllerHelper,
@@ -656,6 +661,35 @@ final class GenericEntityCreateControllerTest extends TestCase
 
         $this->controllerHelper->expects($this->once())->method('persistEntity')->with(
             $this->equalTo(new SampleEntity("static foo"))
+        );
+
+        /** @var Request $request */
+        $request = $this->createMock(Request::class);
+
+        /** @var Response $response */
+        $response = $controller->createEntity($request);
+
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldCreateAnEntityUsingRegularFunction()
+    {
+        /** @var mixed $controller */
+        $controller = new GenericEntityCreateController(
+            $this->controllerHelper,
+            $this->argumentBuilder,
+            $this->container,
+            [
+                'entity-class' => SampleEntity::class,
+                'factory' => __NAMESPACE__ . '\\createSampleEntity'
+            ]
+        );
+
+        $this->controllerHelper->expects($this->once())->method('persistEntity')->with(
+            $this->equalTo(new SampleEntity("function foo"))
         );
 
         /** @var Request $request */
