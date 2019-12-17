@@ -47,7 +47,7 @@ final class BarTest extends TestCase
             'foo',
             ['bar', 123, 'some-resolved'],
             ['abc' => ['def' => new Reference('some-string-representation', 1)]],
-            new Reference('some-decorated-service-id.some.tag.name.some-decorator-service-id.inner', 1)
+            new Reference('decorated_b55aec8c54b06f8899468dfbe954991d.inner', 1)
         ]);
         $decoratorDefinition->expects($this->once())->method('setDecoratedService')->with(
             $this->equalTo('some-decorated-service-id')
@@ -66,7 +66,7 @@ final class BarTest extends TestCase
             $this->equalTo('some-decorator-service-id')
         )->willReturn($decoratorDefinition);
         $container->expects($this->once())->method('setDefinition')->with(
-            $this->equalTo("some-decorated-service-id.some.tag.name.some-decorator-service-id"),
+            $this->equalTo("decorated_b55aec8c54b06f8899468dfbe954991d"),
             $this->equalTo($decoratorDefinition)
         );
         $container->expects($this->once())->method('removeDefinition')->with(

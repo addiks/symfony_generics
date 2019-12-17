@@ -87,12 +87,12 @@ final class DecoratorTemplateCompilerPass implements CompilerPassInterface
         $decoratorDefinition->setTags($newDecoratorTags);
 
         /** @var string $newDecoratorServiceId */
-        $newDecoratorServiceId = sprintf(
+        $newDecoratorServiceId = "decorated_" . md5(sprintf(
             "%s.%s.%s",
-            $decoratedServiceId,
-            $this->tagNameDecorates,
-            $decoratorServiceId
-        );
+            substr(md5($decoratedServiceId), 0, 8),
+            substr(md5($this->tagNameDecorates), 0, 8),
+            substr(md5($decoratorServiceId), 0, 8)
+        ));
 
         /** @var Definition $newDecoratorDefinition */
         $newDecoratorDefinition = $this->filterDefinition(
