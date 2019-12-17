@@ -5,3 +5,6 @@
 - Per mime-type kann zwischen XML oder JSON umgeschaltet werden (per serializer)
 
 - generic form type
+    - ... from XML
+    - ... from doctrine ORM mapping (which is quite similar to XML mapping)
+    - ... that auto-detects entity-method's (update / modify / change / setter / ...)

@@ -2,6 +2,7 @@
 [![Scrutinizer Build Status][11]][12]
 [![Scrutinizer Code Quality][13]][14]
 [![Code Coverage][15]][16]
+
 [![Total Downloads][18]][19]
 [![Licence][20]][19]
 [![Version][21]][19]
