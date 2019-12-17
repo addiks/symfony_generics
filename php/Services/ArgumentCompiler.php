@@ -25,6 +25,7 @@ use ReflectionException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Addiks\SymfonyGenerics\Arguments\ArgumentContextInterface;
 use InvalidArgumentException;
+use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 
 final class ArgumentCompiler implements ArgumentCompilerInterface
 {
@@ -44,14 +45,21 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
      */
     private $argumentContext;
 
+    /**
+     * @var ControllerHelperInterface
+     */
+    private $controllerHelper;
+
     public function __construct(
         ArgumentFactory $argumentFactory,
         RequestStack $requestStack,
-        ArgumentContextInterface $argumentContext
+        ArgumentContextInterface $argumentContext,
+        ControllerHelperInterface $controllerHelper
     ) {
         $this->argumentFactory = $argumentFactory;
         $this->requestStack = $requestStack;
         $this->argumentContext = $argumentContext;
+        $this->controllerHelper = $controllerHelper;
     }
 
     public function buildArguments(
@@ -164,7 +172,16 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         $parameterTypeName = $this->getTypeNameFromReflectionParameter($parameterReflection);
 
         if (isset($argumentsConfiguration[$parameterName])) {
-            return $this->resolveArgumentConfiguration($argumentsConfiguration[$parameterName]);
+            /** @var mixed $value */
+            $value = $this->resolveArgumentConfiguration($argumentsConfiguration[$parameterName]);
+
+            if (!empty($parameterTypeName)) {
+                if (class_exists($parameterTypeName)) {
+                    $value = $this->controllerHelper->findEntity($parameterTypeName, $value);
+                }
+            }
+
+            return $value;
 
         } elseif (isset($argumentsConfiguration[$index])) {
             return $this->resolveArgumentConfiguration($argumentsConfiguration[$index]);

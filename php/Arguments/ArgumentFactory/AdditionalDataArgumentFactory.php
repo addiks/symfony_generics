@@ -33,7 +33,7 @@ final class AdditionalDataArgumentFactory implements ArgumentFactory
 
     public function understandsString(string $source): bool
     {
-        return 1 === preg_match("/^\%[a-zA-Z0-9_-]+\%$/is", $source);
+        return 1 === preg_match("/^\{[a-zA-Z0-9_-]+\}$/is", $source);
     }
 
     public function understandsArray(array $source): bool

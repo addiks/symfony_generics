@@ -64,18 +64,24 @@ final class ArgumentCall implements Argument
         /** @var object|string $callee */
         $callee = $this->callee->resolve();
 
-        /** @var ReflectionFunctionAbstract $methodReflection */
+        /** @var ReflectionFunctionAbstract|null $methodReflection */
         $methodReflection = null;
 
         if (is_string($callee)) {
             Assert::classExists($callee);
 
             $reflectionClass = new ReflectionClass($callee);
-            $methodReflection = $reflectionClass->getMethod($this->methodName);
+
+            if ($reflectionClass->hasMethod($this->methodName)) {
+                $methodReflection = $reflectionClass->getMethod($this->methodName);
+            }
 
         } else {
             $reflectionObject = new ReflectionObject($callee);
-            $methodReflection = $reflectionObject->getMethod($this->methodName);
+
+            if ($reflectionObject->hasMethod($this->methodName)) {
+                $methodReflection = $reflectionObject->getMethod($this->methodName);
+            }
         }
 
         /** @var array<mixed> $argumentsConfiguration */
@@ -91,10 +97,14 @@ final class ArgumentCall implements Argument
         $callback = [$callee, $this->methodName];
 
         /** @var array<mixed> $arguments */
-        $arguments = $this->argumentCompiler->buildCallArguments(
-            $methodReflection,
-            $argumentsConfiguration
-        );
+        $arguments = $argumentsConfiguration;
+
+        if (!is_null($methodReflection)) {
+            $arguments = $this->argumentCompiler->buildCallArguments(
+                $methodReflection,
+                $argumentsConfiguration
+            );
+        }
 
         return call_user_func_array($callback, $arguments);
     }

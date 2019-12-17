@@ -22,6 +22,7 @@ use ReflectionParameter;
 use ReflectionType;
 use ReflectionException;
 use Closure;
+use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 
 final class ArgumentCompilerTest extends TestCase
 {
@@ -46,16 +47,23 @@ final class ArgumentCompilerTest extends TestCase
      */
     private $argumentContext;
 
+    /**
+     * @var ControllerHelperInterface
+     */
+    private $controllerHelper;
+
     public function setUp()
     {
         $this->argumentFactory = $this->createMock(ArgumentFactory::class);
         $this->requestStack = $this->createMock(RequestStack::class);
         $this->argumentContext = $this->createMock(ArgumentContextInterface::class);
+        $this->controllerHelper = $this->createMock(ControllerHelperInterface::class);
 
         $this->compiler = new ArgumentCompiler(
             $this->argumentFactory,
             $this->requestStack,
-            $this->argumentContext
+            $this->argumentContext,
+            $this->controllerHelper
         );
     }
 

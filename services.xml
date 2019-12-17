@@ -112,6 +112,7 @@
             <argument type="service" id="symfony_generics.argument_factory.lazy_load_proxy" />
             <argument type="service" id="request_stack" />
             <argument type="service" id="symfony_generics.argument_factory.context" />
+            <argument type="service" id="symfony_generics.controller_helper" />
         </service>
 
         <service

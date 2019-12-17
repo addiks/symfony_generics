@@ -51,12 +51,12 @@ final class AdditionalDataArgumentFactoryTest extends TestCase
     public function dataproviderForShouldKnowWhatStringsToUnderstand(): array
     {
         return array(
-            [true,  '%foo%'],
-            [true,  '%bar%'],
-            [true,  '%baz%'],
+            [true,  '{foo}'],
+            [true,  '{bar}'],
+            [true,  '{baz}'],
             [false, 'foo'],
-            [false, '%foo'],
-            [false, 'foo%'],
+            [false, '{foo'],
+            [false, 'foo}'],
             [false, '$foo'],
             [false, ''],
         );
@@ -110,12 +110,12 @@ final class AdditionalDataArgumentFactoryTest extends TestCase
         $this->setUp();
 
         return array(
-            [new AdditionalDataArgument('foo', $this->context), '%foo%', false],
-            [new AdditionalDataArgument('lorem-ipsum', $this->context), '%lorem-ipsum%', false],
-            [new AdditionalDataArgument('a', $this->context), '%a%', false],
-            [null, '%%', true],
-            [null, 'foo%', true],
-            [null, '%foo', true],
+            [new AdditionalDataArgument('foo', $this->context), '{foo}', false],
+            [new AdditionalDataArgument('lorem-ipsum', $this->context), '{lorem-ipsum}', false],
+            [new AdditionalDataArgument('a', $this->context), '{a}', false],
+            [null, '{}', true],
+            [null, 'foo}', true],
+            [null, '{foo', true],
             [null, 'foo', true],
         );
     }

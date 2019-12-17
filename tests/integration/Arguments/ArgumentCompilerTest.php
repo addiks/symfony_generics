@@ -22,6 +22,12 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Addiks\SymfonyGenerics\Tests\Integration\Arguments\ServiceSample;
 use Symfony\Component\HttpFoundation\FileBag;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Twig_Environment;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 require_once(__DIR__ . '/ServiceSample.php');
 
@@ -63,6 +69,12 @@ final class ArgumentCompilerTest extends TestCase
 
         $this->container->set('doctrine.orm.entity_manager', $this->entityManager);
         $this->container->set('request_stack', new RequestStack());
+        $this->container->set('twig', $this->createMock(Twig_Environment::class));
+        $this->container->set('security.authorization_checker', $this->createMock(AuthorizationCheckerInterface::class));
+        $this->container->set('router', $this->createMock(UrlGeneratorInterface::class));
+        $this->container->set('session', $this->createMock(Session::class));
+        $this->container->set('logger', $this->createMock(LoggerInterface::class));
+        $this->container->set('event_dispatcher', $this->createMock(EventDispatcherInterface::class));
 
         $this->compiler = $this->container->get('symfony_generics.argument_compiler');
     }
@@ -140,8 +152,8 @@ final class ArgumentCompilerTest extends TestCase
             ["#qwe#foo#", '  @some.service::bar  '],
             ["#qwe#foo#", "\n@some.service::bar\n"],
             ["#asd#baz#", '@some_service::bar(\'asd\', baz)'],
-            ["addArgRes", '%some_additional_argument%'],
-            ["#qwe#foo#", '%some_argument_service%::bar'],
+            ["addArgRes", '{some_additional_argument}'],
+            ["#qwe#foo#", '{some_argument_service}::bar'],
         );
     }
 
