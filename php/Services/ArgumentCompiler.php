@@ -124,7 +124,10 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         /** @var Argument|null $argument */
         $argument = null;
 
-        if (is_array($argumentConfiguration)) {
+        if ($argumentConfiguration === '') {
+            return '';
+
+        } elseif (is_array($argumentConfiguration)) {
             Assert::true($this->argumentFactory->understandsArray($argumentConfiguration), sprintf(
                 "Argument '%s' could not be understood!",
                 preg_replace("/\s+/is", "", var_export($argumentConfiguration, true))
