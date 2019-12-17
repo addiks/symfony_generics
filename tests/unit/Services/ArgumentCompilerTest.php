@@ -88,7 +88,6 @@ final class ArgumentCompilerTest extends TestCase
         /** @var mixed $actualArguments */
         $actualArguments = $this->compiler->buildArguments(
             $argumentsConfiguration,
-            $request,
             ['foo' => 'bar']
         );
 
@@ -121,7 +120,7 @@ final class ArgumentCompilerTest extends TestCase
 
         $this->argumentFactory->method('understandsString')->willReturn(false);
 
-        $this->compiler->buildArguments(['lorem' => 'dolor'], $request, []);
+        $this->compiler->buildArguments(['lorem' => 'dolor'], []);
     }
 
     /**
@@ -141,7 +140,7 @@ final class ArgumentCompilerTest extends TestCase
 
         $this->argumentFactory->method('understandsString')->willReturn(false);
 
-        $this->compiler->buildArguments(['lorem' => ['dolor']], $request, []);
+        $this->compiler->buildArguments(['lorem' => ['dolor']], []);
     }
 
     /**
@@ -149,7 +148,7 @@ final class ArgumentCompilerTest extends TestCase
      */
     public function shouldExpectArgumentToBeArrayOrString()
     {
-        $this->expectExceptionMessage("Arguments must be defined as string or array!");
+        $this->expectExceptionMessage("Arguments must be defined as string, array, bool or null!");
 
         /** @var Request $request */
         $request = $this->createMock(Request::class);
@@ -161,7 +160,7 @@ final class ArgumentCompilerTest extends TestCase
 
         $this->argumentFactory->method('understandsString')->willReturn(false);
 
-        $this->compiler->buildArguments(['lorem' => 3.1415], $request, []);
+        $this->compiler->buildArguments(['lorem' => 3.1415], []);
     }
 
     /**
@@ -198,7 +197,6 @@ final class ArgumentCompilerTest extends TestCase
         $actualArguments = $this->compiler->buildCallArguments(
             $routineReflection,
             $argumentsConfiguration,
-            $request,
             [1 => 'def'],
             ['foo' => 'bar']
         );
@@ -277,7 +275,6 @@ final class ArgumentCompilerTest extends TestCase
         $this->compiler->buildCallArguments(
             $routineReflection,
             [],
-            $request,
             [],
             []
         );

@@ -142,8 +142,7 @@ final class GenericServiceInvokeController
         /** @var array $arguments */
         $arguments = $this->argumentCompiler->buildCallArguments(
             $reflectionMethod,
-            $this->arguments,
-            $request
+            $this->arguments
         );
 
         $reflectionMethod->invokeArgs($service, $arguments);
@@ -152,7 +151,7 @@ final class GenericServiceInvokeController
 
         if (!empty($this->successRedirectRoute)) {
             /** @var array $redirectArguments */
-            $redirectArguments = $this->argumentCompiler->buildArguments($this->successRedirectArguments, $request);
+            $redirectArguments = $this->argumentCompiler->buildArguments($this->successRedirectArguments);
 
             return $this->controllerHelper->redirectToRoute(
                 $this->successRedirectRoute,

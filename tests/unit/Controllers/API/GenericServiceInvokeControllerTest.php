@@ -134,8 +134,7 @@ final class GenericServiceInvokeControllerTest extends TestCase
 
         $this->argumentCompiler->expects($this->once())->method('buildCallArguments')->with(
             $this->equalTo(new ReflectionMethod($service, 'doFoo')),
-            $this->equalTo(['lorem' => 'ipsum']),
-            $this->identicalTo($request)
+            $this->equalTo(['lorem' => 'ipsum'])
         )->willReturn(['lorem', 'ipsum']);
 
         /** @var string $expectedResponseContent */
@@ -175,8 +174,7 @@ final class GenericServiceInvokeControllerTest extends TestCase
 
         $this->argumentCompiler->expects($this->once())->method('buildCallArguments')->with(
             $this->equalTo(new ReflectionMethod($service, 'doFoo')),
-            $this->equalTo(['lorem' => 'ipsum']),
-            $this->identicalTo($request)
+            $this->equalTo(['lorem' => 'ipsum'])
         )->willReturn(['lorem', 'ipsum']);
 
         $controller = new GenericServiceInvokeController(
@@ -284,8 +282,7 @@ final class GenericServiceInvokeControllerTest extends TestCase
 
         $this->argumentCompiler->expects($this->once())->method('buildCallArguments')->with(
             $this->equalTo(new ReflectionMethod($service, 'doFoo')),
-            $this->equalTo(['lorem' => 'ipsum']),
-            $this->identicalTo($request)
+            $this->equalTo(['lorem' => 'ipsum'])
         )->willReturn(['lorem', 'ipsum']);
 
         /** @var string $expectedResponseContent */

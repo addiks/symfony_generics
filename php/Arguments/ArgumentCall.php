@@ -15,6 +15,12 @@ namespace Addiks\SymfonyGenerics\Arguments;
 use Addiks\SymfonyGenerics\Arguments\Argument;
 use Closure;
 use Webmozart\Assert\Assert;
+use ReflectionFunctionAbstract;
+use ReflectionFunction;
+use ReflectionObject;
+use ReflectionClass;
+use ReflectionParameter;
+use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 
 final class ArgumentCall implements Argument
 {
@@ -34,11 +40,18 @@ final class ArgumentCall implements Argument
      */
     private $arguments = array();
 
+    /**
+     * @var ArgumentCompilerInterface
+     */
+    private $argumentCompiler;
+
     public function __construct(
+        ArgumentCompilerInterface $argumentCompiler,
         Argument $callee,
         string $methodName,
         array $arguments
     ) {
+        $this->argumentCompiler = $argumentCompiler;
         $this->callee = $callee;
         $this->methodName = $methodName;
         $this->arguments = array_map(function (Argument $argument): Argument {
@@ -50,10 +63,23 @@ final class ArgumentCall implements Argument
     {
         /** @var object|string $callee */
         $callee = $this->callee->resolve();
-        Assert::methodExists($callee, $this->methodName);
 
-        /** @var array<mixed> $arguments */
-        $arguments = array_map(
+        /** @var ReflectionFunctionAbstract $methodReflection */
+        $methodReflection = null;
+
+        if (is_string($callee)) {
+            Assert::classExists($callee);
+
+            $reflectionClass = new ReflectionClass($callee);
+            $methodReflection = $reflectionClass->getMethod($this->methodName);
+
+        } else {
+            $reflectionObject = new ReflectionObject($callee);
+            $methodReflection = $reflectionObject->getMethod($this->methodName);
+        }
+
+        /** @var array<mixed> $argumentsConfiguration */
+        $argumentsConfiguration = array_map(
             /** @return mixed */
             function (Argument $argument) {
                 return $argument->resolve();
@@ -63,6 +89,12 @@ final class ArgumentCall implements Argument
 
         /** @var callable $callback */
         $callback = [$callee, $this->methodName];
+
+        /** @var array<mixed> $arguments */
+        $arguments = $this->argumentCompiler->buildCallArguments(
+            $methodReflection,
+            $argumentsConfiguration
+        );
 
         return call_user_func_array($callback, $arguments);
     }

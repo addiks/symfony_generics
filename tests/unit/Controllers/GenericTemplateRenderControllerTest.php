@@ -50,8 +50,7 @@ final class GenericTemplateRenderControllerTest extends TestCase
         $expectedResponse = $this->createMock(Response::class);
 
         $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
-            $this->equalTo(['foo' => 'bar']),
-            $this->identicalTo($request)
+            $this->equalTo(['foo' => 'bar'])
         )->willReturn([
             'bar' => 'baz'
         ]);
@@ -141,8 +140,7 @@ final class GenericTemplateRenderControllerTest extends TestCase
         $expectedResponse = $this->createMock(Response::class);
 
         $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
-            $this->equalTo(['foo' => 'bar']),
-            $this->identicalTo($request)
+            $this->equalTo(['foo' => 'bar'])
         )->willReturn([
             'bar' => 'baz'
         ]);

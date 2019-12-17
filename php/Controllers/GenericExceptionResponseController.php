@@ -149,7 +149,7 @@ final class GenericExceptionResponseController
         $response = null;
 
         try {
-            $response = $this->executeInnerControllerUnsafely($request);
+            $response = $this->executeInnerControllerUnsafely();
 
         } catch (Throwable $exception) {
             $this->controllerHelper->handleException($exception);
@@ -171,15 +171,14 @@ final class GenericExceptionResponseController
         return $response;
     }
 
-    private function executeInnerControllerUnsafely(Request $request): Response
+    private function executeInnerControllerUnsafely(): Response
     {
         $methodReflection = new ReflectionMethod($this->innerController, $this->innerControllerMethod);
 
         /** @var array<int, mixed> $arguments */
         $arguments = $this->argumentBuilder->buildCallArguments(
             $methodReflection,
-            $this->innerControllerArgumentsConfiguration,
-            $request
+            $this->innerControllerArgumentsConfiguration
         );
 
         /** @var callable $controllerCallback */
@@ -225,8 +224,7 @@ final class GenericExceptionResponseController
         $redirectRouteParameters = array_merge(
             $request->attributes->get('_route_params'),
             $this->argumentBuilder->buildArguments(
-                $responseData['redirect-route-parameters'],
-                $request
+                $responseData['redirect-route-parameters']
             )
         );
 

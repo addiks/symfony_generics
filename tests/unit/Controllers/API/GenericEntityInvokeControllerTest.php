@@ -62,7 +62,6 @@ final class GenericEntityInvokeControllerTest extends TestCase
                 'method' => 'buildArguments',
                 'arguments' => [
                     'argumentsConfiguration' => "Lorem",
-                    'request' => "ipsum"
                 ]
             ]
         );
@@ -80,7 +79,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
                 "123",
                 $this->argumentCompiler,
                 'buildArguments',
-                [['foo' => 'bar'], $request]
+                [['foo' => 'bar']]
             ))
         );
 
@@ -88,20 +87,16 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->equalTo(new ReflectionMethod(get_class($this->argumentCompiler), 'buildArguments')),
             $this->equalTo([
                 'argumentsConfiguration' => "Lorem",
-                'request' => "ipsum"
-            ]),
-            $this->identicalTo($request)
+            ])
         )->willReturn([
-            ['foo' => 'bar'],
-            $request
+            ['foo' => 'bar']
         ]);
 
         $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
-            $this->equalTo(['foo' => 'bar']),
-            $this->identicalTo($request)
+            $this->equalTo(['foo' => 'bar'])
         );
 
-        $this->controller->invokeEntityMethod($request, "123");
+        $this->controller->invokeEntityMethod("123");
     }
 
     /**
@@ -129,7 +124,6 @@ final class GenericEntityInvokeControllerTest extends TestCase
 
         $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
             $this->equalTo(['some-redirect-route-parameters']),
-            $this->identicalTo($request),
             $this->equalTo(['result' => "some-result"])
         )->willReturn(['foo' => 'bar']);
 
@@ -143,7 +137,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->equalTo(['foo' => 'bar'])
         )->willReturn($this->createMock(Response::class));
 
-        $this->controller->invokeEntityMethod($request, "123");
+        $this->controller->invokeEntityMethod("123");
     }
 
     /**
@@ -170,7 +164,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->equalTo("123")
         )->willReturn(null);
 
-        $this->controller->invokeEntityMethod($request, "123");
+        $this->controller->invokeEntityMethod("123");
     }
 
     /**
@@ -207,7 +201,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->equalTo("123")
         )->willReturn($this->argumentCompiler);
 
-        $this->controller->invokeEntityMethod($request, "123");
+        $this->controller->invokeEntityMethod("123");
     }
 
     /**
@@ -345,16 +339,13 @@ final class GenericEntityInvokeControllerTest extends TestCase
             $this->equalTo([
                 'argumentsConfiguration' => "Lorem",
                 'request' => "ipsum"
-            ]),
-            $this->identicalTo($request)
+            ])
         )->willReturn([
-            ['foo' => 'bar'],
-            $request
+            ['foo' => 'bar']
         ]);
 
         $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
-            $this->equalTo(['foo' => 'bar']),
-            $this->identicalTo($request)
+            $this->equalTo(['foo' => 'bar'])
         );
 
         $this->controllerHelper->method('getCurrentRequest')->willReturn($request);

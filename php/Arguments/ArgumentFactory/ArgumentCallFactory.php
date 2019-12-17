@@ -16,9 +16,15 @@ use Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentFactory;
 use Addiks\SymfonyGenerics\Arguments\Argument;
 use Addiks\SymfonyGenerics\Arguments\ArgumentCall;
 use Webmozart\Assert\Assert;
+use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 
 final class ArgumentCallFactory implements ArgumentFactory
 {
+
+    /**
+     * @var ArgumentCompilerInterface
+     */
+    private $argumentCompiler;
 
     /**
      * @var ArgumentFactory
@@ -26,8 +32,10 @@ final class ArgumentCallFactory implements ArgumentFactory
     private $argumentFactory;
 
     public function __construct(
+        ArgumentCompilerInterface $argumentCompiler,
         ArgumentFactory $argumentFactory
     ) {
+        $this->argumentCompiler = $argumentCompiler;
         $this->argumentFactory = $argumentFactory;
     }
 
@@ -71,7 +79,7 @@ final class ArgumentCallFactory implements ArgumentFactory
         /** @var Argument $callee */
         $callee = $this->argumentFactory->createArgumentFromString($calleeSource);
 
-        return new ArgumentCall($callee, $methodName, $arguments);
+        return new ArgumentCall($this->argumentCompiler, $callee, $methodName, $arguments);
     }
 
     public function createArgumentFromArray(array $source): Argument
@@ -105,7 +113,7 @@ final class ArgumentCallFactory implements ArgumentFactory
             }
         }
 
-        return new ArgumentCall($callee, $source['method'], $arguments);
+        return new ArgumentCall($this->argumentCompiler, $callee, $source['method'], $arguments);
     }
 
 }

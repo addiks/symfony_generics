@@ -134,8 +134,7 @@ final class GenericEntityListingControllerTest extends TestCase
         )->willReturn([$entityA, $entityB]);
 
         $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
-            $this->equalTo(['foo' => 'bar']),
-            $this->identicalTo($request)
+            $this->equalTo(['foo' => 'bar'])
         )->willReturn(['blah' => 'blubb']);
 
         $controller = new GenericEntityListingController($this->controllerHelper, $this->argumentCompiler, [
@@ -237,8 +236,7 @@ final class GenericEntityListingControllerTest extends TestCase
         )->willReturn([$entityA, $entityB]);
 
         $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
-            $this->equalTo(['foo' => 'bar']),
-            $this->identicalTo($request)
+            $this->equalTo(['foo' => 'bar'])
         )->willReturn(['blah' => 'blubb']);
 
         $controller = new GenericEntityListingController($this->controllerHelper, $this->argumentCompiler, [

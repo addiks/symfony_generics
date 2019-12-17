@@ -15,6 +15,8 @@ use Addiks\SymfonyGenerics\Arguments\ArgumentCall;
 use Addiks\SymfonyGenerics\Arguments\Argument;
 use InvalidArgumentException;
 use stdClass;
+use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
+use ReflectionMethod;
 
 final class ArgumentCallTest extends TestCase
 {
@@ -36,10 +38,22 @@ final class ArgumentCallTest extends TestCase
         $argumentB = $this->createMock(Argument::class);
         $argumentB->method("resolve")->willReturn(31415);
 
-        $subject = new ArgumentCall($callee, "someMethod", [
-            $argumentA,
-            $argumentB
-        ]);
+        /** @var ArgumentCompilerInterface $argumentCompiler */
+        $argumentCompiler = $this->createMock(ArgumentCompilerInterface::class);
+        $argumentCompiler->expects($this->any())->method('buildCallArguments')->with(
+            $this->equalTo(new ReflectionMethod(__CLASS__, 'someMethod')),
+            $this->equalTo(["some-foo", 31415])
+        )->willReturn(["some-foo", 31415]);
+
+        $subject = new ArgumentCall(
+            $argumentCompiler,
+            $callee,
+            "someMethod",
+            [
+                $argumentA,
+                $argumentB
+            ]
+        );
 
         /** @var mixed $actualResult */
         $actualResult = $subject->resolve();
@@ -65,23 +79,12 @@ final class ArgumentCallTest extends TestCase
         $callee = $this->createMock(Argument::class);
         $callee->method("resolve")->willReturn("non-object");
 
-        $subject = new ArgumentCall($callee, "someMethod", []);
-
-        $subject->resolve();
-    }
-
-    /**
-     * @test
-     */
-    public function shouldRejectCalleeWithoutCalledMethod()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        /** @var Argument $callee */
-        $callee = $this->createMock(Argument::class);
-        $callee->method("resolve")->willReturn($this->createMock(stdClass::class));
-
-        $subject = new ArgumentCall($callee, "someMethod", []);
+        $subject = new ArgumentCall(
+            $this->createMock(ArgumentCompilerInterface::class),
+            $callee,
+            "someMethod",
+            []
+        );
 
         $subject->resolve();
     }

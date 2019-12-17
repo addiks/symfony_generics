@@ -176,8 +176,7 @@ final class GenericEntityCreateController
         if ($constructorReflection instanceof ReflectionFunctionAbstract) {
             $constructArguments = $this->argumentBuilder->buildCallArguments(
                 $constructorReflection,
-                $this->constructArguments,
-                $request
+                $this->constructArguments
             );
 
             /** @var object $entity */
@@ -190,7 +189,7 @@ final class GenericEntityCreateController
             $entity = new $entityClass();
         }
 
-        $this->performPostCreationCalls($entity, $request);
+        $this->performPostCreationCalls($entity);
 
         if (!empty($this->authorizationAttribute)) {
             $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $entity);
@@ -211,8 +210,7 @@ final class GenericEntityCreateController
         if (!empty($this->successRedirectRoute)) {
             /** @var array $redirectArguments */
             $redirectArguments = $this->argumentBuilder->buildArguments(
-                $this->successRedirectArguments,
-                $request
+                $this->successRedirectArguments
             );
 
             /** @var callable $idGetterCallback */
@@ -324,7 +322,7 @@ final class GenericEntityCreateController
     /**
      * @param object $entity
      */
-    private function performPostCreationCalls($entity, Request $request): void
+    private function performPostCreationCalls($entity): void
     {
         $classReflection = new ReflectionClass($this->entityClass);
 
@@ -336,8 +334,7 @@ final class GenericEntityCreateController
 
             $callArguments = $this->argumentBuilder->buildCallArguments(
                 $methodReflection,
-                $callArgumentConfiguration,
-                $request
+                $callArgumentConfiguration
             );
 
             $methodReflection->invokeArgs($entity, $callArguments);

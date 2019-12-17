@@ -83,7 +83,7 @@ final class GenericTemplateRenderController
         }
 
         /** @var array $arguments */
-        $arguments = $this->argumentCompiler->buildArguments($this->arguments, $request);
+        $arguments = $this->argumentCompiler->buildArguments($this->arguments);
 
         return $this->controllerHelper->renderTemplate($this->templatePath, $arguments);
     }

@@ -30,6 +30,7 @@
                         class="Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentCallFactory"
                         id="symfony_generics.argument_factory.call"
                     >
+                        <argument type="service" id="symfony_generics.argument_compiler" />
                         <argument type="service" id="symfony_generics.argument_factory.lazy_load_proxy" />
                     </service>
                 </argument>

@@ -119,10 +119,10 @@ final class GenericEntityInvokeController
         /** @var string $entityId */
         $entityId = $request->get($this->entityIdKey);
 
-        return $this->invokeEntityMethod($request, $entityId);
+        return $this->invokeEntityMethod($entityId);
     }
 
-    public function invokeEntityMethod(Request $request, string $entityId): Response
+    public function invokeEntityMethod(string $entityId): Response
     {
         /** @var object|null $entity */
         $entity = $this->controllerHelper->findEntity($this->entityClass, $entityId);
@@ -146,8 +146,7 @@ final class GenericEntityInvokeController
         /** @var array $callArguments */
         $callArguments = $this->argumentCompiler->buildCallArguments(
             $reflectionMethod,
-            $this->arguments,
-            $request
+            $this->arguments
         );
 
         $this->controllerHelper->dispatchEvent("symfony_generics.entity_interaction", new EntityInteractionEvent(
@@ -172,7 +171,7 @@ final class GenericEntityInvokeController
         } else {
             $response = $this->controllerHelper->redirectToRoute(
                 $this->redirectRoute,
-                $this->argumentCompiler->buildArguments($this->redirectRouteParameters, $request, [
+                $this->argumentCompiler->buildArguments($this->redirectRouteParameters, [
                     'result' => $result
                 ])
             );

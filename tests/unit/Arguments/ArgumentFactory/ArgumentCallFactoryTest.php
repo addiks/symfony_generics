@@ -16,6 +16,7 @@ use Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentFactory;
 use InvalidArgumentException;
 use Addiks\SymfonyGenerics\Arguments\ArgumentCall;
 use Addiks\SymfonyGenerics\Arguments\Argument;
+use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 
 final class ArgumentCallFactoryTest extends TestCase
 {
@@ -26,15 +27,21 @@ final class ArgumentCallFactoryTest extends TestCase
     private $factory;
 
     /**
+     * @var ArgumentCompilerInterface
+     */
+    private $argumentCompiler;
+
+    /**
      * @var ArgumentFactory
      */
     private $argumentFactory;
 
     public function setUp()
     {
+        $this->argumentCompiler = $this->createMock(ArgumentCompilerInterface::class);
         $this->argumentFactory = $this->createMock(ArgumentFactory::class);
 
-        $this->factory = new ArgumentCallFactory($this->argumentFactory);
+        $this->factory = new ArgumentCallFactory($this->argumentCompiler, $this->argumentFactory);
     }
 
     /**
@@ -108,11 +115,29 @@ final class ArgumentCallFactoryTest extends TestCase
     public function dataProviderForShouldCreateCallArgumentFromString(): array
     {
         return array(
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', []), 'some-callee::someMethod', false],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', [
-                $this->createMock(Argument::class),
-                $this->createMock(Argument::class)
-            ]), 'some-callee::someMethod(a, b)', false],
+            [
+                new ArgumentCall(
+                    $this->createMock(ArgumentCompilerInterface::class),
+                    $this->createMock(Argument::class),
+                    'someMethod',
+                    []
+                ),
+                'some-callee::someMethod',
+                false
+            ],
+            [
+                new ArgumentCall(
+                    $this->createMock(ArgumentCompilerInterface::class),
+                    $this->createMock(Argument::class),
+                    'someMethod',
+                    [
+                        $this->createMock(Argument::class),
+                        $this->createMock(Argument::class)
+                    ]
+                ),
+                'some-callee::someMethod(a, b)',
+                false
+            ],
             [null, 'a::', true],
             [null, '::b', true],
             [null, '::', true],
@@ -160,18 +185,33 @@ final class ArgumentCallFactoryTest extends TestCase
             [null, [], true],
             [null, ['method' => 'foo'], true],
             [null, ['callee' => 'bar'], true],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', []), [
+            [new ArgumentCall(
+                $this->createMock(ArgumentCompilerInterface::class),
+                $this->createMock(Argument::class),
+                'someMethod',
+                []
+            ), [
                 'callee' => 'some-callee',
                 'method' => 'someMethod'
             ], false],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', []), [
+            [new ArgumentCall(
+                $this->createMock(ArgumentCompilerInterface::class),
+                $this->createMock(Argument::class),
+                'someMethod',
+                []
+            ), [
                 'callee' => ['some-callee'],
                 'method' => 'someMethod'
             ], false],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', [
+            [new ArgumentCall(
+                $this->createMock(ArgumentCompilerInterface::class),
                 $this->createMock(Argument::class),
-                $this->createMock(Argument::class)
-            ]), [
+                'someMethod',
+                [
+                    $this->createMock(Argument::class),
+                    $this->createMock(Argument::class)
+                ]
+            ), [
                 'callee' => 'some-callee',
                 'method' => 'someMethod',
                 'arguments' => [
@@ -179,10 +219,14 @@ final class ArgumentCallFactoryTest extends TestCase
                     'bar'
                 ]
             ], false],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', [
+            [new ArgumentCall(
+                $this->createMock(ArgumentCompilerInterface::class),
                 $this->createMock(Argument::class),
-                $this->createMock(Argument::class)
-            ]), [
+                'someMethod', [
+                    $this->createMock(Argument::class),
+                    $this->createMock(Argument::class)
+                ]
+            ), [
                 'callee' => ['some-callee'],
                 'method' => 'someMethod',
                 'arguments' => [
@@ -190,10 +234,14 @@ final class ArgumentCallFactoryTest extends TestCase
                     'bar'
                 ]
             ], false],
-            [new ArgumentCall($this->createMock(Argument::class), 'someMethod', [
+            [new ArgumentCall(
+                $this->createMock(ArgumentCompilerInterface::class),
                 $this->createMock(Argument::class),
-                $this->createMock(Argument::class)
-            ]), [
+                'someMethod', [
+                    $this->createMock(Argument::class),
+                    $this->createMock(Argument::class)
+                ]
+            ), [
                 'callee' => 'some-callee',
                 'method' => 'someMethod',
                 'arguments' => [

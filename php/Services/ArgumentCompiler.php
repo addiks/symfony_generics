@@ -56,7 +56,6 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
 
     public function buildArguments(
         array $argumentsConfiguration,
-        Request $request,
         array $additionalData = array()
     ): array {
         /** @var array $argumentValues */
@@ -79,7 +78,6 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
     public function buildCallArguments(
         ReflectionFunctionAbstract $routineReflection,
         array $argumentsConfiguration,
-        Request $request,
         array $predefinedArguments = array(),
         array $additionalData = array()
     ): array {
@@ -110,21 +108,25 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
     }
 
     /**
-     * @param array|string $argumentConfiguration
+     * @param array|string|bool|null $argumentConfiguration
      *
      * @return mixed
      */
     private function resolveArgumentConfiguration($argumentConfiguration)
     {
-        Assert::true(
-            is_array($argumentConfiguration) || is_string($argumentConfiguration),
-            "Arguments must be defined as string or array!"
+        Assert::oneOf(
+            gettype($argumentConfiguration),
+            ['string', 'array', 'NULL', 'boolean'],
+            "Arguments must be defined as string, array, bool or null!"
         );
 
         /** @var Argument|null $argument */
         $argument = null;
 
-        if ($argumentConfiguration === '') {
+        if (is_bool($argumentConfiguration) || is_null($argumentConfiguration)) {
+            return $argumentConfiguration;
+
+        } else if ($argumentConfiguration === '') {
             return '';
 
         } elseif (is_array($argumentConfiguration)) {

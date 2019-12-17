@@ -109,7 +109,7 @@ final class ArgumentCompilerTest extends TestCase
         ];
 
         /** @var mixed $actualResult */
-        $actualResult = $this->compiler->buildArguments([$argumentsConfiguration], $request, $additionalData);
+        $actualResult = $this->compiler->buildArguments([$argumentsConfiguration], $additionalData);
 
         $this->assertEquals($expectedResult, $actualResult[0]);
     }
