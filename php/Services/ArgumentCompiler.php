@@ -176,8 +176,8 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             $value = $this->resolveArgumentConfiguration($argumentsConfiguration[$parameterName]);
 
             if (!empty($parameterTypeName)) {
-                if (class_exists($parameterTypeName)) {
-                    $value = $this->controllerHelper->findEntity($parameterTypeName, $value);
+                if (class_exists($parameterTypeName) && is_scalar($value)) {
+                    $value = $this->controllerHelper->findEntity($parameterTypeName, (string)$value);
                 }
             }
 
