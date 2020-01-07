@@ -75,6 +75,11 @@ final class GenericServiceInvokeController
      */
     private $successRedirectStatus;
 
+    /**
+     * @var bool
+     */
+    private $sendReturnValueInResponse = false;
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentCompiler,
@@ -94,6 +99,7 @@ final class GenericServiceInvokeController
             'success-redirect' => null,
             'success-redirect-arguments' => [],
             'success-redirect-status' => $defaultRedirectStatus,
+            'send-return-value-in-response' => false,
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
@@ -106,6 +112,7 @@ final class GenericServiceInvokeController
         $this->successRedirectRoute = $options['success-redirect'];
         $this->successRedirectArguments = $options['success-redirect-arguments'];
         $this->successRedirectStatus = $options['success-redirect-status'];
+        $this->sendReturnValueInResponse = $options['send-return-value-in-response'];
     }
 
     public function __invoke(): Response
@@ -145,7 +152,8 @@ final class GenericServiceInvokeController
             $this->arguments
         );
 
-        $reflectionMethod->invokeArgs($service, $arguments);
+        /** @var mixed $returnValue */
+        $returnValue = $reflectionMethod->invokeArgs($service, $arguments);
 
         $this->controllerHelper->flushORM();
 
@@ -160,7 +168,12 @@ final class GenericServiceInvokeController
             );
         }
 
-        return new Response("Service call completed");
+        if ($this->sendReturnValueInResponse) {
+            return new Response((string)$returnValue);
+
+        } else {
+            return new Response("Service call completed");
+        }
     }
 
 }

@@ -183,7 +183,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
 
             return $value;
 
-        } elseif (isset($argumentsConfiguration[$index])) {
+        } elseif (array_key_exists($index, $argumentsConfiguration)) {
             return $this->resolveArgumentConfiguration($argumentsConfiguration[$index]);
 
         } elseif ($parameterTypeName === Request::class) {
