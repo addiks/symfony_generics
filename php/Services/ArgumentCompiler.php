@@ -124,14 +124,14 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
     {
         Assert::oneOf(
             gettype($argumentConfiguration),
-            ['string', 'array', 'NULL', 'boolean'],
-            "Arguments must be defined as string, array, bool or null!"
+            ['string', 'array', 'NULL', 'boolean', 'object'],
+            "Arguments must be defined as string, array, bool, object or null!"
         );
 
         /** @var Argument|null $argument */
         $argument = null;
 
-        if (is_bool($argumentConfiguration) || is_null($argumentConfiguration)) {
+        if (is_bool($argumentConfiguration) || is_null($argumentConfiguration) || is_object($argumentConfiguration)) {
             return $argumentConfiguration;
 
         } else if ($argumentConfiguration === '') {
