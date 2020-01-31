@@ -156,7 +156,7 @@ final class ArgumentCompilerTest extends TestCase
      */
     public function shouldExpectArgumentToBeArrayOrString()
     {
-        $this->expectExceptionMessage("Arguments must be defined as string, array, bool or null!");
+        $this->expectExceptionMessage("Arguments must be defined as string, array, bool, object or null!");
 
         /** @var Request $request */
         $request = $this->createMock(Request::class);
