@@ -69,7 +69,6 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         /** @var array $argumentValues */
         $argumentValues = array();
 
-        $this->argumentContext->clear();
         foreach ($additionalData as $key => $value) {
             $this->argumentContext->set($key, $value);
         }
@@ -92,7 +91,6 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         /** @var array<int, mixed> $callArguments */
         $callArguments = array();
 
-        $this->argumentContext->clear();
         foreach ($additionalData as $key => $value) {
             $this->argumentContext->set($key, $value);
         }
