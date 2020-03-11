@@ -75,6 +75,11 @@ final class GenericEntityInvokeController
      */
     private $redirectRouteParameters;
 
+    /**
+     * @var bool
+     */
+    private $sendReturnValueInResponse = false;
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentCompiler,
@@ -91,6 +96,7 @@ final class GenericEntityInvokeController
             'redirect-route' => null,
             'redirect-route-parameters' => [],
             'entity-id-key' => 'entityId',
+            'send-return-value-in-response' => false,
         ], $options);
 
         Assert::classExists($options['entity-class']);
@@ -107,6 +113,7 @@ final class GenericEntityInvokeController
         $this->successMessage = $options['success-message'];
         $this->redirectRoute = $options['redirect-route'];
         $this->redirectRouteParameters = $options['redirect-route-parameters'];
+        $this->sendReturnValueInResponse = $options['send-return-value-in-response'];
     }
 
     public function __invoke(): Response
@@ -165,7 +172,10 @@ final class GenericEntityInvokeController
         /** @var Response $response */
         $response = null;
 
-        if (is_null($this->redirectRoute)) {
+        if ($this->sendReturnValueInResponse) {
+            return new Response((string)$result);
+
+        } elseif (is_null($this->redirectRoute)) {
             $response = new Response($this->successMessage);
 
         } else {

@@ -114,7 +114,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
     }
 
     /**
-     * @param array|string|bool|null $argumentConfiguration
+     * @param array|string|bool|object|null $argumentConfiguration
      *
      * @return mixed
      */
