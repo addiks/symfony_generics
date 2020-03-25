@@ -80,6 +80,11 @@ final class GenericServiceInvokeController
      */
     private $sendReturnValueInResponse = false;
 
+    /**
+     * @var string
+     */
+    private $successFlashMessage;
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentCompiler,
@@ -99,6 +104,7 @@ final class GenericServiceInvokeController
             'success-redirect' => null,
             'success-redirect-arguments' => [],
             'success-redirect-status' => $defaultRedirectStatus,
+            'success-flash-message' => "",
             'send-return-value-in-response' => false,
         ], $options);
 
@@ -112,6 +118,7 @@ final class GenericServiceInvokeController
         $this->successRedirectRoute = $options['success-redirect'];
         $this->successRedirectArguments = $options['success-redirect-arguments'];
         $this->successRedirectStatus = $options['success-redirect-status'];
+        $this->successFlashMessage = $options['success-flash-message'];
         $this->sendReturnValueInResponse = $options['send-return-value-in-response'];
     }
 
@@ -156,6 +163,10 @@ final class GenericServiceInvokeController
         $returnValue = $reflectionMethod->invokeArgs($service, $arguments);
 
         $this->controllerHelper->flushORM();
+
+        if (!empty($this->successFlashMessage)) {
+            $this->controllerHelper->addFlashMessage($this->successFlashMessage, "success");
+        }
 
         if (!empty($this->successRedirectRoute)) {
             /** @var array $redirectArguments */
