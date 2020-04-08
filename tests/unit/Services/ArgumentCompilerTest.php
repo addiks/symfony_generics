@@ -78,7 +78,6 @@ final class ArgumentCompilerTest extends TestCase
 
         $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
-        $this->argumentContext->expects($this->once())->method('clear');
         $this->argumentContext->expects($this->once())->method('set')->with(
             $this->equalTo('foo'),
             $this->equalTo('bar')
@@ -182,7 +181,6 @@ final class ArgumentCompilerTest extends TestCase
 
         $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
-        $this->argumentContext->expects($this->once())->method('clear');
         $this->argumentContext->expects($this->once())->method('set')->with(
             $this->equalTo('foo'),
             $this->equalTo('bar')
