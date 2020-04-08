@@ -123,22 +123,35 @@ final class GenericEntityInvokeController
 
         Assert::isInstanceOf($request, Request::class, "Cannot use controller outside of request-scope!");
 
-        /** @var string $entityId */
-        $entityId = $request->get($this->entityIdKey);
+        /** @var Response $response */
+        $response = null;
 
-        return $this->invokeEntityMethod($entityId);
+        if ($this->argumentCompiler->understandsArgumentString($this->entityIdKey)) {
+            $response = $this->invokeEntityMethod('');
+
+        } else {
+            /** @var string $entityId */
+            $entityId = $request->get($this->entityIdKey);
+
+            $response = $this->invokeEntityMethod($entityId);
+        }
+
+        return $response;
+
     }
 
     public function invokeEntityMethod(string $entityId): Response
     {
         /** @var object|null $entity */
-        $entity = $this->controllerHelper->findEntity($this->entityClass, $entityId);
+        $entity = null;
 
-        if (is_null($entity)) {
-            throw new InvalidArgumentException(sprintf(
-                "Entity with id '%s' not found!",
-                $entityId
-            ));
+        if ($this->argumentCompiler->understandsArgumentString($this->entityIdKey)) {
+            $entity = $this->argumentCompiler->buildArgument($this->entityIdKey);
+            Assert::object($entity, "Entity not found!");
+
+        } else {
+            $entity = $this->controllerHelper->findEntity($this->entityClass, $entityId);
+            Assert::object($entity, sprintf("Entity with id '%s' not found!", $entityId));
         }
 
         if (!empty($this->denyAccessAttribute)) {

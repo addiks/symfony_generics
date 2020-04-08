@@ -19,6 +19,15 @@ use ReflectionFunctionAbstract;
 interface ArgumentCompilerInterface
 {
 
+    public function understandsArgumentString(string $argumentConfiguration): bool;
+
+    /**
+     * @param array|string $argument
+     *
+     * @return mixed
+     */
+    public function buildArgument($argumentConfiguration, array $additionalData = array());
+
     public function buildArguments(
         array $argumentsConfiguration,
         array $additionalData = array()

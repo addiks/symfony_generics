@@ -62,6 +62,21 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         $this->controllerHelper = $controllerHelper;
     }
 
+    public function understandsArgumentString(string $argumentConfiguration): bool
+    {
+        return $this->argumentFactory->understandsString($argumentConfiguration);
+    }
+
+    /** @param array|string $argumentConfiguration */
+    public function buildArgument($argumentConfiguration, array $additionalData = array())
+    {
+        foreach ($additionalData as $key => $value) {
+            $this->argumentContext->set($key, $value);
+        }
+
+        return $this->resolveArgumentConfiguration($argumentConfiguration);
+    }
+
     public function buildArguments(
         array $argumentsConfiguration,
         array $additionalData = array()
