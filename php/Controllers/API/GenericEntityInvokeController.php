@@ -154,6 +154,12 @@ final class GenericEntityInvokeController
             Assert::object($entity, sprintf("Entity with id '%s' not found!", $entityId));
         }
 
+        Assert::isInstanceOf($entity, $this->entityClass, sprintf(
+            "Found entity is not of expected class '%s', but of class '%s' instead!",
+            $this->entityClass,
+            get_class($entity)
+        ));
+
         if (!empty($this->denyAccessAttribute)) {
             $this->controllerHelper->denyAccessUnlessGranted($this->denyAccessAttribute, $entity);
         }
