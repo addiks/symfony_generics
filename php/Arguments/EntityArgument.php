@@ -14,6 +14,7 @@ namespace Addiks\SymfonyGenerics\Arguments;
 
 use Addiks\SymfonyGenerics\Arguments\Argument;
 use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Common\Persistence\ObjectRepository;
 
 final class EntityArgument implements Argument
 {
@@ -33,6 +34,18 @@ final class EntityArgument implements Argument
      */
     private $objectManager;
 
+    /**
+     * @var ObjectRepository|null
+     */
+    private $repository;
+
+    /** @var array<string, mixed> */
+    private static $constantMap = array(
+        'true' => true,
+        'false' => false,
+        'null' => null,
+    );
+
     public function __construct(
         ObjectManager $objectManager,
         string $entityClass,
@@ -48,10 +61,30 @@ final class EntityArgument implements Argument
         /** @var string $entityId */
         $entityId = $this->id->resolve();
 
-        return $this->objectManager->find(
-            $this->entityClass,
-            $entityId
-        );
+        if (preg_match("/^\[([a-zA-Z0-9_-]+)\=(.*)\]$/is", $entityId, $matches)) {
+            [, $column, $value] = $matches;
+
+            if (isset(self::$constantMap[strtolower($value)])) {
+                $value = self::$constantMap[strtolower($value)];
+            }
+
+            return $this->repository()->findOneBy([$column => $value]);
+
+        } else {
+            return $this->objectManager->find(
+                $this->entityClass,
+                $entityId
+            );
+        }
+    }
+
+    private function repository(): ObjectRepository
+    {
+        if (is_null($this->repository)) {
+            $this->repository = $this->objectManager->getRepository($this->entityClass);
+        }
+
+        return $this->repository;
     }
 
 }
