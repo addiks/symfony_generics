@@ -48,6 +48,11 @@ final class GenericEntityInvokeController
     /**
      * @var string
      */
+    private $entityIdSource;
+
+    /**
+     * @var string
+     */
     private $methodName;
 
     /**
@@ -96,17 +101,20 @@ final class GenericEntityInvokeController
             'redirect-route' => null,
             'redirect-route-parameters' => [],
             'entity-id-key' => 'entityId',
+            'entity-id-source' => 'request',
             'send-return-value-in-response' => false,
         ], $options);
 
         Assert::classExists($options['entity-class']);
         Assert::methodExists($options['entity-class'], $options['method']);
         Assert::isArray($options['arguments'], 'Method-arguments must be array!');
+        Assert::oneOf($options['entity-id-source'], ['request', 'argument']);
 
         $this->controllerHelper = $controllerHelper;
         $this->argumentCompiler = $argumentCompiler;
         $this->entityClass = $options['entity-class'];
         $this->entityIdKey = $options['entity-id-key'];
+        $this->entityIdSource = $options['entity-id-source'];
         $this->methodName = $options['method'];
         $this->arguments = $options['arguments'];
         $this->denyAccessAttribute = $options['deny-access-attribute'];
@@ -126,14 +134,14 @@ final class GenericEntityInvokeController
         /** @var Response $response */
         $response = null;
 
-        if ($this->argumentCompiler->understandsArgumentString($this->entityIdKey)) {
-            $response = $this->invokeEntityMethod('');
-
-        } else {
+        if ($this->entityIdSource === 'request') {
             /** @var string $entityId */
             $entityId = $request->get($this->entityIdKey);
 
             $response = $this->invokeEntityMethod($entityId);
+
+        } elseif ($this->entityIdSource === 'argument') {
+            $response = $this->invokeEntityMethod('');
         }
 
         return $response;
@@ -145,13 +153,13 @@ final class GenericEntityInvokeController
         /** @var object|null $entity */
         $entity = null;
 
-        if ($this->argumentCompiler->understandsArgumentString($this->entityIdKey)) {
-            $entity = $this->argumentCompiler->buildArgument($this->entityIdKey);
-            Assert::object($entity, "Entity not found!");
-
-        } else {
+        if ($this->entityIdSource === 'request') {
             $entity = $this->controllerHelper->findEntity($this->entityClass, $entityId);
             Assert::object($entity, sprintf("Entity with id '%s' not found!", $entityId));
+
+        } elseif ($this->entityIdSource === 'argument') {
+            $entity = $this->argumentCompiler->buildArgument($this->entityIdKey);
+            Assert::object($entity, "Entity not found!");
         }
 
         Assert::isInstanceOf($entity, $this->entityClass, sprintf(
