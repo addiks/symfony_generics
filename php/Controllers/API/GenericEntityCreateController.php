@@ -120,7 +120,7 @@ final class GenericEntityCreateController
             'success-redirect' => null,
             'success-redirect-arguments' => [],
             'success-redirect-status' => $defaultRedirectStatus,
-            'entity-id-getter' => 'getId',
+            'entity-id-getter' => method_exists($options['entity-class'], 'id') ?'id' :'getId',
             'entity-id-key' => 'entityId',
         ], $options);
 
