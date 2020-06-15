@@ -85,6 +85,11 @@ final class GenericServiceInvokeController
      */
     private $successFlashMessage;
 
+    /**
+     * @var array<string, string>
+     */
+    private $successResponseHeader = array();
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentCompiler,
@@ -106,6 +111,7 @@ final class GenericServiceInvokeController
             'success-redirect-status' => $defaultRedirectStatus,
             'success-flash-message' => "",
             'send-return-value-in-response' => false,
+            'success-response-header' => [],
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
@@ -120,6 +126,7 @@ final class GenericServiceInvokeController
         $this->successRedirectStatus = $options['success-redirect-status'];
         $this->successFlashMessage = $options['success-flash-message'];
         $this->sendReturnValueInResponse = $options['send-return-value-in-response'];
+        $this->successResponseHeader = $options['success-response-header'];
     }
 
     public function __invoke(): Response
@@ -179,12 +186,19 @@ final class GenericServiceInvokeController
             );
         }
 
+        /** @var Response $response */
+        $response = null;
+
         if ($this->sendReturnValueInResponse) {
-            return new Response((string)$returnValue);
+            $response = new Response((string)$returnValue);
 
         } else {
-            return new Response("Service call completed");
+            $response = new Response("Service call completed");
         }
+
+        $response->headers->add($this->successResponseHeader);
+
+        return $response;
     }
 
 }
