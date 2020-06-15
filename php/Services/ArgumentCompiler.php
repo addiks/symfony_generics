@@ -185,7 +185,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         /** @var string|null $parameterTypeName */
         $parameterTypeName = $this->getTypeNameFromReflectionParameter($parameterReflection);
 
-        /** @var Request $request */
+        /** @var Request|null $request */
         $request = $this->requestStack->getCurrentRequest();
 
         /** @var mixed $result */
@@ -200,7 +200,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         } elseif ($parameterTypeName === Request::class) {
             $result = $request;
 
-        } elseif ($request->get($parameterName)) {
+        } elseif (is_object($request) && $request->get($parameterName)) {
             $result = $request->get($parameterName);
 
         } else {
