@@ -81,6 +81,11 @@ final class GenericEntityInvokeController
     private $redirectRouteParameters;
 
     /**
+     * @var int
+     */
+    private $redirectStatus;
+
+    /**
      * @var bool
      */
     private $sendReturnValueInResponse = false;
@@ -100,6 +105,7 @@ final class GenericEntityInvokeController
             'success-message' => "Entity method invoked!",
             'redirect-route' => null,
             'redirect-route-parameters' => [],
+            'redirect-status' => 301,
             'entity-id-key' => 'entityId',
             'entity-id-source' => 'request',
             'send-return-value-in-response' => false,
@@ -120,6 +126,7 @@ final class GenericEntityInvokeController
         $this->denyAccessAttribute = $options['deny-access-attribute'];
         $this->successMessage = $options['success-message'];
         $this->redirectRoute = $options['redirect-route'];
+        $this->redirectStatus = $options['redirect-status'];
         $this->redirectRouteParameters = $options['redirect-route-parameters'];
         $this->sendReturnValueInResponse = $options['send-return-value-in-response'];
     }
@@ -210,7 +217,8 @@ final class GenericEntityInvokeController
                 $this->redirectRoute,
                 $this->argumentCompiler->buildArguments($this->redirectRouteParameters, [
                     'result' => $result
-                ])
+                ]),
+                $this->redirectStatus
             );
         }
 
