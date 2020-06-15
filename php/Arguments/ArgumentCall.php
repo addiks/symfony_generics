@@ -104,6 +104,10 @@ final class ArgumentCall implements Argument
                 $methodReflection,
                 $argumentsConfiguration
             );
+
+            if (count($arguments) < count($argumentsConfiguration)) {
+                $arguments = array_merge($arguments, array_slice($argumentsConfiguration, count($arguments)));
+            }
         }
 
         return call_user_func_array($callback, $arguments);
