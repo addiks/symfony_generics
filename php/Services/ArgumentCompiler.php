@@ -26,6 +26,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Addiks\SymfonyGenerics\Arguments\ArgumentContextInterface;
 use InvalidArgumentException;
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
+use ValueObjects\ValueObjectInterface;
 
 final class ArgumentCompiler implements ArgumentCompilerInterface
 {
@@ -184,29 +185,38 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         /** @var string|null $parameterTypeName */
         $parameterTypeName = $this->getTypeNameFromReflectionParameter($parameterReflection);
 
+        /** @var Request $request */
+        $request = $this->requestStack->getCurrentRequest();
+
+        /** @var mixed $result */
+        $result = null;
+
         if (isset($argumentsConfiguration[$parameterName])) {
-            /** @var mixed $value */
-            $value = $this->resolveArgumentConfiguration($argumentsConfiguration[$parameterName]);
-
-            if (!empty($parameterTypeName)) {
-                if (class_exists($parameterTypeName) && is_scalar($value)) {
-                    $value = $this->controllerHelper->findEntity($parameterTypeName, (string)$value);
-                }
-            }
-
-            return $value;
+            $result = $this->resolveArgumentConfiguration($argumentsConfiguration[$parameterName]);
 
         } elseif (array_key_exists($index, $argumentsConfiguration)) {
-            return $this->resolveArgumentConfiguration($argumentsConfiguration[$index]);
+            $result = $this->resolveArgumentConfiguration($argumentsConfiguration[$index]);
 
         } elseif ($parameterTypeName === Request::class) {
-            return $this->requestStack->getCurrentRequest();
+            $result = $request;
+
+        } elseif ($request->get($parameterName)) {
+            $result = $request->get($parameterName);
 
         } else {
-            return $this->getDefaultValueFromParameterReflectionSafely($parameterReflection);
+            $result = $this->getDefaultValueFromParameterReflectionSafely($parameterReflection);
         }
 
-        return null;
+        if (!empty($parameterTypeName) && is_scalar($result)) {
+            if (is_subclass_of($parameterTypeName, ValueObjectInterface::class)) {
+                $result = call_user_func("{$parameterTypeName}::fromNative", $result);
+
+            } elseif (class_exists($parameterTypeName)) {
+                $result = $this->controllerHelper->findEntity($parameterTypeName, (string)$result);
+            }
+        }
+
+        return $result;
     }
 
     /**
