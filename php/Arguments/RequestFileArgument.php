@@ -64,6 +64,11 @@ final class RequestFileArgument implements Argument
         /** @var UploadedFile $file */
         $file = $files->get($this->key);
 
+        Assert::isInstanceOf($file, UploadedFile::class, sprintf(
+            "Missing uploaded file '%s'!",
+            $this->key
+        ));
+
         return [
             'object' => $file,
             'originalname' => $file->getClientOriginalName(),
