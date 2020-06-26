@@ -25,69 +25,46 @@ use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 final class GenericEntityInvokeController
 {
 
-    /**
-     * @var ControllerHelperInterface
-     */
+    /** @var ControllerHelperInterface */
     private $controllerHelper;
 
-    /**
-     * @var ArgumentCompilerInterface
-     */
+    /** @var ArgumentCompilerInterface */
     private $argumentCompiler;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $entityClass;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $entityIdKey;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $entityIdSource;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $methodName;
 
-    /**
-     * @var array
-     */
+    /** @var array */
     private $arguments;
 
-    /**
-     * @var string|null
-     */
+    /** @var string|null */
     private $denyAccessAttribute;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $successMessage;
 
-    /**
-     * @var string|null
-     */
+    /** @var string */
+    private $successFlashMessage;
+
+    /** @var string|null */
     private $redirectRoute;
 
-    /**
-     * @var array
-     */
+    /** @var array */
     private $redirectRouteParameters;
 
-    /**
-     * @var int
-     */
+    /** @var int */
     private $redirectStatus;
 
-    /**
-     * @var bool
-     */
+    /** @var bool */
     private $sendReturnValueInResponse = false;
 
     public function __construct(
@@ -103,6 +80,7 @@ final class GenericEntityInvokeController
             'arguments' => [],
             'deny-access-attribute' => null,
             'success-message' => "Entity method invoked!",
+            'success-flash-message' => "",
             'redirect-route' => null,
             'redirect-route-parameters' => [],
             'redirect-status' => 301,
@@ -125,6 +103,7 @@ final class GenericEntityInvokeController
         $this->arguments = $options['arguments'];
         $this->denyAccessAttribute = $options['deny-access-attribute'];
         $this->successMessage = $options['success-message'];
+        $this->successFlashMessage = $options['success-flash-message'];
         $this->redirectRoute = $options['redirect-route'];
         $this->redirectStatus = $options['redirect-status'];
         $this->redirectRouteParameters = $options['redirect-route-parameters'];
@@ -202,6 +181,10 @@ final class GenericEntityInvokeController
         $result = $reflectionMethod->invokeArgs($entity, $callArguments);
 
         $this->controllerHelper->flushORM();
+
+        if (!empty($this->successFlashMessage)) {
+            $this->controllerHelper->addFlashMessage($this->successFlashMessage, "success");
+        }
 
         /** @var Response $response */
         $response = null;
