@@ -18,6 +18,7 @@ use Addiks\SymfonyGenerics\Arguments\ArgumentCall;
 use Webmozart\Assert\Assert;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 use Addiks\SymfonyGenerics\Arguments\NullArgument;
+use Addiks\SymfonyGenerics\Arguments\ObjectInstanciationArgument;
 
 final class ArgumentCallFactory implements ArgumentFactory
 {
@@ -117,7 +118,15 @@ final class ArgumentCallFactory implements ArgumentFactory
             }
         }
 
-        return new ArgumentCall($this->argumentCompiler, $callee, $source['method'], $arguments);
+        /** @var string $methodName */
+        $methodName = $source['method'];
+
+        if ($methodName === '__construct') {
+            return new ObjectInstanciationArgument($callee, $arguments);
+
+        } else {
+            return new ArgumentCall($this->argumentCompiler, $callee, $source['method'], $arguments);
+        }
     }
 
 }
