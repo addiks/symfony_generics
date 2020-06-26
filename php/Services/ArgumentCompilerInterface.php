@@ -26,7 +26,10 @@ interface ArgumentCompilerInterface
      *
      * @return mixed
      */
-    public function buildArgument($argumentConfiguration, array $additionalData = array());
+    public function buildArgument(
+        $argumentConfiguration,
+        array $additionalData = array()
+    );
 
     public function buildArguments(
         array $argumentsConfiguration,

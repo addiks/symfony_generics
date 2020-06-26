@@ -27,6 +27,7 @@ use Addiks\SymfonyGenerics\Arguments\ArgumentContextInterface;
 use InvalidArgumentException;
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use ValueObjects\ValueObjectInterface;
+use Exception;
 
 final class ArgumentCompiler implements ArgumentCompilerInterface
 {
@@ -179,44 +180,54 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         array $argumentsConfiguration,
         int $index
     ) {
-        /** @var string $parameterName */
-        $parameterName = $parameterReflection->getName();
+        try {
+            /** @var string $parameterName */
+            $parameterName = $parameterReflection->getName();
 
-        /** @var string|null $parameterTypeName */
-        $parameterTypeName = $this->getTypeNameFromReflectionParameter($parameterReflection);
+            /** @var string|null $parameterTypeName */
+            $parameterTypeName = $this->getTypeNameFromReflectionParameter($parameterReflection);
 
-        /** @var Request|null $request */
-        $request = $this->requestStack->getCurrentRequest();
+            /** @var Request|null $request */
+            $request = $this->requestStack->getCurrentRequest();
 
-        /** @var mixed $result */
-        $result = null;
+            /** @var mixed $result */
+            $result = null;
 
-        if (isset($argumentsConfiguration[$parameterName])) {
-            $result = $this->resolveArgumentConfiguration($argumentsConfiguration[$parameterName]);
+            if (isset($argumentsConfiguration[$parameterName])) {
+                $result = $this->resolveArgumentConfiguration($argumentsConfiguration[$parameterName]);
 
-        } elseif (array_key_exists($index, $argumentsConfiguration)) {
-            $result = $this->resolveArgumentConfiguration($argumentsConfiguration[$index]);
+            } elseif (array_key_exists($index, $argumentsConfiguration)) {
+                $result = $this->resolveArgumentConfiguration($argumentsConfiguration[$index]);
 
-        } elseif ($parameterTypeName === Request::class) {
-            $result = $request;
+            } elseif ($parameterTypeName === Request::class) {
+                $result = $request;
 
-        } elseif (is_object($request) && $request->get($parameterName)) {
-            $result = $request->get($parameterName);
+            } elseif (is_object($request) && $request->get($parameterName)) {
+                $result = $request->get($parameterName);
 
-        } else {
-            $result = $this->getDefaultValueFromParameterReflectionSafely($parameterReflection);
-        }
-
-        if (!empty($parameterTypeName) && is_scalar($result)) {
-            if (is_subclass_of($parameterTypeName, ValueObjectInterface::class)) {
-                $result = call_user_func("{$parameterTypeName}::fromNative", $result);
-
-            } elseif (class_exists($parameterTypeName)) {
-                $result = $this->controllerHelper->findEntity($parameterTypeName, (string)$result);
+            } else {
+                $result = $this->getDefaultValueFromParameterReflectionSafely($parameterReflection);
             }
-        }
 
-        return $result;
+            if (!empty($parameterTypeName) && (is_string($result) || is_int($result))) {
+                if (is_subclass_of($parameterTypeName, ValueObjectInterface::class)) {
+                    $result = call_user_func("{$parameterTypeName}::fromNative", $result);
+
+                } elseif (class_exists($parameterTypeName)) {
+                    $result = $this->controllerHelper->findEntity($parameterTypeName, (string)$result);
+                }
+            }
+
+            return $result;
+
+        } catch (Exception $exception) {
+            throw new Exception(sprintf(
+                "While resolving parameter-argument '%s' on call to '%s': %s",
+                $parameterReflection->getName(),
+                $parameterReflection->getDeclaringFunction()->getName(),
+                $exception->getMessage()
+            ), 0, $exception);
+        }
     }
 
     /**
@@ -242,7 +253,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
                 "Missing argument '%s' for the call to '%s'!",
                 $parameterName,
                 $routineReflection->getName()
-            ));
+            ), 0, $exception);
         }
     }
 

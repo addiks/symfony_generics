@@ -23,6 +23,7 @@
         <service
             id="symfony_generics.argument_factory"
             class="Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentFactoryAggregate"
+            public="true"
         >
             <argument type="collection">
                 <argument type="service">
