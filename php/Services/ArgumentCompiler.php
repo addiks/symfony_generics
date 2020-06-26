@@ -224,6 +224,10 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
      */
     private function getDefaultValueFromParameterReflectionSafely(ReflectionParameter $parameterReflection)
     {
+        if ($parameterReflection->getDeclaringFunction()->isInternal()) {
+            return null;
+        }
+
         try {
             return $parameterReflection->getDefaultValue();
 

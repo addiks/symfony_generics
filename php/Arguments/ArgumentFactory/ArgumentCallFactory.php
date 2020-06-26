@@ -17,6 +17,7 @@ use Addiks\SymfonyGenerics\Arguments\Argument;
 use Addiks\SymfonyGenerics\Arguments\ArgumentCall;
 use Webmozart\Assert\Assert;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
+use Addiks\SymfonyGenerics\Arguments\NullArgument;
 
 final class ArgumentCallFactory implements ArgumentFactory
 {
@@ -106,6 +107,9 @@ final class ArgumentCallFactory implements ArgumentFactory
 
                 if (is_array($argumentsSource)) {
                     $arguments[] = $this->argumentFactory->createArgumentFromArray($argumentsSource);
+
+                } elseif (is_null($argumentsSource)) {
+                    $arguments[] = new NullArgument();
 
                 } else {
                     $arguments[] = $this->argumentFactory->createArgumentFromString($argumentsSource);
