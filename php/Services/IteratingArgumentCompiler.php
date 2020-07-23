@@ -30,7 +30,7 @@ final class IteratingArgumentCompiler implements IteratingArgumentCompilerInterf
 
     public function __construct(
         ArgumentCompilerInterface $argumentCompiler,
-        array $itemArguments,
+        $itemArguments,
         bool $argumentIsArray = false
     ) {
         Assert::null($this->argumentCompiler);
