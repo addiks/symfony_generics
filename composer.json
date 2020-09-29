@@ -16,7 +16,7 @@
         "symfony/serializer": "^3.0 || ^4.0 || ^5.1",
         "symfony/http-foundation": "^v3.4 || ^v4.1 || ^5.1",
         "symfony/property-access": "^3.4.0|^4.1.0|^4.2.0 || ^5.1",
-        "symfony/security-bundle": "^3.4.0|^4.1.0|^4.2.0",
+        "symfony/security-bundle": "^3.4.0|^4.1.0|^4.2.0 || ^5.1",
         "symfony/framework-bundle": "^3.4.0|^4.1.0|^4.2.0 || ^5.1",
         "doctrine/orm": "^2.5.0|^2.6.0|^2.7.0",
         "twig/twig": "^2.4.0|^2.5.0|^3.0.0",
