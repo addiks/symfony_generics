@@ -13,7 +13,7 @@
 namespace Addiks\SymfonyGenerics\Controllers;
 
 use Throwable;
-use Twig_Environment;
+use Twig\Environment;
 use Psr\Log\LoggerInterface;
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -77,7 +77,7 @@ final class DefaultControllerHelper implements ControllerHelperInterface
 
     public function __construct(
         EntityManagerInterface $entityManager,
-        Twig_Environment $twig,
+        Environment $twig,
         AuthorizationCheckerInterface $authorization,
         UrlGeneratorInterface $urlGenerator,
         Session $session,
