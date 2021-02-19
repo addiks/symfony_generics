@@ -23,15 +23,9 @@ use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 final class GenericEntityRemoveControllerTest extends TestCase
 {
 
-    /**
-     * @var GenericEntityRemoveController
-     */
-    private $controller;
+    private GenericEntityRemoveController $controller;
 
-    /**
-     * @var ControllerHelperInterface
-     */
-    private $controllerHelper;
+    private ControllerHelperInterface $controllerHelper;
 
     public function setUp()
     {
@@ -50,18 +44,6 @@ final class GenericEntityRemoveControllerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         new GenericEntityRemoveController($this->controllerHelper, []);
-    }
-
-    /**
-     * @test
-     */
-    public function shouldRejectControllerCalledAgain()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        $this->controller->__construct($this->controllerHelper, [
-            'entity-class' => SampleEntity::class
-        ]);
     }
 
     /**

@@ -129,12 +129,12 @@
                     type="service"
                     id="symfony_generics.controller.error_handler.default.inner"
                 />
-                <argument key="success-flash-message">%success_flash_message%</argument>
+                <argument key="success-flash-message">success_flash_message</argument>
                 <argument key="exception-responses" type="collection">
                     <argument key="Exception" type="collection">
                         <argument key="flash-type">danger</argument>
                         <argument key="code">307</argument>
-                        <argument key="redirect-route">%error_route%</argument>
+                        <argument key="redirect-route">error_route</argument>
                     </argument>
                 </argument>
             </argument>

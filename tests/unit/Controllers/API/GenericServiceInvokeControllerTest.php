@@ -51,34 +51,6 @@ final class GenericServiceInvokeControllerTest extends TestCase
     /**
      * @test
      */
-    public function shouldPreventConstructorCalledAgain()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        $controller = new GenericServiceInvokeController(
-            $this->controllerHelper,
-            $this->argumentCompiler,
-            $this->container,
-            [
-                'service' => 'some_service',
-                'method' => 'doFoo'
-            ]
-        );
-
-        $controller->__construct(
-            $this->controllerHelper,
-            $this->argumentCompiler,
-            $this->container,
-            [
-                'service' => 'some_service',
-                'method' => 'doFoo'
-            ]
-        );
-    }
-
-    /**
-     * @test
-     */
     public function shouldFailIfServiceIsMissing()
     {
         $this->expectException(InvalidArgumentException::class);

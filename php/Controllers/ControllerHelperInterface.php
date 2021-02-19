@@ -14,19 +14,23 @@ namespace Addiks\SymfonyGenerics\Controllers;
 
 use Throwable;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\EventDispatcher\Event;
 
 interface ControllerHelperInterface
 {
 
     /**
+     * @param class-string $entityClass
+     *
      * @return object|null
      */
     public function findEntity(string $entityClass, string $id);
 
     /**
+     * @param class-string $entityClass
+     *
      * @return array<object>
      */
     public function findEntities(string $entityClass, array $criteria): array;
@@ -60,6 +64,6 @@ interface ControllerHelperInterface
      */
     public function denyAccessUnlessGranted(string $attribute, $subject): void;
 
-    public function dispatchEvent(string $eventName, Event $event = null): Event;
+    public function dispatchEvent(string $eventName, object $event = null): object;
 
 }

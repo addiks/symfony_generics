@@ -29,75 +29,36 @@ use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 final class GenericEntityCreateController
 {
 
-    /**
-     * @var ControllerHelperInterface
-     */
-    private $controllerHelper;
+    private ControllerHelperInterface $controllerHelper;
 
-    /**
-     * @var ContainerInterface
-     */
-    private $container;
+    private ContainerInterface $container;
 
-    /**
-     * @var string
-     */
-    private $entityClass;
+    /** @var class-string */
+    private string $entityClass;
 
-    /**
-     * @var array<string, array<string, mixed>>
-     */
-    private $calls = array();
+    /** @var array<string, array<string, mixed>> */
+    private array $calls = array();
 
-    /**
-     * @var string|null
-     */
-    private $factory = null;
+    private ?string $factory = null;
 
-    /**
-     * @var array<string, mixed>
-     */
-    private $constructArguments = array();
+    /** @var array<string, mixed> */
+    private array $constructArguments = array();
 
-    /**
-     * @var ArgumentCompilerInterface
-     */
-    private $argumentBuilder;
+    private ArgumentCompilerInterface $argumentBuilder;
 
-    /**
-     * @var string
-     */
-    private $successResponse;
+    private string $successResponse;
 
-    /**
-     * @var string|null
-     */
-    private $authorizationAttribute;
+    private ?string $authorizationAttribute;
 
-    /**
-     * @var string|null
-     */
-    private $successRedirectRoute;
+    private ?string $successRedirectRoute;
 
-    /**
-     * @var array
-     */
-    private $successRedirectArguments;
+    private array $successRedirectArguments;
 
-    /**
-     * @var int
-     */
-    private $successRedirectStatus;
+    private int $successRedirectStatus;
 
-    /**
-     * @var string
-     */
-    private $entityIdKey;
+    private string $entityIdKey;
 
-    /**
-     * @var string
-     */
-    private $entityIdGetter;
+    private string $entityIdGetter;
 
     public function __construct(
         ControllerHelperInterface $controllerHelper,
@@ -105,7 +66,6 @@ final class GenericEntityCreateController
         ContainerInterface $container,
         array $options
     ) {
-        Assert::null($this->controllerHelper);
         Assert::keyExists($options, 'entity-class');
 
         /** @var int $defaultRedirectStatus */
@@ -160,7 +120,7 @@ final class GenericEntityCreateController
 
     public function createEntity(Request $request): Response
     {
-        /** @var object|null $factoryObject */
+        /** @var object $factoryObject */
         $factoryObject = null;
 
         if (!empty($this->authorizationAttribute)) {
@@ -183,7 +143,7 @@ final class GenericEntityCreateController
             $entity = $this->createEntityByConstructor($constructorReflection, $constructArguments, $factoryObject);
 
         } else {
-            /** @var string $entityClass */
+            /** @var class-string $entityClass */
             $entityClass = $this->entityClass;
 
             $entity = new $entityClass();
@@ -228,10 +188,7 @@ final class GenericEntityCreateController
         return new Response($this->successResponse, 200);
     }
 
-    /**
-     * @param object $factoryObject
-     */
-    private function findConstructorReflection(&$factoryObject = null): ?ReflectionFunctionAbstract
+    private function findConstructorReflection(object &$factoryObject = null): ?ReflectionFunctionAbstract
     {
         /** @var ReflectionFunctionAbstract|null $constructorReflection */
         $constructorReflection = null;
@@ -255,6 +212,8 @@ final class GenericEntityCreateController
 
                     } else {
                         # Create by static factory-method of other class
+
+                        Assert::classExists($factoryClass);
 
                         $constructorReflection = (new ReflectionClass($factoryClass))->getMethod($factoryMethod);
                     }
@@ -286,16 +245,11 @@ final class GenericEntityCreateController
         return $constructorReflection;
     }
 
-    /**
-     * @param object|null $factoryObject
-     *
-     * @return object
-     */
     private function createEntityByConstructor(
         ReflectionFunctionAbstract $constructorReflection,
         array $constructArguments,
-        $factoryObject
-    ) {
+        ?object $factoryObject
+    ): ?object {
         /** @var object|null $entity */
         $entity = null;
 

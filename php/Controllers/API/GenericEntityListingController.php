@@ -27,57 +27,30 @@ final class GenericEntityListingController
 {
     use ApplyDataTemplateTrait;
 
-    /**
-     * @var ControllerHelperInterface
-     */
-    private $controllerHelper;
+    private ControllerHelperInterface $controllerHelper;
 
-    /**
-     * @var ArgumentCompilerInterface
-     */
-    private $argumentCompiler;
+    private ArgumentCompilerInterface $argumentCompiler;
 
-    /**
-     * @var string
-     */
-    private $entityClass;
+    /** @var class-string */
+    private string $entityClass;
 
-    /**
-     * @var array
-     */
-    private $criteria;
+    private array $criteria;
 
-    /**
-     * @var string|null
-     */
-    private $authorizationAttribute;
+    private ?string $authorizationAttribute;
 
-    /**
-     * @var string
-     */
-    private $format;
+    private string $format;
 
-    /**
-     * @var EncoderInterface|null
-     */
-    private $encoder;
+    private ?EncoderInterface $encoder;
 
-    /**
-     * @var NormalizerInterface|null
-     */
-    private $normalizer;
+    private ?NormalizerInterface $normalizer;
 
-    /**
-     * @var array|null
-     */
-    private $dataTemplate;
+    private ?array $dataTemplate;
 
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentCompiler,
         array $options
     ) {
-        Assert::null($this->controllerHelper);
         Assert::keyExists($options, 'entity-class');
         Assert::classExists($options['entity-class']);
 

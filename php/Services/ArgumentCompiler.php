@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Webmozart\Assert\Assert;
 use ErrorException;
 use ReflectionType;
+use ReflectionNamedType;
 use ReflectionFunctionAbstract;
 use ReflectionParameter;
 use ReflectionException;
@@ -100,7 +101,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
     }
 
     public function buildCallArguments(
-        ReflectionFunctionAbstract $routineReflection,
+        ReflectionFunctionAbstract $methodReflection,
         array $argumentsConfiguration,
         array $predefinedArguments = array(),
         array $additionalData = array()
@@ -112,7 +113,7 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             $this->argumentContext->set($key, $value);
         }
 
-        foreach ($routineReflection->getParameters() as $index => $parameterReflection) {
+        foreach ($methodReflection->getParameters() as $index => $parameterReflection) {
             /** @var ReflectionParameter $parameterReflection */
 
             if (isset($predefinedArguments[$index])) {
@@ -263,10 +264,13 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
         $parameterTypeName = null;
 
         if ($parameterReflection->hasType()) {
-            /** @var ReflectionType|null $parameterType */
+            /** @var ReflectionType|ReflectionNamedType|null $parameterType */
             $parameterType = $parameterReflection->getType();
 
-            if ($parameterType instanceof ReflectionType) {
+            if ($parameterType instanceof ReflectionNamedType) {
+                $parameterTypeName = $parameterType->getName();
+
+            } elseif ($parameterType instanceof ReflectionType) {
                 $parameterTypeName = $parameterType->__toString();
             }
         }

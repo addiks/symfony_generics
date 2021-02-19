@@ -25,62 +25,36 @@ use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Doctrine\Common\Persistence\ObjectRepository;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\EventDispatcher\Event;
+use Twig\Environment;
+use Symfony\Contracts\EventDispatcher\Event;
+use Doctrine\Persistence\ObjectRepository;
 
 final class DefaultControllerHelperTest extends TestCase
 {
 
-    /**
-     * @var DefaultControllerHelper
-     */
-    private $controllerHelper;
+    private DefaultControllerHelper $controllerHelper;
 
-    /**
-     * @var EntityManagerInterface
-     */
-    private $entityManager;
+    private EntityManagerInterface $entityManager;
 
-    /**
-     * @var Twig_Environment
-     */
-    private $twig;
+    private Environment $twig;
 
-    /**
-     * @var AuthorizationCheckerInterface
-     */
-    private $authorization;
+    private AuthorizationCheckerInterface $authorization;
 
-    /**
-     * @var UrlGeneratorInterface
-     */
-    private $urlGenerator;
+    private UrlGeneratorInterface $urlGenerator;
 
-    /**
-     * @var Session
-     */
-    private $session;
+    private Session $session;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $eventDispatcher;
+    private EventDispatcherInterface $eventDispatcher;
 
-    /**
-     * @var RequestStack
-     */
-    private $requestStack;
+    private RequestStack $requestStack;
 
     public function setUp()
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->twig = $this->createMock(Twig_Environment::class);
+        $this->twig = $this->createMock(Environment::class);
         $this->authorization = $this->createMock(AuthorizationCheckerInterface::class);
         $this->urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $this->session = $this->createMock(Session::class);
@@ -218,8 +192,8 @@ final class DefaultControllerHelperTest extends TestCase
         $event = $this->createMock(Event::class);
 
         $this->eventDispatcher->expects($this->once())->method('dispatch')->with(
-            $this->equalTo('foo'),
-            $this->equalTo($event)
+            $this->equalTo($event),
+            $this->equalTo('foo')
         )->willReturn($event);
 
         $this->assertSame($event, $this->controllerHelper->dispatchEvent("foo", $event));

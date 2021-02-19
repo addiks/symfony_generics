@@ -76,10 +76,10 @@ final class IteratingArgumentCompiler implements IteratingArgumentCompilerInterf
                 );
             }
 
-            $this->compiledItems[$key] = $compiledItem;
+            $compiledItems[$key] = $compiledItem;
         }
 
-        return $this->compiledItems;
+        return $compiledItems;
     }
 
 }

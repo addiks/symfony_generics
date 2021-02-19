@@ -16,26 +16,17 @@ use InvalidArgumentException;
 use Addiks\SymfonyGenerics\Arguments\ArgumentCall;
 use Addiks\SymfonyGenerics\Arguments\Argument;
 use Addiks\SymfonyGenerics\Arguments\ArgumentFactory\EntityArgumentFactory;
-use Doctrine\Common\Persistence\ObjectManager;
 use Addiks\SymfonyGenerics\Arguments\EntityArgument;
+use Doctrine\Persistence\ObjectManager;
 
 final class EntityArgumentFactoryTest extends TestCase
 {
 
-    /**
-     * @var EntityArgumentFactory
-     */
-    private $factory;
+    private EntityArgumentFactory $factory;
 
-    /**
-     * @var ObjectManager
-     */
-    private $objectManager;
+    private ObjectManager $objectManager;
 
-    /**
-     * @var ArgumentFactory
-     */
-    private $argumentFactory;
+    private ArgumentFactory $argumentFactory;
 
     public function setUp()
     {

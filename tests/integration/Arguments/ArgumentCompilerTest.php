@@ -28,31 +28,20 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Twig\Environment;
 
 require_once(__DIR__ . '/ServiceSample.php');
 
 final class ArgumentCompilerTest extends TestCase
 {
 
-    /**
-     * @var ArgumentCompiler
-     */
-    private $compiler;
+    private ArgumentCompiler $compiler;
 
-    /**
-     * @var ContainerInterface
-     */
-    private $container;
+    private ContainerInterface $container;
 
-    /**
-     * @var XmlFileLoader
-     */
-    private $loader;
+    private XmlFileLoader $loader;
 
-    /**
-     * @var EntityManager
-     */
-    private $entityManager;
+    private EntityManager $entityManager;
 
     public function setUp()
     {
@@ -69,7 +58,7 @@ final class ArgumentCompilerTest extends TestCase
 
         $this->container->set('doctrine.orm.entity_manager', $this->entityManager);
         $this->container->set('request_stack', new RequestStack());
-        $this->container->set('twig', $this->createMock(Twig_Environment::class));
+        $this->container->set('twig', $this->createMock(Environment::class));
         $this->container->set('security.authorization_checker', $this->createMock(AuthorizationCheckerInterface::class));
         $this->container->set('router', $this->createMock(UrlGeneratorInterface::class));
         $this->container->set('session', $this->createMock(Session::class));

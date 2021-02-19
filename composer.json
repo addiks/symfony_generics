@@ -12,7 +12,7 @@
     },
 
     "require": {
-        "php": ">=7.1",
+        "php": ">=7.4",
         "symfony/serializer": "^3.0 || ^4.0 || ^5.1",
         "symfony/http-foundation": "^v3.4 || ^v4.1 || ^5.1",
         "symfony/property-access": "^3.4.0|^4.1.0|^4.2.0 || ^5.1",
@@ -22,12 +22,12 @@
         "twig/twig": "^2.4.0|^2.5.0|^3.0.0",
         "webmozart/assert": "^1.3",
         "psr/container": "^1.0",
-        "ytake/valueobjects": "^1.0"
+        "ytake/valueobjects": "^2.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^7.4",
-        "infection/infection": "^0.11.0",
-        "vimeo/psalm": "^2.0",
-        "phpstan/phpstan": "^0.11.7"
+        "infection/infection": "*",
+        "vimeo/psalm": "*",
+        "phpstan/phpstan": "*"
     }
 }

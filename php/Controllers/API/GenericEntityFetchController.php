@@ -31,48 +31,27 @@ final class GenericEntityFetchController
     /**
      * @var ControllerHelperInterface
      */
-    private $controllerHelper;
+    private ControllerHelperInterface $controllerHelper;
 
-    /**
-     * @var EncoderInterface|null
-     */
-    private $encoder;
+    private ?EncoderInterface $encoder;
 
-    /**
-     * @var NormalizerInterface|null
-     */
-    private $normalizer;
+    private ?NormalizerInterface $normalizer;
 
-    /**
-     * @var array|null
-     */
-    private $dataTemplate;
+    private ?array $dataTemplate;
 
-    /**
-     * @var string|null
-     */
-    private $authorizationAttribute;
+    private ?string $authorizationAttribute;
 
-    /**
-     * @var string
-     */
-    private $entityClass;
+    /** @var class-string */
+    private string $entityClass;
 
-    /**
-     * @var string
-     */
-    private $entityIdKey;
+    private string $entityIdKey;
 
-    /**
-     * @var string
-     */
-    private $format;
+    private string $format;
 
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         array $options
     ) {
-        Assert::null($this->controllerHelper);
         Assert::keyExists($options, 'entity-class');
 
         $options = array_merge([
@@ -113,7 +92,7 @@ final class GenericEntityFetchController
 
     public function fetchEntity(string $entityId): Response
     {
-        /** @var object|null $entity */
+        /** @var object $entity */
         $entity = $this->controllerHelper->findEntity($this->entityClass, $entityId);
 
         if (is_null($entity)) {

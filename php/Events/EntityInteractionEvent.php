@@ -12,7 +12,7 @@
 
 namespace Addiks\SymfonyGenerics\Events;
 
-use Symfony\Component\EventDispatcher\Event;
+use Symfony\Contracts\EventDispatcher\Event;
 use Webmozart\Assert\Assert;
 
 final class EntityInteractionEvent extends Event

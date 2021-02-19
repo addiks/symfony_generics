@@ -207,24 +207,6 @@ final class GenericEntityInvokeControllerTest extends TestCase
     /**
      * @test
      */
-    public function shouldRejectConstructorCalledAgain()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        $controller = new GenericEntityInvokeController($this->controllerHelper, $this->argumentCompiler, [
-            'entity-class' => get_class($this->argumentCompiler),
-            'method' => 'buildArguments',
-        ]);
-
-        $controller->__construct($this->controllerHelper, $this->argumentCompiler, [
-            'entity-class' => get_class($this->argumentCompiler),
-            'method' => 'buildArguments',
-        ]);
-    }
-
-    /**
-     * @test
-     */
     public function shouldRejectMissingEntityClass()
     {
         $this->expectException(InvalidArgumentException::class);

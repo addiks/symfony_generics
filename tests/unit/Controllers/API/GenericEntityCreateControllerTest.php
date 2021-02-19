@@ -153,32 +153,6 @@ final class GenericEntityCreateControllerTest extends TestCase
     /**
      * @test
      */
-    public function shouldRejectControllerCalledAgain()
-    {
-        $controller = new GenericEntityCreateController(
-            $this->controllerHelper,
-            $this->argumentBuilder,
-            $this->container,
-            [
-                'entity-class' => SampleEntity::class
-            ]
-        );
-
-        $this->expectException(InvalidArgumentException::class);
-
-        $controller->__construct(
-            $this->controllerHelper,
-            $this->argumentBuilder,
-            $this->container,
-            [
-                'entity-class' => SampleEntity::class
-            ]
-        );
-    }
-
-    /**
-     * @test
-     */
     public function shouldProvideConstructArguments()
     {
         $controller = new GenericEntityCreateController(

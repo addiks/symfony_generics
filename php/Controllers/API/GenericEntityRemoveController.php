@@ -22,32 +22,20 @@ use Symfony\Component\HttpFoundation\Request;
 final class GenericEntityRemoveController
 {
 
-    /**
-     * @var ControllerHelperInterface
-     */
-    private $controllerHelper;
+    private ControllerHelperInterface $controllerHelper;
 
-    /**
-     * @var string
-     */
-    private $entityClass;
+    /** @var class-string */
+    private string $entityClass;
 
-    /**
-     * @var string
-     */
-    private $entityIdKey;
+    private string $entityIdKey;
 
-    /**
-     * @var string|null
-     */
-    private $authorizationAttribute;
+    private ?string $authorizationAttribute;
 
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         array $options
     ) {
         Assert::keyExists($options, 'entity-class');
-        Assert::null($this->controllerHelper);
 
         $options = array_merge([
             'authorization-attribute' => null,

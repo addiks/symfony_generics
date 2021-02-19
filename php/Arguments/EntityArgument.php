@@ -13,31 +13,20 @@
 namespace Addiks\SymfonyGenerics\Arguments;
 
 use Addiks\SymfonyGenerics\Arguments\Argument;
-use Doctrine\Common\Persistence\ObjectManager;
-use Doctrine\Common\Persistence\ObjectRepository;
+use Doctrine\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectRepository;
 
 final class EntityArgument implements Argument
 {
 
-    /**
-     * @var string
-     */
-    private $entityClass;
+    /** @var class-string */
+    private string $entityClass;
 
-    /**
-     * @var Argument
-     */
-    private $id;
+    private Argument $id;
 
-    /**
-     * @var ObjectManager
-     */
-    private $objectManager;
+    private ObjectManager $objectManager;
 
-    /**
-     * @var ObjectRepository|null
-     */
-    private $repository;
+    private ?ObjectRepository $repository;
 
     /** @var array<string, mixed> */
     private static $constantMap = array(
@@ -46,6 +35,7 @@ final class EntityArgument implements Argument
         'null' => null,
     );
 
+    /** @param class-string $entityClass */
     public function __construct(
         ObjectManager $objectManager,
         string $entityClass,

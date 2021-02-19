@@ -49,22 +49,6 @@ final class GenericEntityListingControllerTest extends TestCase
     /**
      * @test
      */
-    public function shouldPreventControllerBeingCalledAgain()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        $controller = new GenericEntityListingController($this->controllerHelper, $this->argumentCompiler, [
-            'entity-class' => SampleEntity::class
-        ]);
-
-        $controller->__construct($this->controllerHelper, $this->argumentCompiler, [
-            'entity-class' => SampleEntity::class
-        ]);
-    }
-
-    /**
-     * @test
-     */
     public function shouldThrowExceptionWhenEntityClassIsMissing()
     {
         $this->expectException(InvalidArgumentException::class);

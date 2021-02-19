@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 use Addiks\SymfonyGenerics\Arguments\EntityArgument;
 use Addiks\SymfonyGenerics\Arguments\Argument;
 use stdClass;
-use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectManager;
 
 final class EntityArgumentTest extends TestCase
 {

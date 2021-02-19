@@ -15,21 +15,15 @@ namespace Addiks\SymfonyGenerics\Arguments\ArgumentFactory;
 use Addiks\SymfonyGenerics\Arguments\ArgumentFactory\ArgumentFactory;
 use Addiks\SymfonyGenerics\Arguments\Argument;
 use Addiks\SymfonyGenerics\Arguments\EntityArgument;
-use Doctrine\Common\Persistence\ObjectManager;
 use Webmozart\Assert\Assert;
+use Doctrine\Persistence\ObjectManager;
 
 final class EntityArgumentFactory implements ArgumentFactory
 {
 
-    /**
-     * @var ObjectManager
-     */
-    private $objectManager;
+    private ObjectManager $objectManager;
 
-    /**
-     * @var ArgumentFactory
-     */
-    private $argumentFactory;
+    private ArgumentFactory $argumentFactory;
 
     public function __construct(
         ObjectManager $objectManager,
@@ -53,6 +47,7 @@ final class EntityArgumentFactory implements ArgumentFactory
     {
         Assert::true($this->understandsString($source));
 
+        /** @var class-string $entityClass */
         [$entityClass, $idSource] = explode('#', $source);
 
         /** @var Argument $id */
@@ -66,10 +61,13 @@ final class EntityArgumentFactory implements ArgumentFactory
         Assert::keyExists($source, 'entity-class');
         Assert::keyExists($source, 'entity-id');
 
+        /** @var class-string $entityClass */
+        $entityClass = $source['entity-class'];
+
         /** @var Argument $id */
         $id = $this->argumentFactory->createArgumentFromString($source['entity-id']);
 
-        return new EntityArgument($this->objectManager, $source['entity-class'], $id);
+        return new EntityArgument($this->objectManager, $entityClass, $id);
     }
 
 }

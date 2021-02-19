@@ -17,17 +17,18 @@ use Twig\Environment;
 use Psr\Log\LoggerInterface;
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\Common\Persistence\ObjectRepository;
+use Doctrine\Persistence\ObjectRepository;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\EventDispatcher\Event;
+use stdClass;
 
 /**
  * The default implementation of the controller-helper.
@@ -35,45 +36,21 @@ use Symfony\Component\HttpFoundation\Request;
 final class DefaultControllerHelper implements ControllerHelperInterface
 {
 
-    /**
-     * @var EntityManagerInterface
-     */
-    private $entityManager;
+    private EntityManagerInterface $entityManager;
 
-    /**
-     * @var Twig_Environment
-     */
-    private $twig;
+    private Environment $twig;
 
-    /**
-     * @var AuthorizationCheckerInterface
-     */
-    private $authorization;
+    private AuthorizationCheckerInterface $authorization;
 
-    /**
-     * @var UrlGeneratorInterface
-     */
-    private $urlGenerator;
+    private UrlGeneratorInterface $urlGenerator;
 
-    /**
-     * @var Session
-     */
-    private $session;
+    private Session $session;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $eventDispatcher;
+    private EventDispatcherInterface $eventDispatcher;
 
-    /**
-     * @var RequestStack
-     */
-    private $requestStack;
+    private RequestStack $requestStack;
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -167,9 +144,9 @@ final class DefaultControllerHelper implements ControllerHelperInterface
         }
     }
 
-    public function dispatchEvent(string $eventName, Event $event = null): Event
+    public function dispatchEvent(string $eventName, object $event = null): object
     {
-        return $this->eventDispatcher->dispatch($eventName, $event);
+        return $this->eventDispatcher->dispatch($event ?? new stdClass(), $eventName);
     }
 
 }

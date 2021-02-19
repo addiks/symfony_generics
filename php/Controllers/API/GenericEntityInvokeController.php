@@ -25,54 +25,40 @@ use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 final class GenericEntityInvokeController
 {
 
-    /** @var ControllerHelperInterface */
-    private $controllerHelper;
+    private ControllerHelperInterface $controllerHelper;
 
-    /** @var ArgumentCompilerInterface */
-    private $argumentCompiler;
+    private ArgumentCompilerInterface $argumentCompiler;
 
-    /** @var string */
-    private $entityClass;
+    /** @var class-string */
+    private string $entityClass;
 
-    /** @var string */
-    private $entityIdKey;
+    private string $entityIdKey;
 
-    /** @var string */
-    private $entityIdSource;
+    private string $entityIdSource;
 
-    /** @var string */
-    private $methodName;
+    private string $methodName;
 
-    /** @var array */
-    private $arguments;
+    private array $arguments;
 
-    /** @var string|null */
-    private $denyAccessAttribute;
+    private ?string $denyAccessAttribute;
 
-    /** @var string */
-    private $successMessage;
+    private string $successMessage;
 
-    /** @var string */
-    private $successFlashMessage;
+    private string $successFlashMessage;
 
-    /** @var string|null */
-    private $redirectRoute;
+    private ?string $redirectRoute;
 
-    /** @var array */
-    private $redirectRouteParameters;
+    private array $redirectRouteParameters;
 
-    /** @var int */
-    private $redirectStatus;
+    private int $redirectStatus;
 
-    /** @var bool */
-    private $sendReturnValueInResponse = false;
+    private bool $sendReturnValueInResponse = false;
 
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentCompiler,
         array $options
     ) {
-        Assert::null($this->controllerHelper);
         Assert::keyExists($options, 'entity-class');
         Assert::keyExists($options, 'method');
 
@@ -136,7 +122,7 @@ final class GenericEntityInvokeController
 
     public function invokeEntityMethod(string $entityId): Response
     {
-        /** @var object|null $entity */
+        /** @var object $entity */
         $entity = null;
 
         if ($this->entityIdSource === 'request') {

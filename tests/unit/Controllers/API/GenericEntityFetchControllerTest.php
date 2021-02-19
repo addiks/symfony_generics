@@ -255,22 +255,6 @@ final class GenericEntityFetchControllerTest extends TestCase
     /**
      * @test
      */
-    public function shouldThrowExceptionWhenCallingConstructorAgain()
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        $controller = new GenericEntityFetchController($this->controllerHelper, [
-            'entity-class' => SampleEntity::class,
-        ]);
-
-        $controller->__construct($this->controllerHelper, [
-            'entity-class' => SampleEntity::class,
-        ]);
-    }
-
-    /**
-     * @test
-     */
     public function shouldBeCallableByInvokingController()
     {
         $entity = new SampleEntity();
