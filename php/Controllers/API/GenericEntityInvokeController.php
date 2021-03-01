@@ -185,7 +185,8 @@ final class GenericEntityInvokeController
             $response = $this->controllerHelper->redirectToRoute(
                 $this->redirectRoute,
                 $this->argumentCompiler->buildArguments($this->redirectRouteParameters, [
-                    'result' => $result
+                    'result' => $result,
+                    'entity' => $entity
                 ]),
                 $this->redirectStatus
             );

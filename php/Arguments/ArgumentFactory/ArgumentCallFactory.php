@@ -76,7 +76,12 @@ final class ArgumentCallFactory implements ArgumentFactory
             $sourceWithoutArguments = substr($source, 0, $argumentsPosition);
         }
 
-        [$calleeSource, $methodName] = explode('::', $sourceWithoutArguments);
+        /** @var array<string> $sourceParts */
+        $sourceParts = explode('::', $sourceWithoutArguments);
+
+        $methodName = array_pop($sourceParts);
+
+        $calleeSource = implode('::', $sourceParts);
 
         /** @var Argument $callee */
         $callee = $this->argumentFactory->createArgumentFromString($calleeSource);
