@@ -21,6 +21,7 @@ use ReflectionMethod;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final class GenericEntityInvokeController
 {
@@ -127,11 +128,17 @@ final class GenericEntityInvokeController
 
         if ($this->entityIdSource === 'request') {
             $entity = $this->controllerHelper->findEntity($this->entityClass, $entityId);
-            Assert::object($entity, sprintf("Entity with id '%s' not found!", $entityId));
+
+            if (!is_object($entity)) {
+                throw new NotFoundHttpException(sprintf("Entity with id '%s' not found!", $entityId));
+            }
 
         } elseif ($this->entityIdSource === 'argument') {
             $entity = $this->argumentCompiler->buildArgument($this->entityIdKey);
-            Assert::object($entity, "Entity not found!");
+
+            if (!is_object($entity)) {
+                throw new NotFoundHttpException("Entity not found!");
+            }
         }
 
         Assert::isInstanceOf($entity, $this->entityClass, sprintf(

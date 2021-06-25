@@ -140,5 +140,13 @@
             </argument>
         </service>
 
+        <service
+            id="symfony_generics.entity_locator"
+            class="Addiks\SymfonyGenerics\Repositories\EntityLocatorClass"
+        >
+            <argument type="service" id="request_stack" />
+            <argument type="service" id="doctrine.orm.entity_manager" />
+        </service>
+
     </services>
 </container>

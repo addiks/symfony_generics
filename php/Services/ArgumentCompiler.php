@@ -154,10 +154,10 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             return '';
 
         } elseif (is_array($argumentConfiguration)) {
-            Assert::true($this->argumentFactory->understandsArray($argumentConfiguration), sprintf(
-                "Argument '%s' could not be understood!",
-                preg_replace("/\s+/is", "", var_export($argumentConfiguration, true))
-            ));
+            Assert::true(
+                $this->argumentFactory->understandsArray($argumentConfiguration),
+                "Array-argument could not be understood!"
+            );
 
             $argument = $this->argumentFactory->createArgumentFromArray($argumentConfiguration);
 
