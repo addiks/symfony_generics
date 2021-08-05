@@ -21,9 +21,13 @@ use Symfony\Component\HttpFoundation\Request;
 use ErrorException;
 use ReflectionObject;
 use ReflectionMethod;
+use Throwable;
+use Addiks\SymfonyGenerics\SelfValidating;
+use Addiks\SymfonyGenerics\SelfValidateTrait;
 
-final class GenericServiceInvokeController
+final class GenericServiceInvokeController implements SelfValidating
 {
+    use SelfValidateTrait;
 
     /**
      * @var ControllerHelperInterface
@@ -199,6 +203,44 @@ final class GenericServiceInvokeController
         $response->headers->add($this->successResponseHeader);
 
         return $response;
+    }
+
+    public function isSelfValid(?string &$reason = null): bool
+    {
+        try {
+            /** @var object $service */
+            $service = $this->container->get($this->serviceId);
+
+            if (!is_object($service)) {
+                $reason = sprintf(
+                    "Could not find service '%s'!",
+                    $this->serviceId
+                );
+                return false;
+            }
+
+            $reflectionObject = new ReflectionObject($service);
+
+            /** @var ReflectionMethod $refletionMethod */
+            $refletionMethod = $reflectionObject->getMethod($this->method);
+
+            return $this->areArgumentsCompatibleWithReflectionMethod($refletionMethod, $this->arguments);
+
+        } catch (Throwable $exception) {
+            $reason = $exception->getMessage();
+
+            return false;
+        }
+    }
+
+    protected function buildInvalidMessage(string $reason): string
+    {
+        return sprintf(
+            'Configuration of Service-Invoke-Controller for "%s::%s" is invalid: "%s"!',
+            $this->serviceId,
+            $this->method,
+            $reason
+        );
     }
 
 }

@@ -22,9 +22,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use ReflectionClass;
+use Addiks\SymfonyGenerics\SelfValidateTrait;
+use Addiks\SymfonyGenerics\SelfValidating;
 
-final class GenericEntityInvokeController
+final class GenericEntityInvokeController implements SelfValidating
 {
+    use SelfValidateTrait;
 
     private ControllerHelperInterface $controllerHelper;
 
@@ -200,6 +204,36 @@ final class GenericEntityInvokeController
         }
 
         return $response;
+    }
+
+    public function isSelfValid(?string &$reason = null): bool
+    {
+        if (!class_exists($this->entityClass)) {
+            return false;
+        }
+
+        if ($this->entityIdSource === 'argument') {
+            if (!$this->argumentCompiler->understandsArgumentString($this->entityIdKey)) {
+                return false;
+            }
+        }
+
+        $reflectionObject = new ReflectionClass($this->entityClass);
+
+        /** @var ReflectionMethod $refletionMethod */
+        $refletionMethod = $reflectionObject->getMethod($this->methodName);
+
+        return $this->areArgumentsCompatibleWithReflectionMethod($refletionMethod, $this->arguments);
+    }
+
+    protected function buildInvalidMessage(string $reason): string
+    {
+        return sprintf(
+            'Configuration of Entity-Invoke-Controller for "%s::%s" is invalid: "%s"!',
+            $this->entityClass,
+            $this->methodName,
+            $reason
+        );
     }
 
 }

@@ -37,26 +37,26 @@ class EntityLocatorClass implements EntityLocator
         string $entityClass,
         bool $failIfNotFound = true
     ): ?object {
-        /** @var Request|null */
-        $request = $this->requestStack->getCurrentRequest();
-
-        Assert::object($request, "Missing request to locate entity from request-argument!");
-
-        /** @var string $entityId */
-        $entityId = $request->get($requestKey);
-
         /** @var object|null $entity */
         $entity = null;
 
-        if (!empty($entityId)) {
-            $entity = $this->entityManager->find($entityClass, $entityId);
+        /** @var Request|null */
+        $request = $this->requestStack->getCurrentRequest();
 
-            if ($failIfNotFound && is_null($entity)) {
-                throw new NotFoundHttpException(sprintf(
-                    "Cound not find entity with id '%s'!",
-                    $entityId
-                ));
+        if (is_object($request)) {
+            /** @var string $entityId */
+            $entityId = $request->get($requestKey);
+
+            if (!empty($entityId)) {
+                $entity = $this->entityManager->find($entityClass, $entityId);
             }
+        }
+
+        if ($failIfNotFound && is_null($entity)) {
+            throw new NotFoundHttpException(sprintf(
+                "Cound not find entity with id '%s'!",
+                $entityId
+            ));
         }
 
         return $entity;

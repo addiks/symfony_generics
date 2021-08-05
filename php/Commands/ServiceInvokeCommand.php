@@ -19,9 +19,15 @@ use Symfony\Component\Console\Command\Command;
 use ReflectionMethod;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Addiks\SymfonyGenerics\SelfValidating;
+use Addiks\SymfonyGenerics\Commands\SelfValidateTrait;
+use ReflectionObject;
+use ReflectionParameter;
+use Throwable;
 
-final class ServiceInvokeCommand extends Command
+final class ServiceInvokeCommand extends Command implements SelfValidating
 {
+    use SelfValidateTrait;
 
     /** @var ContainerInterface */
     private $container;
@@ -75,6 +81,35 @@ final class ServiceInvokeCommand extends Command
         $this->description = $options['description'];
 
         parent::__construct();
+    }
+
+    public function isSelfValid(?string &$reason = null): bool
+    {
+        try {
+            /** @var object $service */
+            $service = $this->service();
+
+            $reflectionObject = new ReflectionObject($service);
+
+            /** @var ReflectionMethod $refletionMethod */
+            $refletionMethod = $reflectionObject->getMethod($this->method);
+
+            $this->assertArgumentsAreCompatibleWithReflectionMethod($refletionMethod, $this->arguments);
+
+        } catch (Throwable $exception) {
+            $reason = $exception->getMessage();
+
+            return false;
+        }
+    }
+
+    protected function buildInvalidMessage(string $reason): string
+    {
+        return sprintf(
+            'Configuration of Service-Invoke-Command "%s" is invalid: "%s"!',
+            $this->name,
+            $reason
+        );
     }
 
     protected function configure(): void

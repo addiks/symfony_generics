@@ -148,5 +148,13 @@
             <argument type="service" id="doctrine.orm.entity_manager" />
         </service>
 
+        <service
+            id="symfony_generics.validatables.collection"
+            class="Addiks\SymfonyGenerics\Collection\CollectionOfValidatables"
+            public="true"
+        >
+            <argument type="collection"></argument>
+        </service>
+
     </services>
 </container>
