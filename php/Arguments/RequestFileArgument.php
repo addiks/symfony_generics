@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Webmozart\Assert\Assert;
 use Symfony\Component\HttpFoundation\FileBag;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use InvalidArgumentException;
 
 final class RequestFileArgument implements Argument
 {
@@ -61,8 +62,29 @@ final class RequestFileArgument implements Argument
         /** @var FileBag $files */
         $files = $request->files;
 
+        /** @var FileBag|array|UploadedFile $container */
+        $container = $files;
+
+        /** @var string $key */
+        foreach (explode(':', $this->key) as $index => $key) {
+            if ($container instanceof FileBag) {
+                $container = $container->get($key);
+
+            } elseif (is_array($container)) {
+                $container = $container[$key];
+
+            } else {
+                throw new InvalidArgumentException(sprintf(
+                    "Missing uploaded file '%s' (at index %d: '%s')!",
+                    $this->key,
+                    $index,
+                    $key
+                ));
+            }
+        }
+
         /** @var UploadedFile $file */
-        $file = $files->get($this->key);
+        $file = $container;
 
         Assert::isInstanceOf($file, UploadedFile::class, sprintf(
             "Missing uploaded file '%s'!",
