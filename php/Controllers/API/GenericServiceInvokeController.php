@@ -24,6 +24,8 @@ use ReflectionMethod;
 use Throwable;
 use Addiks\SymfonyGenerics\SelfValidating;
 use Addiks\SymfonyGenerics\SelfValidateTrait;
+use Symfony\Component\Form\FormInterface;
+use InvalidArgumentException;
 
 final class GenericServiceInvokeController implements SelfValidating
 {
@@ -58,6 +60,11 @@ final class GenericServiceInvokeController implements SelfValidating
      * @var array
      */
     private $arguments;
+    
+    /**
+     * @var FormInterface|null
+     */
+    private $argumentsForm;
 
     /**
      * @var string|null
@@ -83,6 +90,8 @@ final class GenericServiceInvokeController implements SelfValidating
      * @var bool
      */
     private $sendReturnValueInResponse = false;
+    
+    private $returnValueInResponseGetter = '';
 
     /**
      * @var string
@@ -109,14 +118,20 @@ final class GenericServiceInvokeController implements SelfValidating
 
         $options = array_merge([
             'arguments' => [],
+            'arguments-form' => null,
             'authorization-attributes' => null,
             'success-redirect' => null,
             'success-redirect-arguments' => [],
             'success-redirect-status' => $defaultRedirectStatus,
             'success-flash-message' => "",
             'send-return-value-in-response' => false,
+            'return-value-in-response-getter' => '',
             'success-response-header' => [],
         ], $options);
+        
+        if (!empty($options['return-value-in-response-getter'])) {
+            $options['send-return-value-in-response'] = true;
+        }
 
         $this->controllerHelper = $controllerHelper;
         $this->argumentCompiler = $argumentCompiler;
@@ -124,12 +139,14 @@ final class GenericServiceInvokeController implements SelfValidating
         $this->serviceId = $options['service'];
         $this->method = $options['method'];
         $this->arguments = $options['arguments'];
+        $this->argumentsForm = $options['arguments-form'];
         $this->authorizationAttribute = $options['authorization-attributes'];
         $this->successRedirectRoute = $options['success-redirect'];
         $this->successRedirectArguments = $options['success-redirect-arguments'];
         $this->successRedirectStatus = $options['success-redirect-status'];
         $this->successFlashMessage = $options['success-flash-message'];
         $this->sendReturnValueInResponse = $options['send-return-value-in-response'];
+        $this->returnValueInResponseGetter = $options['return-value-in-response-getter'];
         $this->successResponseHeader = $options['success-response-header'];
     }
 
@@ -169,6 +186,15 @@ final class GenericServiceInvokeController implements SelfValidating
             $reflectionMethod,
             $this->arguments
         );
+        
+        if (is_object($this->argumentsForm)) {
+            $this->argumentsForm->handleRequest($request);
+            
+            Assert::true($this->argumentsForm->isSubmitted());
+            Assert::true($this->argumentsForm->isValid());
+            
+            $arguments = array_merge(array_values($this->argumentsForm->getData()), $arguments);
+        }
 
         /** @var mixed $returnValue */
         $returnValue = $reflectionMethod->invokeArgs($service, $arguments);
@@ -194,6 +220,41 @@ final class GenericServiceInvokeController implements SelfValidating
         $response = null;
 
         if ($this->sendReturnValueInResponse) {
+            if (!empty($this->returnValueInResponseGetter)) {
+                foreach (explode('.', $this->returnValueInResponseGetter) as $getterKey) {
+                    if (is_array($returnValue)) {
+                        if (isset($returnValue[$getterKey])) {
+                            $returnValue = $returnValue[$getterKey];
+                            
+                        } else {
+                            throw new InvalidArgumentException(sprintf(
+                                'Key "%s" does not exist in result (sub-) array!',
+                                $getterKey
+                            ));
+                        }
+                        
+                    } elseif (is_object($returnValue)) {
+                        if (method_exists($returnValue, $getterKey)) {
+                            $returnValue = $returnValue->{$getterKey}();
+                            
+                        } elseif (property_exists($returnValue, $getterKey)) {
+                            $returnValue = $returnValue->{$getterKey};
+                            
+                        } else {
+                            throw new InvalidArgumentException(sprintf(
+                                'Method or property "%s" does not exist in result (sub-) object!',
+                                $getterKey
+                            ));
+                        }
+                        
+                    } else {
+                        throw new InvalidArgumentException(
+                            'Cannot get sub-value from value that is neither an array nor an object!'
+                        );
+                    }
+                }
+            }
+            
             $response = new Response((string)$returnValue);
 
         } else {

@@ -122,12 +122,20 @@ final class GenericExceptionResponseController
                 'redirect-route' => null,
                 'redirect-route-parameters' => [],
                 'filter' => '',
+                'controller' => null,
+                'controller-method' => '__invoke',
+                'controller-arguments' => [],
             ], $responseData);
 
             Assert::true(
                 is_a($responseData['exception-class'], Throwable::class, true) ||
                 empty($responseData['exception-class'])
             );
+            
+            if (!is_null($responseData['controller'])) {
+                Assert::object($responseData['controller']);
+                Assert::methodExists($responseData['controller'], $responseData['controller-method']);
+            }
 
             $this->exceptionResponses[] = $responseData;
         }
@@ -173,11 +181,9 @@ final class GenericExceptionResponseController
 
     private function executeInnerControllerUnsafely(): Response
     {
-        $methodReflection = new ReflectionMethod($this->innerController, $this->innerControllerMethod);
-
         /** @var array<int, mixed> $arguments */
         $arguments = $this->argumentBuilder->buildCallArguments(
-            $methodReflection,
+            new ReflectionMethod($this->innerController, $this->innerControllerMethod),
             $this->innerControllerArgumentsConfiguration
         );
 
@@ -238,14 +244,36 @@ final class GenericExceptionResponseController
     private function applyResponseDataForException(Request $request, Throwable $exception, array $responseData): Response
     {
         $this->handleFlashMessageForException($exception, $responseData);
-
-        if (!empty($responseData['redirect-route'])) {
+        
+        if (is_object($responseData['controller'])) {
+            $response = $this->createControllerResponseForException($responseData);
+            
+        } elseif (!empty($responseData['redirect-route'])) {
             $response = $this->createRedirectResponseForException($request, $responseData);
 
         } else {
             $response = $this->createMessageResponseForException($exception, $responseData);
         }
 
+        return $response;
+    }
+    
+    private function createControllerResponseForException(array $responseData): Response
+    {
+        /** @var array $arguments */
+        $arguments = $this->argumentBuilder->buildCallArguments(
+            new ReflectionMethod($responseData['controller'], $responseData['controller-method']),
+            $responseData['controller-arguments']
+        );
+        
+        /** @var Response $response */
+        $response = call_user_func_array(
+            [$responseData['controller'], $responseData['controller-method']], 
+            $arguments
+        );
+        
+        Assert::isInstanceOf($response, Response::class);
+        
         return $response;
     }
 
@@ -269,6 +297,19 @@ final class GenericExceptionResponseController
 
             $this->controllerHelper->addFlashMessage($flashMessage, $responseData['flash-type']);
         }
+    }
+    
+    private function buildCallArguments(object $controller, string $method, array $argumentsConfiguration): array
+    {
+        $methodReflection = new ReflectionMethod($controller, $method);
+
+        /** @var array<int, mixed> $arguments */
+        $arguments = $this->argumentBuilder->buildCallArguments(
+            new ReflectionMethod($controller, $method),
+            $argumentsConfiguration
+        );
+        
+        return $arguments;
     }
 
 }
