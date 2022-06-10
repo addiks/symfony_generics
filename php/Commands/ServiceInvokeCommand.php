@@ -12,9 +12,9 @@
 
 namespace Addiks\SymfonyGenerics\Commands;
 
-use Addiks\SymfonyGenerics\Commands\SelfValidateTrait;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 use Addiks\SymfonyGenerics\SelfValidating;
+use Addiks\SymfonyGenerics\SelfValidateTrait;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
