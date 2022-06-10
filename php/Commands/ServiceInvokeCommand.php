@@ -12,18 +12,20 @@
 
 namespace Addiks\SymfonyGenerics\Commands;
 
+use Addiks\SymfonyGenerics\Commands\SelfValidateTrait;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
+use Addiks\SymfonyGenerics\SelfValidating;
 use Psr\Container\ContainerInterface;
-use Webmozart\Assert\Assert;
 use Symfony\Component\Console\Command\Command;
-use ReflectionMethod;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Addiks\SymfonyGenerics\SelfValidating;
-use Addiks\SymfonyGenerics\Commands\SelfValidateTrait;
-use ReflectionObject;
-use ReflectionParameter;
 use Throwable;
+use ReflectionObject;
+use ReflectionMethod;
+use ReflectionParameter;
+use Webmozart\Assert\Assert;
 
 final class ServiceInvokeCommand extends Command implements SelfValidating
 {
@@ -53,6 +55,12 @@ final class ServiceInvokeCommand extends Command implements SelfValidating
     /** @var string */
     private $description;
 
+    /** @var array<string, array<string, string>> */
+    private $inputArguments;
+
+    /** @var array<string, array<string, string>> */
+    private $inputOptions;
+
     public function __construct(
         ContainerInterface $container,
         ArgumentCompilerInterface $argumentCompiler,
@@ -66,6 +74,8 @@ final class ServiceInvokeCommand extends Command implements SelfValidating
             'arguments' => [],
             'method' => '__invoke',
             'description' => '',
+            'input-options' => [],
+            'input-arguments' => [],
         );
 
         $options = array_merge($defaults, $options);
@@ -79,6 +89,8 @@ final class ServiceInvokeCommand extends Command implements SelfValidating
         $this->arguments = $options['arguments'];
         $this->name = $options['name'];
         $this->description = $options['description'];
+        $this->inputArguments = $options['input-arguments'];
+        $this->inputOptions = $options['input-options'];
 
         parent::__construct();
     }
@@ -116,6 +128,37 @@ final class ServiceInvokeCommand extends Command implements SelfValidating
     {
         $this->setName($this->name);
 
+        foreach ($this->inputArguments as $name => $config) {
+            /** @var int $mode */
+            $mode = InputArgument::REQUIRED;
+
+            if ($config['optional'] ?? false) {
+                $mode = InputArgument::OPTIONAL;
+            }
+
+            if ($config['is-array'] ?? false) {
+                $mode = $mode + InputArgument::IS_ARRAY;
+            }
+
+            $this->addArgument($name, $mode, $config['description'] ?? '');
+        }
+
+        foreach ($this->inputOptions as $name => $config) {
+            $mode = InputOption::VALUE_REQUIRED;
+
+            if ($config['flag'] ?? false) {
+                $mode = InputOption::VALUE_NONE;
+
+            } elseif ($config['optional'] ?? false) {
+                $mode = InputOption::VALUE_OPTIONAL;
+
+            } elseif ($config['is-array'] ?? false) {
+                $mode = InputOption::VALUE_IS_ARRAY;
+            }
+
+            $this->addOption($name, $config['shortcut'] ?? null, $mode, $config['description'] ?? '');
+        }
+
         if (!empty($this->description)) {
             $this->setDescription($this->description);
         }
@@ -128,10 +171,23 @@ final class ServiceInvokeCommand extends Command implements SelfValidating
 
         $methodReflection = new ReflectionMethod($service, $this->method);
 
+        /** @var mixed $additionalArguments */
+        $additionalArguments = array();
+
+        foreach (array_keys($this->inputArguments) as $name) {
+            $additionalArguments[$name] = $input->getArgument($name);
+        }
+
+        foreach (array_keys($this->inputOptions) as $name) {
+            $additionalArguments[$name] = $input->getOption($name);
+        }
+
         /** @var array $arguments */
         $arguments = $this->argumentCompiler->buildCallArguments(
             $methodReflection,
-            $this->arguments
+            $this->arguments,
+            [],
+            $additionalArguments
         );
 
         $methodReflection->invoke($service, $arguments);
