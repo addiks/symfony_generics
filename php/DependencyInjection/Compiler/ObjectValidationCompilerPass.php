@@ -54,7 +54,7 @@ final class ObjectValidationCompilerPass implements CompilerPassInterface
                     }
 
                 } catch (Error $error) {
-                    if (!preg_match('/^Class \'.*\' not found$/is', $error->getMessage())) {
+                    if (!preg_match('/^(Class|Interface|Trait) (\'|").*(\'|") not found$/is', $error->getMessage())) {
                         throw $error;
                     }
                 }
