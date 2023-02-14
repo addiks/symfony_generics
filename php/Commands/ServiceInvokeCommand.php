@@ -106,7 +106,11 @@ final class ServiceInvokeCommand extends Command implements SelfValidating
             /** @var ReflectionMethod $refletionMethod */
             $refletionMethod = $reflectionObject->getMethod($this->method);
 
-            $this->assertArgumentsAreCompatibleWithReflectionMethod($refletionMethod, $this->arguments);
+            return $this->areArgumentsCompatibleWithReflectionMethod(
+                $refletionMethod, 
+                $this->arguments, 
+                $reason
+            );
 
         } catch (Throwable $exception) {
             $reason = $exception->getMessage();

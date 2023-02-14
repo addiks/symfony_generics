@@ -112,7 +112,10 @@ final class GenericEntityInvokeController implements SelfValidating
         $response = null;
 
         if ($this->entityIdSource === 'request') {
-            /** @var string $entityId */
+            /** 
+             * @var string $entityId  
+             * @psalm-suppress InternalMethod 
+             */
             $entityId = $request->get($this->entityIdKey);
 
             $response = $this->invokeEntityMethod($entityId);
@@ -223,7 +226,7 @@ final class GenericEntityInvokeController implements SelfValidating
         /** @var ReflectionMethod $refletionMethod */
         $refletionMethod = $reflectionObject->getMethod($this->methodName);
 
-        return $this->areArgumentsCompatibleWithReflectionMethod($refletionMethod, $this->arguments);
+        return $this->areArgumentsCompatibleWithReflectionMethod($refletionMethod, $this->arguments, $reason);
     }
 
     protected function buildInvalidMessage(string $reason): string

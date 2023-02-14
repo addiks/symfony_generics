@@ -27,15 +27,17 @@ trait SelfValidateTrait
         /** @var bool $isValid */
         $isValid = $this->isSelfValid($reason);
 
-        Assert::true($isValid, $this->buildInvalidMessage($reason));
+        Assert::true($isValid, $this->buildInvalidMessage((string) $reason));
     }
 
     protected abstract function buildInvalidMessage(string $reason): string;
+    
+    public abstract function isSelfValid(?string &$reason = null): bool;
 
     private function areArgumentsCompatibleWithReflectionMethod(
         ReflectionFunctionAbstract $refletionMethod,
         array $arguments,
-        string &$reason = ""
+        ?string &$reason = null
     ): bool {
         /** @var ReflectionParameter $reflectionParameter */
         foreach ($refletionMethod->getParameters() as $parameterIndex => $reflectionParameter) {

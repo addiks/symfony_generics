@@ -17,11 +17,12 @@ use IteratorAggregate;
 use Iterator;
 use ArrayIterator;
 
+/** @implements IteratorAggregate<SelfValidating> */
 final class CollectionOfValidatables implements IteratorAggregate
 {
 
     /** @var array<string, SelfValidating> */
-    private array $validatables;
+    private array $validatables = array();
 
     public function __construct(array $validatables)
     {
@@ -33,7 +34,7 @@ final class CollectionOfValidatables implements IteratorAggregate
 
     public function add(string $serviceId, SelfValidating $validatable): void
     {
-        $this->validatables[$serviceId] = [$serviceId, $validatable];
+        $this->validatables[$serviceId] = $validatable;
     }
 
     public function validateAll(): void

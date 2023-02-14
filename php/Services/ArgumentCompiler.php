@@ -203,14 +203,17 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             } elseif ($parameterTypeName === Request::class) {
                 $result = $request;
 
-            } elseif (is_object($request) && $request->get($parameterName)) {
-                $result = $request->get($parameterName);
-
             } else {
-                $result = $this->getDefaultValueFromParameterReflectionSafely($parameterReflection);
+                /** @psalm-suppress InternalMethod */
+                $result = $request?->get($parameterName);
+
+                if (is_null($result)) {
+                    $result = $this->getDefaultValueFromParameterReflectionSafely($parameterReflection);
+                }
             }
 
             if (!empty($parameterTypeName) && (is_string($result) || is_int($result))) {
+                /** @psalm-suppress UndefinedClass */
                 if (is_subclass_of($parameterTypeName, ValueObjectInterface::class)) {
                     $result = call_user_func("{$parameterTypeName}::fromNative", $result);
 

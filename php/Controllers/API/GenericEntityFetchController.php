@@ -84,7 +84,10 @@ final class GenericEntityFetchController
 
         Assert::isInstanceOf($request, Request::class, "Cannot use controller outside of request-scope!");
 
-        /** @var string $entityId */
+        /** 
+         * @var string $entityId  
+         * @psalm-suppress InternalMethod 
+         */
         $entityId = $request->get($this->entityIdKey);
 
         return $this->fetchEntity($entityId);

@@ -49,6 +49,7 @@ final class RequestArgument implements Argument
             "Cannot resolve request-argument without active request!"
         );
 
+        /** @psalm-suppress InternalMethod */
         return $request->get($this->key);
     }
 

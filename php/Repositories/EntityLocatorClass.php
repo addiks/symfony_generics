@@ -43,13 +43,14 @@ class EntityLocatorClass implements EntityLocator
         /** @var Request|null */
         $request = $this->requestStack->getCurrentRequest();
 
-        if (is_object($request)) {
-            /** @var string $entityId */
-            $entityId = $request->get($requestKey);
+        /** 
+         * @var string $entityId   
+         * @psalm-suppress InternalMethod 
+         */
+        $entityId = $request?->get($requestKey) ?? "";
 
-            if (!empty($entityId)) {
-                $entity = $this->entityManager->find($entityClass, $entityId);
-            }
+        if (!empty($entityId)) {
+            $entity = $this->entityManager->find($entityClass, $entityId);
         }
 
         if ($failIfNotFound && is_null($entity)) {

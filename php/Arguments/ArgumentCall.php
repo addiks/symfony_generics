@@ -21,6 +21,7 @@ use ReflectionObject;
 use ReflectionClass;
 use ReflectionParameter;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
+use UnitEnum;
 
 final class ArgumentCall implements Argument
 {
@@ -93,24 +94,29 @@ final class ArgumentCall implements Argument
             $this->arguments
         );
 
-        /** @var callable $callback */
-        $callback = [$callee, $this->methodName];
+        if (is_string($callee) && is_a($callee, UnitEnum::class, true)) {
+            return constant($callee . '::' . $this->methodName);
 
-        /** @var array<mixed> $arguments */
-        $arguments = $argumentsConfiguration;
+        } else {
+            /** @var callable $callback */
+            $callback = [$callee, $this->methodName];
 
-        if (!is_null($methodReflection)) {
-            $arguments = $this->argumentCompiler->buildCallArguments(
-                $methodReflection,
-                $argumentsConfiguration
-            );
+            /** @var array<mixed> $arguments */
+            $arguments = $argumentsConfiguration;
 
-            if (count($arguments) < count($argumentsConfiguration)) {
-                $arguments = array_merge($arguments, array_slice($argumentsConfiguration, count($arguments)));
+            if (!is_null($methodReflection)) {
+                $arguments = $this->argumentCompiler->buildCallArguments(
+                    $methodReflection,
+                    $argumentsConfiguration
+                );
+
+                if (count($arguments) < count($argumentsConfiguration)) {
+                    $arguments = array_merge($arguments, array_slice($argumentsConfiguration, count($arguments)));
+                }
             }
-        }
 
-        return call_user_func_array($callback, $arguments);
+            return call_user_func_array($callback, $arguments);
+        }
     }
 
 }

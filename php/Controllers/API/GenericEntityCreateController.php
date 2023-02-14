@@ -195,6 +195,7 @@ final class GenericEntityCreateController
 
         if (!empty($this->factory)) {
             if (is_int(strpos($this->factory, '::'))) {
+                /** @psalm-suppress PossiblyUndefinedArrayOffset */
                 [$factoryClass, $factoryMethod] = explode('::', $this->factory, 2);
 
                 if (!empty($factoryClass)) {
