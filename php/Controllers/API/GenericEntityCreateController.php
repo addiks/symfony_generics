@@ -53,6 +53,8 @@ final class GenericEntityCreateController
     private ?string $successRedirectRoute;
 
     private array $successRedirectArguments;
+    
+    private bool $successRedirectDefaultArguments = true;
 
     private int $successRedirectStatus;
 
@@ -78,6 +80,7 @@ final class GenericEntityCreateController
             'authorization-attribute' => null,
             'arguments' => [],
             'success-redirect' => null,
+            'success-redirect-default-arguments' => true,
             'success-redirect-arguments' => [],
             'success-redirect-status' => $defaultRedirectStatus,
             'entity-id-getter' => method_exists($options['entity-class'], 'id') ?'id' :'getId',
@@ -96,6 +99,7 @@ final class GenericEntityCreateController
         $this->constructArguments = $options['arguments'];
         $this->successRedirectRoute = $options['success-redirect'];
         $this->successRedirectArguments = $options['success-redirect-arguments'];
+        $this->successRedirectDefaultArguments = (bool) $options['success-redirect-default-arguments'];
         $this->successRedirectStatus = $options['success-redirect-status'];
 
         foreach ($options['calls'] as $methodName => $arguments) {
@@ -172,11 +176,15 @@ final class GenericEntityCreateController
             $redirectArguments = $this->argumentBuilder->buildArguments(
                 $this->successRedirectArguments
             );
+            
+            if ($this->successRedirectDefaultArguments) {
+                /** @var callable $idGetterCallback */
+                $idGetterCallback = [$entity, $this->entityIdGetter];
 
-            /** @var callable $idGetterCallback */
-            $idGetterCallback = [$entity, $this->entityIdGetter];
-
-            $redirectArguments[$this->entityIdKey] = call_user_func($idGetterCallback);
+                $redirectArguments[$this->entityIdKey] = call_user_func($idGetterCallback);
+            }
+            
+            $this->controllerHelper->addFlashMessage($this->successResponse, 'success');
 
             return $this->controllerHelper->redirectToRoute(
                 $this->successRedirectRoute,

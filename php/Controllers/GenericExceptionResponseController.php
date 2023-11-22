@@ -129,7 +129,11 @@ final class GenericExceptionResponseController
 
             Assert::true(
                 is_a($responseData['exception-class'], Throwable::class, true) ||
-                empty($responseData['exception-class'])
+                empty($responseData['exception-class']),
+                sprintf(
+                    'Parameter "exception-class" must either be subtype of \\Throwable or be null! Is "%s"!',
+                    $responseData['exception-class']
+                )
             );
             
             if (!is_null($responseData['controller'])) {

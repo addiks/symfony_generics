@@ -18,11 +18,14 @@ use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
 use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 use Symfony\Component\HttpFoundation\Request;
+use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 
 final class GenericEntityRemoveController
 {
 
     private ControllerHelperInterface $controllerHelper;
+
+    private ArgumentCompilerInterface $argumentBuilder;
 
     /** @var class-string */
     private string $entityClass;
@@ -31,21 +34,42 @@ final class GenericEntityRemoveController
 
     private ?string $authorizationAttribute;
 
+    private string $successResponse;
+
+    private ?string $successRedirectRoute;
+
+    private array $successRedirectArguments;
+    
+    private int $successRedirectStatus;
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
+        ArgumentCompilerInterface $argumentBuilder,
         array $options
     ) {
         Assert::keyExists($options, 'entity-class');
 
+        /** @var int $defaultRedirectStatus */
+        $defaultRedirectStatus = 303;
+
         $options = array_merge([
             'authorization-attribute' => null,
             'entity-id-key' => 'entityId',
+            'success-response' => "Entity removed!",
+            'success-redirect' => null,
+            'success-redirect-arguments' => [],
+            'success-redirect-status' => $defaultRedirectStatus,
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
+        $this->argumentBuilder = $argumentBuilder;
         $this->entityClass = $options['entity-class'];
         $this->entityIdKey = $options['entity-id-key'];
         $this->authorizationAttribute = $options['authorization-attribute'];
+        $this->successResponse = $options['success-response'];
+        $this->successRedirectRoute = $options['success-redirect'];
+        $this->successRedirectArguments = $options['success-redirect-arguments'];
+        $this->successRedirectStatus = $options['success-redirect-status'];
     }
 
     public function __invoke(): Response
@@ -88,8 +112,23 @@ final class GenericEntityRemoveController
         ));
 
         $this->controllerHelper->removeEntity($entity);
+        $this->controllerHelper->flushORM();
 
-        return new Response("Entity removed!");
+        if (!empty($this->successRedirectRoute)) {
+            /** @var array $redirectArguments */
+            $redirectArguments = $this->argumentBuilder->buildArguments(
+                $this->successRedirectArguments
+            );
+            $this->controllerHelper->addFlashMessage($this->successResponse, 'success');
+
+            return $this->controllerHelper->redirectToRoute(
+                $this->successRedirectRoute,
+                $redirectArguments,
+                $this->successRedirectStatus
+            );
+        }
+
+        return new Response($this->successResponse);
     }
 
 }

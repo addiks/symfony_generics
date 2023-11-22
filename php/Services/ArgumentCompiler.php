@@ -29,6 +29,9 @@ use InvalidArgumentException;
 use Addiks\SymfonyGenerics\Controllers\ControllerHelperInterface;
 use ValueObjects\ValueObjectInterface;
 use Exception;
+use SerendipityHQ\Component\ValueObjects\Common\SimpleValueObjectInterface;
+use BackedEnum;
+use DateTime;
 
 final class ArgumentCompiler implements ArgumentCompilerInterface
 {
@@ -216,6 +219,15 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
                 /** @psalm-suppress UndefinedClass */
                 if (is_subclass_of($parameterTypeName, ValueObjectInterface::class)) {
                     $result = call_user_func("{$parameterTypeName}::fromNative", $result);
+
+                } elseif (is_subclass_of($parameterTypeName, SimpleValueObjectInterface::class)) {
+                    $result = new $parameterTypeName($result);
+
+                } elseif (is_subclass_of($parameterTypeName, BackedEnum::class)) {
+                    $result = $parameterTypeName::from($result);
+
+                } elseif (is_a($parameterTypeName, DateTime::class, true)) {
+                    $result = new DateTime($result);
 
                 } elseif (class_exists($parameterTypeName)) {
                     $result = $this->controllerHelper->findEntity($parameterTypeName, (string)$result);

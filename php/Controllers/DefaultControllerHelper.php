@@ -44,8 +44,6 @@ final class DefaultControllerHelper implements ControllerHelperInterface
 
     private UrlGeneratorInterface $urlGenerator;
 
-    private Session $session;
-
     private LoggerInterface $logger;
 
     private EventDispatcherInterface $eventDispatcher;
@@ -57,7 +55,6 @@ final class DefaultControllerHelper implements ControllerHelperInterface
         Environment $twig,
         AuthorizationCheckerInterface $authorization,
         UrlGeneratorInterface $urlGenerator,
-        Session $session,
         LoggerInterface $logger,
         EventDispatcherInterface $eventDispatcher,
         RequestStack $requestStack
@@ -66,7 +63,6 @@ final class DefaultControllerHelper implements ControllerHelperInterface
         $this->twig = $twig;
         $this->authorization = $authorization;
         $this->urlGenerator = $urlGenerator;
-        $this->session = $session;
         $this->logger = $logger;
         $this->eventDispatcher = $eventDispatcher;
         $this->requestStack = $requestStack;
@@ -112,7 +108,12 @@ final class DefaultControllerHelper implements ControllerHelperInterface
 
     public function addFlashMessage(string $message, string $type = "default"): void
     {
-        $this->session->getFlashBag()->add($type, $message);
+        $this->session()?->getFlashBag()?->add($type, $message);
+    }
+    
+    private function session(): ?Session
+    {
+        return $this->getCurrentRequest()?->getSession();
     }
 
     public function redirectToRoute(string $route, array $parameters = array(), int $status = 301): Response
