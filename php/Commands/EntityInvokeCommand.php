@@ -12,80 +12,74 @@
 
 namespace Addiks\SymfonyGenerics\Commands;
 
-use Symfony\Component\Console\Command\Command;
-use Addiks\SymfonyGenerics\SelfValidating;
-use Psr\Container\ContainerInterface;
 use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
+use Addiks\SymfonyGenerics\SelfValidating;
+use Addiks\SymfonyGenerics\SelfValidateTrait;
+use Psr\Container\ContainerInterface;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Webmozart\Assert\Assert;
+use Throwable;
+use ReflectionObject;
 use ReflectionMethod;
 use ReflectionParameter;
-use Exception;
+use Webmozart\Assert\Assert;
 use Doctrine\Persistence\ObjectRepository;
-use Addiks\SymfonyGenerics\SelfValidateTrait;
-use Symfony\Component\Console\Input\InputOption;
-use InvalidArgumentException;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Console\Input\InputArgument;
+use Doctrine\Persistence\ObjectManager;
+use ReflectionClass;
 
 final class EntityInvokeCommand extends Command implements SelfValidating
 {
     use SelfValidateTrait;
 
-    private string $name;
-    private string $description;
-    
-    /** @var class-string $entityClass */
-    private string $entityClass;
-    
+    private string $repositoryMethod;
+
     private string $method;
 
-    /** @var array<string, mixed> */
     private array $arguments;
-    
-    /** @var array<int, string>|null */
-    private array|null $argumentsOrder = null;
-    
-    private ReflectionMethod|null $methodReflection = null;
-    
-    private ReflectionMethod|null $repositoryMethod = null;
+
+    private string $name;
+
+    private string $description;
+
+    /** @var array<string, array<string, string>> */
+    private array $inputArguments;
+
+    /** @var array<string, array<string, string>> */
+    private array $inputOptions;
 
     public function __construct(
         private ContainerInterface $container,
         private ArgumentCompilerInterface $argumentCompiler,
-        private ObjectRepository $repository,
-        private EntityManagerInterface $entityManager,
+        private ObjectRepository $entityRepository,
+        private ObjectManager $objectManager,
         array $options
     ) {
         Assert::keyExists($options, 'name');
-        Assert::keyExists($options, 'entity-class');
-        Assert::classExists($options['entity-class']);
-        Assert::true(is_a($repository->getClassName(), $options['entity-class'], true));
 
         /** @var array<string, mixed> $defaults */
         $defaults = array(
+            'repository-method' => 'findAll',
             'arguments' => [],
             'method' => '__invoke',
             'description' => '',
-            'repository-method' => null,
+            'input-options' => [],
+            'input-arguments' => [],
         );
 
         $options = array_merge($defaults, $options);
 
         Assert::isArray($options['arguments']);
 
+        $this->repositoryMethod = $options['repository-method'];
+        $this->method = $options['method'];
         $this->arguments = $options['arguments'];
-        $this->name = (string) $options['name'];
-        $this->description = (string) $options['description'];
-        $this->entityClass = (string) $options['entity-class'];
-        $this->method = (string) $options['method'];
-        
-        Assert::methodExists($this->entityClass, $this->method);
-        
-        if (!empty($options['repository-method'])) {
-            $this->repositoryMethod = new ReflectionMethod($repository, (string) $options['repository-method']);
-        }
+        $this->name = $options['name'];
+        $this->description = $options['description'];
+        $this->inputArguments = $options['input-arguments'];
+        $this->inputOptions = $options['input-options'];
         
         parent::__construct();
     }
@@ -93,19 +87,31 @@ final class EntityInvokeCommand extends Command implements SelfValidating
     public function isSelfValid(?string &$reason = null): bool
     {
         try {
-            Assert::methodExists($this->entityClass, $this->method);
-            
-            $this->buildArguments();
-            
-            return true;
-            
-        } catch (Exception $exception) {
+            Assert::methodExists($this->entityRepository, $this->method);
+
+            return $this->areArgumentsCompatibleWithReflectionMethod(
+                $this->refletionMethod(), 
+                $this->arguments, 
+                $reason
+            );
+
+        } catch (Throwable $exception) {
             $reason = $exception->getMessage();
-            
+
             return false;
         }
     }
     
+    private function reflectionMethod(): ReflectionMethod
+    {
+        $reflectionClass = new ReflectionClass($this->entityRepository->getClassName());
+
+        /** @var ReflectionMethod $refletionMethod */
+        $refletionMethod = $reflectionClass->getMethod($this->method);
+
+        return $reflectionMethod;
+    }
+
     protected function buildInvalidMessage(string $reason): string
     {
         return sprintf(
@@ -118,16 +124,8 @@ final class EntityInvokeCommand extends Command implements SelfValidating
     protected function configure(): void
     {
         $this->setName($this->name);
-        
-        if (!empty($this->description)) {
-            $this->setDescription($this->description);
-        }
-        
-        if (is_null($this->argumentsOrder)) {
-            $this->buildArguments();
-        }
-        
-        foreach ($this->arguments as $key => $config) {
+
+        foreach ($this->inputArguments as $name => $config) {
             /** @var int $mode */
             $mode = InputArgument::REQUIRED;
 
@@ -139,110 +137,63 @@ final class EntityInvokeCommand extends Command implements SelfValidating
                 $mode = $mode + InputArgument::IS_ARRAY;
             }
 
-            $this->addArgument($key, $mode, $config['description'] ?? '');
+            $this->addArgument($name, $mode, $config['description'] ?? '');
         }
-        
-        $this->addOption('id', null, InputOption::VALUE_OPTIONAL, 'ID of the entity.');
-        $this->addOption('all', null, InputOption::VALUE_NONE, 'Execute on all entities.');
+
+        foreach ($this->inputOptions as $name => $config) {
+            $mode = InputOption::VALUE_REQUIRED;
+
+            if ($config['flag'] ?? false) {
+                $mode = InputOption::VALUE_NONE;
+
+            } elseif ($config['optional'] ?? false) {
+                $mode = InputOption::VALUE_OPTIONAL;
+
+            } elseif ($config['is-array'] ?? false) {
+                $mode = InputOption::VALUE_IS_ARRAY;
+            }
+
+            $this->addOption($name, $config['shortcut'] ?? null, $mode, $config['description'] ?? '');
+        }
+
+        if (!empty($this->description)) {
+            $this->setDescription($this->description);
+        }
     }
-    
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        /** @var string|null $id */
-        $id = $input->getOption('id');
+        /** @var array<array-key, object> $entitie */
+        $entities = $this->entityRepository->{$this->repositoryMethod}();
         
-        /** @var bool $all */
-        $all = (bool) $input->getOption('all');
+        /** @var ReflectionMethod $methodReflection */
+        $methodReflection = $this->reflectionMethod();
         
-        try {
-            /** @var array<array-key, mixed> $callArguments */
-            $callArguments = $this->buildCallArguments();
-        
-            /** @var array<int, object> $entities */
-            $entities = array();
+        foreach ($entities as $entity) {
             
-            if (is_string($id)) {
-                $entity = $this->repository->find($id);
-                
-                Assert::object($entity, sprintf('Entity with id "%s" not found!', $id));
-                
-                $entities = [$entity];
-                
-            } elseif ($all) {
-                $entities = $this->repository->findAll();
-                
-            } elseif (is_object($this->repositoryMethod)) {
-                $entities = $this->repositoryMethod->invoke($this->repository);
-                
-            } else {
-                throw new InvalidArgumentException('Must specify what entities to execute on (with --id or --all)');
-            }
-            
-            foreach ($entities as $entity) {
-                $this->methodReflection()->invokeArgs($entity, $callArguments);
-            }
-        
-            $this->entityManager->flush();
-        
-            return 0;
-        
-        } catch (Exception $exception) {
-            $output->write((string) $exception);
-            
-            return -1;
-        }
-    }
-    
-    private function buildCallArguments(): array
-    {
-        /** @var array<int, mixed> $arguments */
-        $arguments = array();
-        
-        if (is_null($this->argumentsOrder)) {
-            $this->buildArguments();
-        }
-        
-        foreach ($this->argumentsOrder as $key) {
-            $arguments[] = $this->arguments[$key];
-        }
-        
-        /** @var array<array-key, mixed> $callArguments */
-        $callArguments = $this->argumentCompiler->buildCallArguments($this->methodReflection(), $arguments);
-        
-        return $callArguments;
-    }
-    
-    private function buildArguments(): void
-    {
-        $this->argumentsOrder = array();
+            /** @var array<string, mixed> $additionalArguments */
+            $additionalArguments = array();
 
-        /** @var ReflectionParameter $reflectionParameter */
-        foreach ($this->methodReflection()->getParameters() as $reflectionParameter) {
-            
-            /** @var string $key */
-            $key = $reflectionParameter->name;
-            
-            $this->argumentsOrder[] = $key;
-            
-            if (isset($this->arguments[$key])) {
-                continue;
+            foreach (array_keys($this->inputArguments) as $name) {
+                $additionalArguments[$name] = $input->getArgument($name);
             }
+
+            foreach (array_keys($this->inputOptions) as $name) {
+                $additionalArguments[$name] = $input->getOption($name);
+            }
+
+            /** @var array $arguments */
+            $arguments = $this->argumentCompiler->buildCallArguments(
+                $methodReflection,
+                $this->arguments,
+                [],
+                $additionalArguments
+            );
             
-            $this->arguments[$key] = [
-                'optional' => $reflectionParameter->isOptional(),
-                'is-array' => false, # TODO
-                'description' => null, # TODO
-            ];
+            $methodReflection->invoke($entity, $args);
         }
+
+        return 0;
     }
-    
-    private function methodReflection(): ReflectionMethod
-    {
-        if (is_null($this->methodReflection)) {
-            $this->methodReflection = new ReflectionMethod($this->entityClass, $this->method);
-        }
-        
-        return $this->methodReflection;
-    }
-    
+
 }

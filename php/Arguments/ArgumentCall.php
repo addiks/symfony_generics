@@ -94,7 +94,7 @@ final class ArgumentCall implements Argument
             $this->arguments
         );
 
-        if (is_string($callee) && is_a($callee, UnitEnum::class, true)) {
+        if (is_string($callee) && is_a($callee, UnitEnum::class, true) && $this->methodName !== "from") {
             return constant($callee . '::' . $this->methodName);
 
         } else {

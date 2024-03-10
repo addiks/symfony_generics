@@ -29,43 +29,22 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\Event;
 use stdClass;
+use Symfony\Component\HttpFoundation\Exception\SessionNotFoundException;
 
 /**
  * The default implementation of the controller-helper.
  */
 final class DefaultControllerHelper implements ControllerHelperInterface
 {
-
-    private EntityManagerInterface $entityManager;
-
-    private Environment $twig;
-
-    private AuthorizationCheckerInterface $authorization;
-
-    private UrlGeneratorInterface $urlGenerator;
-
-    private LoggerInterface $logger;
-
-    private EventDispatcherInterface $eventDispatcher;
-
-    private RequestStack $requestStack;
-
     public function __construct(
-        EntityManagerInterface $entityManager,
-        Environment $twig,
-        AuthorizationCheckerInterface $authorization,
-        UrlGeneratorInterface $urlGenerator,
-        LoggerInterface $logger,
-        EventDispatcherInterface $eventDispatcher,
-        RequestStack $requestStack
+        private EntityManagerInterface $entityManager,
+        private Environment $twig,
+        private AuthorizationCheckerInterface $authorization,
+        private UrlGeneratorInterface $urlGenerator,
+        private LoggerInterface $logger,
+        private EventDispatcherInterface $eventDispatcher,
+        private RequestStack $requestStack
     ) {
-        $this->entityManager = $entityManager;
-        $this->twig = $twig;
-        $this->authorization = $authorization;
-        $this->urlGenerator = $urlGenerator;
-        $this->logger = $logger;
-        $this->eventDispatcher = $eventDispatcher;
-        $this->requestStack = $requestStack;
     }
 
     public function renderTemplate(string $templatePath, array $arguments = array()): Response
@@ -108,12 +87,12 @@ final class DefaultControllerHelper implements ControllerHelperInterface
 
     public function addFlashMessage(string $message, string $type = "default"): void
     {
-        $this->session()?->getFlashBag()?->add($type, $message);
-    }
-    
-    private function session(): ?Session
-    {
-        return $this->getCurrentRequest()?->getSession();
+        try {
+            $this->requestStack->getSession()->getFlashBag()->add($type, $message);
+            
+        } catch (SessionNotFoundException $exception ) {
+            # May happen when called in CLI, just dont do anything
+        }
     }
 
     public function redirectToRoute(string $route, array $parameters = array(), int $status = 301): Response
