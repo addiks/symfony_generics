@@ -61,6 +61,10 @@ final class EntityArgument implements Argument
             return $this->repository()->findOneBy([$column => $value]);
 
         } else {
+            if (empty($entityId)) {
+                return null;
+            }
+            
             return $this->objectManager->find(
                 $this->entityClass,
                 $entityId

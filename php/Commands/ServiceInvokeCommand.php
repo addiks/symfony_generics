@@ -194,7 +194,7 @@ final class ServiceInvokeCommand extends Command implements SelfValidating
             $additionalArguments
         );
 
-        $methodReflection->invoke($service, $arguments);
+        $methodReflection->invokeArgs($service, $arguments);
 
         return 0;
     }
