@@ -30,6 +30,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\Event;
 use stdClass;
 use Symfony\Component\HttpFoundation\Exception\SessionNotFoundException;
+use Symfony\Component\Security\Core\Authorization\AccessDecisionManagerInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\NullToken;
 
 /**
  * The default implementation of the controller-helper.
@@ -39,7 +42,8 @@ final class DefaultControllerHelper implements ControllerHelperInterface
     public function __construct(
         private EntityManagerInterface $entityManager,
         private Environment $twig,
-        private AuthorizationCheckerInterface $authorization,
+        private TokenStorageInterface $tokenStorage,
+        private AccessDecisionManagerInterface $accessDecisionManager,
         private UrlGeneratorInterface $urlGenerator,
         private LoggerInterface $logger,
         private EventDispatcherInterface $eventDispatcher,
@@ -113,9 +117,19 @@ final class DefaultControllerHelper implements ControllerHelperInterface
         return $this->requestStack->getCurrentRequest();
     }
 
-    public function denyAccessUnlessGranted(string $attribute, $subject): void
+    public function denyAccessUnlessGranted(string|array $attributes, $subject): void
     {
-        if (!$this->authorization->isGranted($attribute, $subject)) {
+        if (is_string($attributes)) {
+            $attributes = [$attributes];
+        }
+
+        $token = $this->tokenStorage->getToken();
+
+        if (!$token || !$token->getUser()) {
+            $token = new NullToken();
+        }
+
+        if (!$this->accessDecisionManager->decide($token, $attributes, $subject)) {
             $exception = new AccessDeniedException('Access Denied.');
             $exception->setSubject($subject);
             $exception->setAttributes($attribute);

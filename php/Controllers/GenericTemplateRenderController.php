@@ -42,9 +42,14 @@ final class GenericTemplateRenderController
     private $arguments;
 
     /**
-     * @var string|null
+     * @var array<int, string>|string|null
      */
     private $authorizationAttribute;
+    
+    /**
+     * @var string|null
+     */
+    private $authorizationSubjectKey = null;
 
     public function __construct(
         ControllerHelperInterface $controllerHelper,
@@ -57,6 +62,7 @@ final class GenericTemplateRenderController
         $options = array_merge([
             'arguments' => [],
             'authorization-attribute' => null,
+            'authorization-subject-key' => null,
         ], $options);
 
         $this->controllerHelper = $controllerHelper;
@@ -64,6 +70,7 @@ final class GenericTemplateRenderController
         $this->templatePath = $options['template'];
         $this->arguments = $options['arguments'];
         $this->authorizationAttribute = $options['authorization-attribute'];
+        $this->authorizationSubjectKey = $options['authorization-subject-key'];
     }
 
     public function __invoke(): Response
@@ -78,12 +85,20 @@ final class GenericTemplateRenderController
 
     public function renderTemplate(Request $request): Response
     {
-        if (!is_null($this->authorizationAttribute)) {
-            $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $request);
-        }
-
         /** @var array $arguments */
         $arguments = $this->argumentCompiler->buildArguments($this->arguments);
+
+        if (!is_null($this->authorizationAttribute)) {
+            
+            /** @var mixed $subject */
+            $subject = $request;
+            
+            if (!empty($this->authorizationSubjectKey)) {
+                $subject = $arguments[$this->authorizationSubjectKey];
+            }
+            
+            $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $subject);
+        }
 
         return $this->controllerHelper->renderTemplate($this->templatePath, $arguments);
     }

@@ -16,23 +16,30 @@ use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Security;
+use ErrorException;
 
 final class OwnershipVoter implements VoterInterface
 {
     public function __construct(
         private Security $security,
         private mixed $expectedAttribute = "ownership",
-        private int $ifSubjectNotSupported = VoterInterface::ACCESS_ABSTAIN,
+        private int $ifNotSupported = VoterInterface::ACCESS_ABSTAIN,
+        private int $ifSubjectIsNotObject = VoterInterface::ACCESS_ABSTAIN,
         private int $ifCallerIsNull = VoterInterface::ACCESS_DENIED,
         private int $ifOwnerIsNull = VoterInterface::ACCESS_DENIED,
-        private int $ifNotOwned = VoterInterface::ACCESS_DENIED
+        private int $ifNotOwned = VoterInterface::ACCESS_DENIED,
+        private bool $throwExceptionIfUnsupportedWhenExpected = true
     ) {
     }
     
     public function vote(TokenInterface $token, mixed $subject, array $attributes): int
     {
         if (!is_null($this->expectedAttribute) && !in_array($this->expectedAttribute, $attributes, true)) {
-            return $this->ifSubjectNotSupported;
+            return $this->ifNotSupported;
+        }
+        
+        if (!is_object($subject)) {
+            return $this->ifSubjectIsNotObject;
         }
         
         /** @var UserInterface|null $caller */
@@ -40,6 +47,14 @@ final class OwnershipVoter implements VoterInterface
         
         if (is_null($caller)) {
             return $this->ifCallerIsNull;
+            
+        } elseif ($subject instanceof UserInterface) {
+            if ($subject === $caller) {
+                return VoterInterface::ACCESS_GRANTED;
+                
+            } else {
+                return $this->ifNotOwned;
+            }
             
         } elseif ($subject instanceof Owned) {
             /** @var UserInterface|null $owner */
@@ -56,7 +71,7 @@ final class OwnershipVoter implements VoterInterface
             }
             
         } elseif ($subject instanceof OwnedFacade) {
-            if ($subject->isOwnedBy($caller)) {
+            if ($subject->isOwnedBy($caller, $attributes)) {
                 return VoterInterface::ACCESS_GRANTED;
                 
             } else {
@@ -64,15 +79,25 @@ final class OwnershipVoter implements VoterInterface
             }
             
         } elseif ($caller instanceof Owner) {
-            if ($caller->owns($subject)) {
+            if ($caller->owns($subject, $attributes)) {
                 return VoterInterface::ACCESS_GRANTED;
                 
             } else {
                 return $this->ifNotOwned;
             }
             
+        } elseif ($this->throwExceptionIfUnsupportedWhenExpected) {
+            throw new ErrorException(sprintf(
+                'Tried to vote by ownership when neither "%s" implements "%s" nor "%s" implements "%s" or "%s"!',
+                get_class($caller),
+                Owner::class,
+                get_class($subject),
+                Owned::class,
+                OwnedFacade::class
+            ));
+            
         } else {
-            return $this->ifSubjectNotSupported;
+            return $this->ifNotSupported;
         }
     }
 }

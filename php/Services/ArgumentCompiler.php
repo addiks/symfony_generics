@@ -98,6 +98,8 @@ final class ArgumentCompiler implements ArgumentCompilerInterface
             /** @var array|string $argumentConfiguration */
 
             $argumentValues[$key] = $this->resolveArgumentConfiguration($argumentConfiguration);
+            
+            $this->argumentContext->set($key, $argumentValues[$key]);
         }
 
         return $argumentValues;

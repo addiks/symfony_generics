@@ -12,7 +12,8 @@
         >
             <argument type="service" id="doctrine.orm.entity_manager" />
             <argument type="service" id="twig" />
-            <argument type="service" id="security.authorization_checker" />
+            <argument type="service" id="security.token_storage" />
+            <argument type="service" id="security.access.decision_manager" />
             <argument type="service" id="router" />
             <argument type="service" id="logger" />
             <argument type="service" id="event_dispatcher" />

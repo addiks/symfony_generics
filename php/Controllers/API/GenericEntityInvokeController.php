@@ -45,7 +45,7 @@ final class GenericEntityInvokeController implements SelfValidating
 
     private array $arguments;
 
-    private ?string $denyAccessAttribute;
+    private string|array|null $denyAccessAttribute;
 
     private string $successMessage;
 
@@ -69,7 +69,8 @@ final class GenericEntityInvokeController implements SelfValidating
 
         $options = array_merge([
             'arguments' => [],
-            'deny-access-attribute' => null,
+            'deny-access-attribute' => null, # deprecated
+            'authorization-attribute' => null,
             'success-message' => "Entity method invoked!",
             'success-flash-message' => "",
             'redirect-route' => null,
@@ -92,7 +93,7 @@ final class GenericEntityInvokeController implements SelfValidating
         $this->entityIdSource = $options['entity-id-source'];
         $this->methodName = $options['method'];
         $this->arguments = $options['arguments'];
-        $this->denyAccessAttribute = $options['deny-access-attribute'];
+        $this->denyAccessAttribute = $options['deny-access-attribute'] ?? $options['authorization-attribute'];
         $this->successMessage = $options['success-message'];
         $this->successFlashMessage = $options['success-flash-message'];
         $this->redirectRoute = $options['redirect-route'];

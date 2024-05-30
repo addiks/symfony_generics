@@ -62,7 +62,7 @@ interface ControllerHelperInterface
     /**
      * @param object $subject
      */
-    public function denyAccessUnlessGranted(string $attribute, $subject): void;
+    public function denyAccessUnlessGranted(string|array $attributes, $subject): void;
 
     public function dispatchEvent(string $eventName, object $event = null): object;
 

@@ -16,5 +16,5 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 interface OwnedFacade
 {
-    public function isOwnedBy(UserInterface $caller): bool;
+    public function isOwnedBy(UserInterface $caller, array $attributes = array()): bool;
 }

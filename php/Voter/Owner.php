@@ -14,5 +14,5 @@ namespace Addiks\SymfonyGenerics\Voter;
 
 interface Owner
 {
-    public function owns(mixed $subject): bool;
+    public function owns(mixed $subject, array $attributes = array()): bool;
 }
