@@ -43,7 +43,7 @@ final class ArgumentCallFactory implements ArgumentFactory
 
     public function understandsString(string $source): bool
     {
-        return 1 === preg_match("/^[^\:]+(\:\:|\-\>)[a-zA-Z0-9_-]+/is", $source);
+        return 1 === preg_match("/^[^\:\>]+(\:\:|\-\>)[a-zA-Z0-9_-]+/is", $source);
     }
 
     public function understandsArray(array $source): bool
@@ -60,8 +60,8 @@ final class ArgumentCallFactory implements ArgumentFactory
 
         $source = str_replace('->', '::', $source);
 
-        /** @var int|bool $argumentsPosition */
-        $argumentsPosition = strpos($source, '(');
+        /** @var int|false $argumentsPosition */
+        $argumentsPosition = strrpos($source, '(');
 
         /** @var string $sourceWithoutArguments */
         $sourceWithoutArguments = $source;
@@ -69,10 +69,21 @@ final class ArgumentCallFactory implements ArgumentFactory
         if (is_int($argumentsPosition)) {
             /** @var string $argumentsSources */
             $argumentsSources = substr($source, $argumentsPosition + 1);
-            $argumentsSources = str_replace(')', '', $argumentsSources);
 
-            foreach (explode(',', $argumentsSources) as $argumentsSource) {
-                $arguments[] = $this->argumentFactory->createArgumentFromString(trim($argumentsSource));
+            /** @var int|false $argumentsEndPosition */
+            $argumentsEndPosition = strpos($argumentsSources, ')');
+
+            if ($argumentsEndPosition === false) {
+                $argumentsSources = str_replace(')', '', $argumentsSources);
+
+            } else {
+                $argumentsSources = substr($argumentsSources, 0, $argumentsEndPosition);
+            }
+
+            if (!empty($argumentsSources)) {
+                foreach (explode(',', $argumentsSources) as $argumentsSource) {
+                    $arguments[] = $this->argumentFactory->createArgumentFromString(trim($argumentsSource));
+                }
             }
 
             $sourceWithoutArguments = substr($source, 0, $argumentsPosition);
