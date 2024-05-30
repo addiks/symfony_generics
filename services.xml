@@ -155,5 +155,13 @@
             <argument type="collection"></argument>
         </service>
 
+        <service
+            id="symfony_generics.voter.ownership"
+            class="Addiks\SymfonyGenerics\Voter\OwnershipVoter"
+        >
+            <argument type="service" id="security.helper" />
+            <tag name="security.voter" />
+        </service>
+
     </services>
 </container>
