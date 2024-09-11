@@ -26,6 +26,7 @@ use Addiks\SymfonyGenerics\SelfValidating;
 use Addiks\SymfonyGenerics\SelfValidateTrait;
 use Symfony\Component\Form\FormInterface;
 use InvalidArgumentException;
+use Exception;
 
 final class GenericServiceInvokeController implements SelfValidating
 {
@@ -102,6 +103,8 @@ final class GenericServiceInvokeController implements SelfValidating
      * @var array<string, string>
      */
     private $successResponseHeader = array();
+    
+    private string|null $errorRedirectRoute = null;
 
     public function __construct(
         ControllerHelperInterface $controllerHelper,
@@ -124,6 +127,7 @@ final class GenericServiceInvokeController implements SelfValidating
             'success-redirect-arguments' => [],
             'success-redirect-status' => $defaultRedirectStatus,
             'success-flash-message' => "",
+            'error-redirect' => null,
             'send-return-value-in-response' => false,
             'return-value-in-response-getter' => '',
             'success-response-header' => [],
@@ -148,6 +152,7 @@ final class GenericServiceInvokeController implements SelfValidating
         $this->sendReturnValueInResponse = $options['send-return-value-in-response'];
         $this->returnValueInResponseGetter = $options['return-value-in-response-getter'];
         $this->successResponseHeader = $options['success-response-header'];
+        $this->errorRedirectRoute = $options['error-redirect'];
     }
 
     public function __invoke(): Response
@@ -166,102 +171,115 @@ final class GenericServiceInvokeController implements SelfValidating
             $this->controllerHelper->denyAccessUnlessGranted($this->authorizationAttribute, $request);
         }
 
-        /** @var object|null $service */
-        $service = $this->container->get($this->serviceId);
+        try {
+            /** @var object|null $service */
+            $service = $this->container->get($this->serviceId);
 
-        if (is_null($service)) {
-            throw new ErrorException(sprintf(
-                "Could not find service '%s'!",
-                $this->serviceId
-            ));
-        }
+            if (is_null($service)) {
+                throw new ErrorException(sprintf(
+                    "Could not find service '%s'!",
+                    $this->serviceId
+                ));
+            }
 
-        $reflectionObject = new ReflectionObject($service);
+            $reflectionObject = new ReflectionObject($service);
 
-        /** @var ReflectionMethod $reflectionMethod */
-        $reflectionMethod = $reflectionObject->getMethod($this->method);
+            /** @var ReflectionMethod $reflectionMethod */
+            $reflectionMethod = $reflectionObject->getMethod($this->method);
 
-        /** @var array $arguments */
-        $arguments = $this->argumentCompiler->buildCallArguments(
-            $reflectionMethod,
-            $this->arguments
-        );
-        
-        if (is_object($this->argumentsForm)) {
-            $this->argumentsForm->handleRequest($request);
-            
-            Assert::true($this->argumentsForm->isSubmitted());
-            Assert::true($this->argumentsForm->isValid());
-            
-            $arguments = array_merge(array_values($this->argumentsForm->getData()), $arguments);
-        }
-
-        /** @var mixed $returnValue */
-        $returnValue = $reflectionMethod->invokeArgs($service, $arguments);
-
-        $this->controllerHelper->flushORM();
-
-        if (!empty($this->successFlashMessage)) {
-            $this->controllerHelper->addFlashMessage($this->successFlashMessage, "success");
-        }
-
-        if (!empty($this->successRedirectRoute)) {
-            /** @var array $redirectArguments */
-            $redirectArguments = $this->argumentCompiler->buildArguments($this->successRedirectArguments);
-
-            return $this->controllerHelper->redirectToRoute(
-                $this->successRedirectRoute,
-                $redirectArguments,
-                $this->successRedirectStatus
+            /** @var array $arguments */
+            $arguments = $this->argumentCompiler->buildCallArguments(
+                $reflectionMethod,
+                $this->arguments
             );
-        }
+            
+            if (is_object($this->argumentsForm)) {
+                $this->argumentsForm->handleRequest($request);
+                
+                Assert::true($this->argumentsForm->isSubmitted());
+                Assert::true($this->argumentsForm->isValid());
+                
+                $arguments = array_merge(array_values($this->argumentsForm->getData()), $arguments);
+            }
 
-        /** @var Response $response */
-        $response = null;
+            /** @var mixed $returnValue */
+            $returnValue = $reflectionMethod->invokeArgs($service, $arguments);
 
-        if ($this->sendReturnValueInResponse) {
-            if (!empty($this->returnValueInResponseGetter)) {
-                foreach (explode('.', $this->returnValueInResponseGetter) as $getterKey) {
-                    if (is_array($returnValue)) {
-                        if (isset($returnValue[$getterKey])) {
-                            $returnValue = $returnValue[$getterKey];
+            $this->controllerHelper->flushORM();
+
+            if (!empty($this->successFlashMessage)) {
+                $this->controllerHelper->addFlashMessage($this->successFlashMessage, "success");
+            }
+
+            if (!empty($this->successRedirectRoute)) {
+                /** @var array $redirectArguments */
+                $redirectArguments = $this->argumentCompiler->buildArguments($this->successRedirectArguments);
+
+                return $this->controllerHelper->redirectToRoute(
+                    $this->successRedirectRoute,
+                    $redirectArguments,
+                    $this->successRedirectStatus
+                );
+            }
+
+            /** @var Response $response */
+            $response = null;
+
+            if ($this->sendReturnValueInResponse) {
+                if (!empty($this->returnValueInResponseGetter)) {
+                    foreach (explode('.', $this->returnValueInResponseGetter) as $getterKey) {
+                        if (is_array($returnValue)) {
+                            if (isset($returnValue[$getterKey])) {
+                                $returnValue = $returnValue[$getterKey];
+                                
+                            } else {
+                                throw new InvalidArgumentException(sprintf(
+                                    'Key "%s" does not exist in result (sub-) array!',
+                                    $getterKey
+                                ));
+                            }
+                            
+                        } elseif (is_object($returnValue)) {
+                            if (method_exists($returnValue, $getterKey)) {
+                                $returnValue = $returnValue->{$getterKey}();
+                                
+                            } elseif (property_exists($returnValue, $getterKey)) {
+                                $returnValue = $returnValue->{$getterKey};
+                                
+                            } else {
+                                throw new InvalidArgumentException(sprintf(
+                                    'Method or property "%s" does not exist in result (sub-) object!',
+                                    $getterKey
+                                ));
+                            }
                             
                         } else {
-                            throw new InvalidArgumentException(sprintf(
-                                'Key "%s" does not exist in result (sub-) array!',
-                                $getterKey
-                            ));
+                            throw new InvalidArgumentException(
+                                'Cannot get sub-value from value that is neither an array nor an object!'
+                            );
                         }
-                        
-                    } elseif (is_object($returnValue)) {
-                        if (method_exists($returnValue, $getterKey)) {
-                            $returnValue = $returnValue->{$getterKey}();
-                            
-                        } elseif (property_exists($returnValue, $getterKey)) {
-                            $returnValue = $returnValue->{$getterKey};
-                            
-                        } else {
-                            throw new InvalidArgumentException(sprintf(
-                                'Method or property "%s" does not exist in result (sub-) object!',
-                                $getterKey
-                            ));
-                        }
-                        
-                    } else {
-                        throw new InvalidArgumentException(
-                            'Cannot get sub-value from value that is neither an array nor an object!'
-                        );
                     }
                 }
+                
+                $response = new Response((string)$returnValue);
+
+            } else {
+                $response = new Response("Service call completed");
             }
+
+            $response->headers->add($this->successResponseHeader);
             
-            $response = new Response((string)$returnValue);
-
-        } else {
-            $response = new Response("Service call completed");
+        } catch (Exception $exception) {
+            if (!empty($this->errorRedirectRoute)) {
+                $this->controllerHelper->handleException($exception);
+                $this->controllerHelper->addFlashMessage($exception->getMessage(), 'danger');
+                
+                $response = $this->controllerHelper->redirectToRoute($this->errorRedirectRoute);
+                
+            } else {
+                throw $exception;
+            }
         }
-
-        $response->headers->add($this->successResponseHeader);
 
         return $response;
     }

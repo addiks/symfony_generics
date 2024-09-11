@@ -157,11 +157,47 @@
         </service>
 
         <service
-            id="symfony_generics.voter.ownership"
+            id="symfony_generics.voter.ownership.owns"
             class="Addiks\SymfonyGenerics\Voter\OwnershipVoter"
         >
             <argument type="service" id="security.helper" />
+            <argument>OWNS</argument>
             <tag name="security.voter" />
+        </service>
+
+        <service
+            id="symfony_generics.voter.ownership.can_read"
+            class="Addiks\SymfonyGenerics\Voter\OwnershipVoter"
+        >
+            <argument type="service" id="security.helper" />
+            <argument>CAN_READ</argument>
+            <tag name="security.voter" />
+        </service>
+
+        <service
+            id="symfony_generics.voter.ownership.can_write"
+            class="Addiks\SymfonyGenerics\Voter\OwnershipVoter"
+        >
+            <argument type="service" id="security.helper" />
+            <argument>CAN_WRITE</argument>
+            <tag name="security.voter" />
+        </service>
+
+        <service
+            id="symfony_generics.voter.ownership.can_delete"
+            class="Addiks\SymfonyGenerics\Voter\OwnershipVoter"
+        >
+            <argument type="service" id="security.helper" />
+            <argument>CAN_DELETE</argument>
+            <tag name="security.voter" />
+        </service>
+        
+        <service
+            id="symfony_generics.routing.loader.by_tag"
+            class="Addiks\SymfonyGenerics\Routing\RoutingLoaderDecorator"
+            decorates="routing.loader"
+        >
+            <argument type="service" id="symfony_generics.routing.loader.by_tag.inner" />
         </service>
 
     </services>

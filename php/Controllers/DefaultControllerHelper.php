@@ -132,7 +132,7 @@ final class DefaultControllerHelper implements ControllerHelperInterface
         if (!$this->accessDecisionManager->decide($token, $attributes, $subject)) {
             $exception = new AccessDeniedException('Access Denied.');
             $exception->setSubject($subject);
-            $exception->setAttributes($attribute);
+            $exception->setAttributes($attributes);
 
             throw $exception;
         }

@@ -13,8 +13,11 @@
 namespace Addiks\SymfonyGenerics\Arguments;
 
 use Addiks\SymfonyGenerics\Arguments\Argument;
+use BackedEnum;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\ObjectRepository;
+use UnitEnum;
+use ValueError;
 
 final class EntityArgument implements Argument
 {
@@ -65,10 +68,23 @@ final class EntityArgument implements Argument
                 return null;
             }
             
-            return $this->objectManager->find(
-                $this->entityClass,
-                $entityId
-            );
+            if (is_a($this->entityClass, BackedEnum::class, true)) {
+                try {
+                    return ($this->entityClass)::from($entityId);
+                    
+                } catch (ValueError $error) {
+                    return constant($this->entityClass . '::' . $entityId);
+                }
+                
+            } elseif (is_a($this->entityClass, UnitEnum::class, true)) {
+                return constant($this->entityClass . '::' . $entityId);
+                
+            } else {
+                return $this->objectManager->find(
+                    $this->entityClass,
+                    $entityId
+                );
+            }
         }
     }
 

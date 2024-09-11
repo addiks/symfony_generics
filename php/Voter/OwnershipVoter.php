@@ -15,14 +15,15 @@ namespace Addiks\SymfonyGenerics\Voter;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Security\Core\Security as LegacySecurity;
+use Symfony\Bundle\SecurityBundle\Security;
 use ErrorException;
 
 final class OwnershipVoter implements VoterInterface
 {
     public function __construct(
-        private Security $security,
-        private mixed $expectedAttribute = "ownership",
+        private Security|LegacySecurity $security,
+        private mixed $expectedAttribute = "OWNS",
         private int $ifNotSupported = VoterInterface::ACCESS_ABSTAIN,
         private int $ifSubjectIsNotObject = VoterInterface::ACCESS_ABSTAIN,
         private int $ifCallerIsNull = VoterInterface::ACCESS_DENIED,
