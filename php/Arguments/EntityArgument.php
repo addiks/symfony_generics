@@ -79,6 +79,9 @@ final class EntityArgument implements Argument
             } elseif (is_a($this->entityClass, UnitEnum::class, true)) {
                 return constant($this->entityClass . '::' . $entityId);
                 
+            } elseif (in_array($this->entityClass, [\DateTime::class, \DateTimeImmutable::class], true)) {
+                return new ($this->entityClass)($entityId);
+
             } else {
                 return $this->objectManager->find(
                     $this->entityClass,

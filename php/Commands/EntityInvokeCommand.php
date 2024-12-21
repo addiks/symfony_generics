@@ -106,8 +106,8 @@ final class EntityInvokeCommand extends Command implements SelfValidating
     {
         $reflectionClass = new ReflectionClass($this->entityRepository->getClassName());
 
-        /** @var ReflectionMethod $refletionMethod */
-        $refletionMethod = $reflectionClass->getMethod($this->method);
+        /** @var ReflectionMethod $reflectionMethod */
+        $reflectionMethod = $reflectionClass->getMethod($this->method);
 
         return $reflectionMethod;
     }
@@ -189,9 +189,11 @@ final class EntityInvokeCommand extends Command implements SelfValidating
                 [],
                 $additionalArguments
             );
-            
-            $methodReflection->invoke($entity, $args);
+
+            $methodReflection->invokeArgs($entity, $arguments);
         }
+
+        $this->objectManager->flush();
 
         return 0;
     }

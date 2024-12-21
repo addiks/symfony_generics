@@ -97,6 +97,9 @@ final class ArgumentCall implements Argument
         if (is_string($callee) && is_a($callee, UnitEnum::class, true) && $this->methodName !== "from") {
             return constant($callee . '::' . $this->methodName);
 
+        } elseif (is_object($callee) && !method_exists($callee, $this->methodName) && property_exists($callee, $this->methodName)) {
+            return $callee->{$this->methodName};
+
         } else {
             /** @var callable $callback */
             $callback = [$callee, $this->methodName];
