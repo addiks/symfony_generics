@@ -59,6 +59,9 @@ final class GenericEntityInvokeController implements SelfValidating
 
     private bool $sendReturnValueInResponse = false;
 
+    /** @var array<string, string> */
+    private array $responseHeaders = [];
+
     public function __construct(
         ControllerHelperInterface $controllerHelper,
         ArgumentCompilerInterface $argumentCompiler,
@@ -79,6 +82,7 @@ final class GenericEntityInvokeController implements SelfValidating
             'entity-id-key' => 'entityId',
             'entity-id-source' => 'request',
             'send-return-value-in-response' => false,
+            'response-headers' => [],
         ], $options);
 
         Assert::classExists($options['entity-class']);
@@ -100,6 +104,7 @@ final class GenericEntityInvokeController implements SelfValidating
         $this->redirectStatus = $options['redirect-status'];
         $this->redirectRouteParameters = $options['redirect-route-parameters'];
         $this->sendReturnValueInResponse = $options['send-return-value-in-response'];
+        $this->responseHeaders = $options['response-headers'];
     }
 
     public function __invoke(): Response
@@ -187,11 +192,16 @@ final class GenericEntityInvokeController implements SelfValidating
             $this->controllerHelper->addFlashMessage($this->successFlashMessage, "success");
         }
 
+        $additionalData = [
+            'result' => $result,
+            'entity' => $entity
+        ];
+
         /** @var Response $response */
         $response = null;
 
         if ($this->sendReturnValueInResponse) {
-            return new Response((string)$result);
+            $response = new Response((string)$result);
 
         } elseif (is_null($this->redirectRoute)) {
             $response = new Response($this->successMessage);
@@ -199,12 +209,13 @@ final class GenericEntityInvokeController implements SelfValidating
         } else {
             $response = $this->controllerHelper->redirectToRoute(
                 $this->redirectRoute,
-                $this->argumentCompiler->buildArguments($this->redirectRouteParameters, [
-                    'result' => $result,
-                    'entity' => $entity
-                ]),
+                $this->argumentCompiler->buildArguments($this->redirectRouteParameters, $additionalData),
                 $this->redirectStatus
             );
+        }
+
+        foreach ($this->responseHeaders as $key => $headerArgument) {
+            $response->headers->set($key, $this->argumentCompiler->buildArgument($headerArgument, $additionalData));
         }
 
         return $response;
