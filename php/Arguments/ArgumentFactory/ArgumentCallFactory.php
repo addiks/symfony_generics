@@ -59,6 +59,9 @@ final class ArgumentCallFactory implements ArgumentFactory
         $arguments = array();
 
         $source = str_replace('->', '::', $source);
+        
+        /** @var int|false $operatorPosition */
+        $operatorPosition = strrpos($source, '::');
 
         /** @var int|false $argumentsPosition */
         $argumentsPosition = strrpos($source, '(');
@@ -66,7 +69,7 @@ final class ArgumentCallFactory implements ArgumentFactory
         /** @var string $sourceWithoutArguments */
         $sourceWithoutArguments = $source;
 
-        if (is_int($argumentsPosition)) {
+        if (is_int($argumentsPosition) && $argumentsPosition > $operatorPosition) {
             /** @var string $argumentsSources */
             $argumentsSources = substr($source, $argumentsPosition + 1);
 
@@ -95,7 +98,7 @@ final class ArgumentCallFactory implements ArgumentFactory
         $methodName = array_pop($sourceParts);
 
         $calleeSource = implode('::', $sourceParts);
-
+dump($calleeSource);
         /** @var Argument $callee */
         $callee = $this->argumentFactory->createArgumentFromString($calleeSource);
 
