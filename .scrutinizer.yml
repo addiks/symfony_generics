@@ -10,7 +10,4 @@ build:
             version: 8.2
     tests:
         override:
-            - command: 'vendor/bin/phpunit --coverage-clover=some-file'
-              coverage:
-                file: 'some-file'
-                format: 'clover'
+            - command: 'vendor/bin/phpunit'
