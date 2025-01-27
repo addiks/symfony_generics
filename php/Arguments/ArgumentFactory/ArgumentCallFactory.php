@@ -98,7 +98,7 @@ final class ArgumentCallFactory implements ArgumentFactory
         $methodName = array_pop($sourceParts);
 
         $calleeSource = implode('::', $sourceParts);
-dump($calleeSource);
+
         /** @var Argument $callee */
         $callee = $this->argumentFactory->createArgumentFromString($calleeSource);
 

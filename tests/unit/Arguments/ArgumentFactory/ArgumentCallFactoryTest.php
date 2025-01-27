@@ -36,7 +36,7 @@ final class ArgumentCallFactoryTest extends TestCase
      */
     private $argumentFactory;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->argumentCompiler = $this->createMock(ArgumentCompilerInterface::class);
         $this->argumentFactory = $this->createMock(ArgumentFactory::class);

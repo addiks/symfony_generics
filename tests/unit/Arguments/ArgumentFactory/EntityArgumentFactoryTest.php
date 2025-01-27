@@ -28,7 +28,7 @@ final class EntityArgumentFactoryTest extends TestCase
 
     private ArgumentFactory $argumentFactory;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->objectManager = $this->createMock(ObjectManager::class);
         $this->argumentFactory = $this->createMock(ArgumentFactory::class);

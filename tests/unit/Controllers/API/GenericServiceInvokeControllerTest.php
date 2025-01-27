@@ -41,7 +41,7 @@ final class GenericServiceInvokeControllerTest extends TestCase
      */
     private $container;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->controllerHelper = $this->createMock(ControllerHelperInterface::class);
         $this->argumentCompiler = $this->createMock(ArgumentCompilerInterface::class);

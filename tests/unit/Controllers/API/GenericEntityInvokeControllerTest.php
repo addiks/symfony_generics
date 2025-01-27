@@ -21,6 +21,7 @@ use Symfony\Component\Finder\Exception\AccessDeniedException;
 use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
 use Symfony\Component\HttpFoundation\Response;
 use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntity;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final class GenericEntityInvokeControllerTest extends TestCase
 {
@@ -40,7 +41,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
      */
     private $argumentCompiler;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->controllerHelper = $this->createMock(ControllerHelperInterface::class);
         $this->argumentCompiler = $this->createMock(ArgumentCompilerInterface::class);
@@ -124,7 +125,10 @@ final class GenericEntityInvokeControllerTest extends TestCase
 
         $this->argumentCompiler->expects($this->once())->method('buildArguments')->with(
             $this->equalTo(['some-redirect-route-parameters']),
-            $this->equalTo(['result' => "some-result"])
+            $this->equalTo([
+                'result' => "some-result",
+                'entity' => $entity,
+            ])
         )->willReturn(['foo' => 'bar']);
 
         $this->controllerHelper->expects($this->once())->method('findEntity')->with(
@@ -145,7 +149,7 @@ final class GenericEntityInvokeControllerTest extends TestCase
      */
     public function shouldThrowExceptionWhenEntityNotFound()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(NotFoundHttpException::class);
 
         /** @var Request $request */
         $request = $this->createMock(Request::class);

@@ -29,7 +29,7 @@ final class AdditionalDataArgumentFactoryTest extends TestCase
      */
     private $context;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->context = $this->createMock(ArgumentContextInterface::class);
 

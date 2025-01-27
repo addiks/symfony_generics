@@ -35,7 +35,7 @@ final class ArgumentFactoryLazyLoadProxyTest extends TestCase
      */
     private $loadedArgumentFactory;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->container = $this->createMock(ContainerInterface::class);
         $this->loadedArgumentFactory = $this->createMock(ArgumentFactory::class);

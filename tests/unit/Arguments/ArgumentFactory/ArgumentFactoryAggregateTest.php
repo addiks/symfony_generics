@@ -42,7 +42,7 @@ final class ArgumentFactoryAggregateTest extends TestCase
      */
     private $innerArgumentFactoryC;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->innerArgumentFactoryA = $this->createMock(ArgumentFactory::class);
         $this->innerArgumentFactoryB = $this->createMock(ArgumentFactory::class);
@@ -162,15 +162,23 @@ final class ArgumentFactoryAggregateTest extends TestCase
             $this->equalTo($source)
         )->willReturn($cu);
 
-        $this->innerArgumentFactoryA->expects($this->any())->method('createArgumentFromString')->with(
-            $this->equalTo($source)
-        )->willReturn($ar);
-        $this->innerArgumentFactoryB->expects($this->any())->method('createArgumentFromString')->with(
-            $this->equalTo($source)
-        )->willReturn($br);
-        $this->innerArgumentFactoryC->expects($this->any())->method('createArgumentFromString')->with(
-            $this->equalTo($source)
-        )->willReturn($cr);
+        if ($au) {
+            $this->innerArgumentFactoryA->expects($this->any())->method('createArgumentFromString')->with(
+                $this->equalTo($source)
+            )->willReturn($ar);
+        }
+        
+        if ($bu) {
+            $this->innerArgumentFactoryB->expects($this->any())->method('createArgumentFromString')->with(
+                $this->equalTo($source)
+            )->willReturn($br);
+        }
+        
+        if ($cu) {
+            $this->innerArgumentFactoryC->expects($this->any())->method('createArgumentFromString')->with(
+                $this->equalTo($source)
+            )->willReturn($cr);
+        }
 
         /** @var mixed $actualResult */
         $actualResult = $this->factoryAggregate->createArgumentFromString($source);
@@ -217,15 +225,23 @@ final class ArgumentFactoryAggregateTest extends TestCase
             $this->equalTo($source)
         )->willReturn($cu);
 
-        $this->innerArgumentFactoryA->expects($this->any())->method('createArgumentFromArray')->with(
-            $this->equalTo($source)
-        )->willReturn($ar);
-        $this->innerArgumentFactoryB->expects($this->any())->method('createArgumentFromArray')->with(
-            $this->equalTo($source)
-        )->willReturn($br);
-        $this->innerArgumentFactoryC->expects($this->any())->method('createArgumentFromArray')->with(
-            $this->equalTo($source)
-        )->willReturn($cr);
+        if ($au) {
+            $this->innerArgumentFactoryA->expects($this->any())->method('createArgumentFromArray')->with(
+                $this->equalTo($source)
+            )->willReturn($ar);
+        }
+        
+        if ($bu) {
+            $this->innerArgumentFactoryB->expects($this->any())->method('createArgumentFromArray')->with(
+                $this->equalTo($source)
+            )->willReturn($br);
+        }
+        
+        if ($cu) {
+            $this->innerArgumentFactoryC->expects($this->any())->method('createArgumentFromArray')->with(
+                $this->equalTo($source)
+            )->willReturn($cr);
+        }
 
         /** @var mixed $actualResult */
         $actualResult = $this->factoryAggregate->createArgumentFromArray($source);

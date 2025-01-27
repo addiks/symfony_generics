@@ -43,7 +43,7 @@ final class ArgumentCompilerTest extends TestCase
 
     private EntityManager $entityManager;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->container = new ContainerBuilder();
 

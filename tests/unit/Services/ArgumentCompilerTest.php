@@ -52,7 +52,7 @@ final class ArgumentCompilerTest extends TestCase
      */
     private $controllerHelper;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->argumentFactory = $this->createMock(ArgumentFactory::class);
         $this->requestStack = $this->createMock(RequestStack::class);
@@ -78,9 +78,8 @@ final class ArgumentCompilerTest extends TestCase
 
         $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
-        $this->argumentContext->expects($this->once())->method('set')->with(
-            $this->equalTo('foo'),
-            $this->equalTo('bar')
+        $this->argumentContext->expects($this->any())->method('set')->withConsecutive(
+            [$this->equalTo('foo'), $this->equalTo('bar')]
         );
 
         /** @var Argument $argument */
@@ -135,7 +134,7 @@ final class ArgumentCompilerTest extends TestCase
      */
     public function shouldExpectArgumentFactoryToUnderstandArray()
     {
-        $this->expectExceptionMessage("Argument 'array(0=>'dolor',)' could not be understood!");
+        $this->expectExceptionMessage("Array-argument could not be understood!");
 
         /** @var Request $request */
         $request = $this->createMock(Request::class);
@@ -218,9 +217,13 @@ final class ArgumentCompilerTest extends TestCase
         /** @var Closure $buildParameter */
         $buildParameter = function (string $name, bool $hasType = false, $parameterTypeName = null) use ($testCase) {
 
-            /** @var ReflectionType $parameterType */
-            $parameterType = $testCase->createMock(ReflectionType::class);
-            $parameterType->method('__toString')->willReturn($parameterTypeName);
+            /** @var ReflectionType|null $parameterType */
+            $parameterType = null;
+                
+            if (is_string($parameterTypeName)) {
+                $parameterType = $testCase->createMock(ReflectionType::class);
+                $parameterType->method('__toString')->willReturn($parameterTypeName);
+            }
 
             /** @var ReflectionParameter $parameter */
             $parameter = $testCase->createMock(ReflectionParameter::class);

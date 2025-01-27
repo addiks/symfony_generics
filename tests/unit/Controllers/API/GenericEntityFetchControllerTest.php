@@ -30,7 +30,7 @@ final class GenericEntityFetchControllerTest extends TestCase
      */
     private $controllerHelper;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->controllerHelper = $this->createMock(ControllerHelperInterface::class);
     }

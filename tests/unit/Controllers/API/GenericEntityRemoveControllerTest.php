@@ -19,6 +19,7 @@ use Symfony\Component\Finder\Exception\AccessDeniedException;
 use Addiks\SymfonyGenerics\Tests\Unit\Controllers\SampleEntity;
 use Symfony\Component\HttpFoundation\Request;
 use Addiks\SymfonyGenerics\Events\EntityInteractionEvent;
+use Addiks\SymfonyGenerics\Services\ArgumentCompilerInterface;
 
 final class GenericEntityRemoveControllerTest extends TestCase
 {
@@ -27,13 +28,18 @@ final class GenericEntityRemoveControllerTest extends TestCase
 
     private ControllerHelperInterface $controllerHelper;
 
-    public function setUp()
+    private ArgumentCompilerInterface $argumentBuilder;
+
+    public function setUp(): void
     {
         $this->controllerHelper = $this->createMock(ControllerHelperInterface::class);
+        $this->argumentBuilder = $this->createMock(ArgumentCompilerInterface::class);
 
-        $this->controller = new GenericEntityRemoveController($this->controllerHelper, [
-            'entity-class' => SampleEntity::class
-        ]);
+        $this->controller = new GenericEntityRemoveController(
+            $this->controllerHelper, 
+            $this->argumentBuilder,
+            ['entity-class' => SampleEntity::class]
+        );
     }
 
     /**
@@ -43,7 +49,7 @@ final class GenericEntityRemoveControllerTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new GenericEntityRemoveController($this->controllerHelper, []);
+        new GenericEntityRemoveController($this->controllerHelper, $this->argumentBuilder, []);
     }
 
     /**
@@ -102,10 +108,14 @@ final class GenericEntityRemoveControllerTest extends TestCase
             }
         ));
 
-        $controller = new GenericEntityRemoveController($this->controllerHelper, [
-            'entity-class' => SampleEntity::class,
-            'authorization-attribute' => 'some-attribute',
-        ]);
+        $controller = new GenericEntityRemoveController(
+            $this->controllerHelper, 
+            $this->argumentBuilder,
+            [
+                'entity-class' => SampleEntity::class,
+                'authorization-attribute' => 'some-attribute',
+            ]
+        );
 
         $controller->removeEntity("some-id");
     }
@@ -155,9 +165,11 @@ final class GenericEntityRemoveControllerTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $controller = new GenericEntityRemoveController($this->controllerHelper, [
-            'entity-class' => SampleEntity::class,
-        ]);
+        $controller = new GenericEntityRemoveController(
+            $this->controllerHelper, 
+            $this->argumentBuilder,
+            ['entity-class' => SampleEntity::class,]
+        );
 
         $this->controllerHelper->method('getCurrentRequest')->willReturn(null);
 

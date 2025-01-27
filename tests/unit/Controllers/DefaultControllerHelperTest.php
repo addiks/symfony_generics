@@ -29,6 +29,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Twig\Environment;
 use Symfony\Contracts\EventDispatcher\Event;
 use Doctrine\Persistence\ObjectRepository;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authorization\AccessDecisionManagerInterface;
 
 final class DefaultControllerHelperTest extends TestCase
 {
@@ -39,7 +41,9 @@ final class DefaultControllerHelperTest extends TestCase
 
     private Environment $twig;
 
-    private AuthorizationCheckerInterface $authorization;
+    private TokenStorageInterface $tokenStorage;
+
+    private AccessDecisionManagerInterface $accessDecisionManager;
 
     private UrlGeneratorInterface $urlGenerator;
 
@@ -51,23 +55,26 @@ final class DefaultControllerHelperTest extends TestCase
 
     private RequestStack $requestStack;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->twig = $this->createMock(Environment::class);
-        $this->authorization = $this->createMock(AuthorizationCheckerInterface::class);
+        $this->tokenStorage = $this->createMock(TokenStorageInterface::class);
+        $this->accessDecisionManager = $this->createMock(AccessDecisionManagerInterface::class);
         $this->urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $this->session = $this->createMock(Session::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $this->requestStack = $this->createMock(RequestStack::class);
+        
+        $this->requestStack->method('getSession')->willReturn($this->session);
 
         $this->controllerHelper = new DefaultControllerHelper(
             $this->entityManager,
             $this->twig,
-            $this->authorization,
+            $this->tokenStorage,
+            $this->accessDecisionManager,
             $this->urlGenerator,
-            $this->session,
             $this->logger,
             $this->eventDispatcher,
             $this->requestStack
@@ -281,10 +288,7 @@ final class DefaultControllerHelperTest extends TestCase
         /** @var stdClass $subject */
         $subject = $this->createMock(stdClass::class);
 
-        $this->authorization->expects($this->once())->method('isGranted')->with(
-            $this->equalTo("foo"),
-            $this->equalTo($subject)
-        )->willReturn(false);
+        $this->accessDecisionManager->expects($this->once())->method('decide')->willReturn(false);
 
         try {
             $this->controllerHelper->denyAccessUnlessGranted("foo", $subject);
@@ -305,10 +309,7 @@ final class DefaultControllerHelperTest extends TestCase
         /** @var stdClass $subject */
         $subject = $this->createMock(stdClass::class);
 
-        $this->authorization->expects($this->once())->method('isGranted')->with(
-            $this->equalTo("foo"),
-            $this->equalTo($subject)
-        )->willReturn(true);
+        $this->accessDecisionManager->expects($this->once())->method('decide')->willReturn(true);
 
         $this->controllerHelper->denyAccessUnlessGranted("foo", $subject);
     }

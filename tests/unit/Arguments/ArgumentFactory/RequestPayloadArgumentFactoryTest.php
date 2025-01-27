@@ -28,7 +28,7 @@ final class RequestPayloadArgumentFactoryTest extends TestCase
      */
     private $requestStack;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->requestStack = $this->createMock(RequestStack::class);
 

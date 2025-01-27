@@ -46,7 +46,7 @@ final class GenericExceptionResponseControllerTest extends TestCase
      */
     private $argumentBuilder;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->controllerHelper = $this->createMock(ControllerHelperInterface::class);
         $this->innerController = $this->createMock(Serializable::class);

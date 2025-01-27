@@ -28,7 +28,7 @@ final class EntityInteractionEventTest extends TestCase
      */
     private $entity;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->entity = $this->createMock(stdClass::class);
 

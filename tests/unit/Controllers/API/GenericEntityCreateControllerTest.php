@@ -50,7 +50,7 @@ final class GenericEntityCreateControllerTest extends TestCase
      */
     private $container;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->controllerHelper = $this->createMock(ControllerHelperInterface::class);
         $this->container = $this->createMock(ContainerInterface::class);

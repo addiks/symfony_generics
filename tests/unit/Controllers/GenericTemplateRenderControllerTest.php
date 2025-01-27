@@ -32,7 +32,7 @@ final class GenericTemplateRenderControllerTest extends TestCase
      */
     private $argumentCompiler;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->controllerHelper = $this->createMock(ControllerHelperInterface::class);
         $this->argumentCompiler = $this->createMock(ArgumentCompilerInterface::class);
