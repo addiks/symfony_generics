@@ -43,6 +43,14 @@ These components currently exist in the library:
 | Controller | [API/GenericServiceInvokeController][6] | API to call a method on a service. |
 | Controller | [GenericTemplateRenderController][7]    | Renders a template with arguments. |
 | Controller | [GenericExceptionResponseController][8] | Handle different exceptions.       |
+| Command    | EntityInvokeCommand                     | Invoke Entity-Methods from CLI.    |
+| Command    | ServiceInvokeCommand                    | Invoke Service-Methods from CLI.   |
+| Service    | ArgumentCompiler                        | More versatile alternative to symfony expression-language                     |
+| Router     | RoutingLoaderDecorator                  | Decorates a router to allow service-tag-based routes                          | 
+| Voter      | Owned (Interface)                       | Entity-Access-Authorization: Entities can specify an owner user               |
+| Voter      | OwnedFacade (Interface)                 | Entity-Access-Authorization: Entities can specify if they are owned by a user |
+| Voter      | Owner (Interface)                       | Entity-Access-Authorization: User can specify if he own an entity             |
+| Voter      | OwnershipVoter                          | Voter than can restrict acces based on interfaces above                       |
 
 [1]: documentation/controllers/api/entity-create.md
 [2]: documentation/controllers/api/entity-fetch.md
