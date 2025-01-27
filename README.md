@@ -1,4 +1,3 @@
-[![Travis Build Status][10]][9]
 [![Scrutinizer Build Status][11]][12]
 [![Scrutinizer Code Quality][13]][14]
 [![Code Coverage][15]][16]
@@ -6,7 +5,6 @@
 [![Total Downloads][18]][19]
 [![Licence][20]][19]
 [![Version][21]][19]
-[![PHP][22]][19]
 [![PHP][23]][19]
 
 # Symfony Generic Components
@@ -54,8 +52,6 @@ These components currently exist in the library:
 [6]: documentation/controllers/api/service-invoke.md
 [7]: documentation/controllers/template-render.md
 [8]: documentation/controllers/exception-response.md
-[9]: https://travis-ci.org/addiks/symfony_generics
-[10]: https://travis-ci.org/addiks/symfony_generics.svg?branch=master
 [11]: https://scrutinizer-ci.com/g/addiks/symfony_generics/badges/build.png?b=master
 [12]: https://scrutinizer-ci.com/g/addiks/symfony_generics/build-status/master
 [13]: https://scrutinizer-ci.com/g/addiks/symfony_generics/badges/quality-score.png?b=master
@@ -67,5 +63,4 @@ These components currently exist in the library:
 [19]: https://packagist.org/packages/addiks/symfony_generics
 [20]: https://img.shields.io/packagist/l/addiks/symfony_generics.svg
 [21]: https://img.shields.io/packagist/v/addiks/symfony_generics.svg
-[22]: https://img.shields.io/travis/php-v/addiks/symfony_generics.svg
 [23]: https://img.shields.io/github/last-commit/addiks/symfony_generics.svg
